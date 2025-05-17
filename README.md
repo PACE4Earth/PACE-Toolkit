@@ -62,4 +62,4 @@ PACE-Toolkit/
 
 Built as part of the **Code for Earth 2025** Challenge.  
 Maintained by: **PACE Team**  
-Contact: marek.rodny@iblsot.com
+Contact: marek.rodny@iblsoft.com
