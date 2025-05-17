@@ -1,0 +1,12 @@
+# Core scientific computing
+numpy              # Fast array computations
+scipy              # Scientific functions and statistical tools
+
+# Data structures for labeled multi-dimensional arrays
+xarray             # Ideal for handling NetCDF/climate model outputs
+
+# Machine learning framework
+torch>=2.0         # PyTorch: deep learning and numerical modeling backend
+
+# Visualization
+matplotlib         # Basic plotting (maps, diagnostics, metrics)
