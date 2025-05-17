@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/) 
 [![PyTorch](https://img.shields.io/badge/PyTorch-ML-orange.svg)](https://pytorch.org/) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) 
-[![Docs](https://img.shields.io/badge/docs-online-blue)](https://pace4earth.github.io/toolkit/)
+[![Docs](https://img.shields.io/badge/docs-in%20progress-lightgrey)](https://pace4earth.github.io/toolkit/)
 
 **PACE toolkit** provides a set of diagnostics to evaluate the **physical consistency** of machine learning-based Earth system predictions. It helps verify whether models like **GraphCast** (global) and **CorrDiff** (regional downscaling) respect fundamental physical laws across space, time, and variables.
 
