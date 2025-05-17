@@ -33,8 +33,8 @@ Machine learning forecasts can appear statistically accurate while violating bas
 ## 📦 Installation (coming soon)
 
 ```bash
-git clone https://github.com/PACE4Earth/PACE-toolkit.git
-cd PACE-toolkit
+git clone https://github.com/PACE4Earth/PACE-Toolkit.git
+cd PACE-Toolkit
 pip install -r requirements.txt
 ```
 
@@ -43,7 +43,7 @@ pip install -r requirements.txt
 ## 🗂️ Project Structure
 
 ```
-PACE-toolkit/
+PACE-Toolkit/
 ├── pace/                # Core diagnostics and evaluation code
 │   ├── evaluator.py
 │   ├── metrics/
