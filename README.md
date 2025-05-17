@@ -61,5 +61,5 @@ toolkit/
 ## 🧠 Maintainers
 
 Built as part of the **Code for Earth 2025** Challenge.  
-Maintained by: [Your Name or Team]  
-Contact: [your.email@domain.com]
+Maintained by: **PACE Team**  
+Contact: marek.rodny@iblsot.com
