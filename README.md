@@ -34,7 +34,7 @@ Machine learning forecasts can appear statistically accurate while violating bas
 
 ```bash
 git clone https://github.com/PACE4Earth/PACE-toolkit.git
-cd toolkit
+cd PACE-toolkit
 pip install -r requirements.txt
 ```
 
