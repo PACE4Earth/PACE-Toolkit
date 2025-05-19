@@ -124,7 +124,7 @@ if __name__=="__main__":
             # compute by metpy
             u_gx, v_gx = metpy_geostrophic_wind(phi_xr, dataset.lats, dataset.lons)
             
-            print(torch.nn.functional.l1_loss(u_gt, torch.tensor(u_gx)).item())        
+            # print(torch.nn.functional.l1_loss(u_gt, torch.tensor(u_gx)).item())        
             
             ### for v_g a dirty trick was necessary (prob. f mask?)
             ### also i saved some type checking, so youll get a UserWarning
@@ -152,7 +152,22 @@ if __name__=="__main__":
             # print(phi.shape, u_g.shape, v_g.shape)
             
                 if os.path.exists('../__tmp_outs'):
-                    plt.title(f'{int(level.values)}hPa {str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}')
+                    
+                    delta_u = (np.array(u**2 + v**2)**.5) - (np.array(u_g**2 + v_g**2))**.5
+                    # delta_u = (u**2+v**2)**.5 - np.array((u_g**2+v_g**2)**.5)
+                    
+                    # _ = torch.nn.functional.mse_loss(
+                    #     torch.tensor(u**2+v**2)**.5,
+                    #     torch.tensor(u_g**2+v_g**2)**.5,
+                    #     reduction='none',
+                    # ).numpy()
+                        
+                    
+                    plt.title(
+                        r'$||u||_2 - ||u_g||_2$' +
+                        # f'\n RMSE = {np.mean(delta_u):1.2f}' $ needs
+                        f'\n{backend} {int(level.values)}hPa {str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}'
+                    )
                     plt.contour(
                         dataset.lons,
                         dataset.lats, 
@@ -165,12 +180,17 @@ if __name__=="__main__":
                         dataset.lons,
                         dataset.lats, 
                         # v-np.array(v_g),
-                        (u**2+v**2)**.5 - np.array((u_g**2+v_g**2)**.5),
+                        # (u**2+v**2)**.5 - np.array((u_g**2+v_g**2)**.5),
+                        delta_u,
                         vmin = -20,
                         vmax = 20,
                         cmap = 'seismic',
                     )
+                    
+                    plt.tight_layout()
+                    
                     plt.colorbar()
+                    
                     plt.savefig(f'../__tmp_outs/{backend}_{int(level.values)}_{str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}.png')
                     plt.close('all')
     

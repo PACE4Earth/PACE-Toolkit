@@ -49,7 +49,7 @@ class GeostrophicWind(nn.Module):
         u_g =  dphi_dy / self.f
         v_g =  dphi_dx / self.f
         
-        return u_g.view(shape), v_g.view(shape) # torch.cat((geopotential, u_g, v_g), dim=1)
+        return u_g.view(shape).clamp(-100, 100), v_g.view(shape).clamp(-100, 100)
 
 from metpy import constants as mpconsts
 from metpy.calc import (
