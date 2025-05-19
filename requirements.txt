@@ -4,6 +4,7 @@ scipy              # Scientific functions and statistical tools
 
 # Data structures for labeled multi-dimensional arrays
 xarray             # Ideal for handling NetCDF/climate model outputs
+netCDF4            # Appears to be necessary for engine=netcdf4 xarray backend
 
 # Machine learning framework
 torch>=2.0         # PyTorch: deep learning and numerical modeling backend
