@@ -61,7 +61,7 @@ def lower_abs_boundary(xi):
     mask = np.abs(xi) < 1e-5
     xi[mask] = 1e-5 * np.sign(xi[mask]+1e-9)  
 
-def metpy_geostrophic_wind(z, lat, lon):
+def metpy_geostrophic_wind(z, lat, lon, cos_lat):
     
     z = z.metpy.quantify()
     dx, dy = metpy.calc.lat_lon_grid_deltas(lon, lat)
@@ -77,7 +77,7 @@ def metpy_geostrophic_wind(z, lat, lon):
     u_g, v_g = metpy.calc.geostrophic_wind(z, dx=dx, dy=dy)
     
     u_g = np.nan_to_num(u_g.values, nan=0)
-    v_g = np.nan_to_num(v_g.values, nan=0)   
+    v_g = np.nan_to_num(v_g.values, nan=0) * cos_lat[:, None]   
 
     return np.clip(u_g, -100, 100), np.clip(v_g, -100, 100)
     

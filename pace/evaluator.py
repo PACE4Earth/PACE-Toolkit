@@ -122,7 +122,7 @@ if __name__=="__main__":
             u_gt, v_gt = dataset.geostrophy.forward(phi)
             
             # compute by metpy
-            u_gx, v_gx = metpy_geostrophic_wind(phi_xr, dataset.lats, dataset.lons)
+            u_gx, v_gx = metpy_geostrophic_wind(phi_xr, dataset.lats, dataset.lons, dataset.cos_lat)
             
             # print(torch.nn.functional.l1_loss(u_gt, torch.tensor(u_gx)).item())        
             
@@ -132,7 +132,7 @@ if __name__=="__main__":
             
             for (u_g, v_g, backend) in [
                 (u_gt, v_gt, 'torch'),
-                (u_gx, v_gx, 'xarray')
+                (u_gx, v_gx, 'metpy')
             ]:
                 print(
                     f'{backend:>6} L1(u,u_g) [ms-1]: ',
@@ -161,11 +161,12 @@ if __name__=="__main__":
                     #     torch.tensor(u_g**2+v_g**2)**.5,
                     #     reduction='none',
                     # ).numpy()
-                        
+                                        
+                    ### deltas plot
                     
                     plt.title(
-                        r'$||u||_2 - ||u_g||_2$' +
-                        # f'\n RMSE = {np.mean(delta_u):1.2f}' $ needs
+                        r'$||u||_1 - ||u_g||_1$' +
+                        f'\nMAE = {np.mean(np.abs(delta_u)):1.2f}' +
                         f'\n{backend} {int(level.values)}hPa {str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}'
                     )
                     plt.contour(
@@ -193,7 +194,40 @@ if __name__=="__main__":
                     
                     plt.savefig(f'../__tmp_outs/{backend}_{int(level.values)}_{str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}.png')
                     plt.close('all')
-    
+                
+                ### delta deltas plot
+            
+            if os.path.exists('../__tmp_outs'):        
+                plt.title(
+                    r'$\Delta u_t - \Delta u_m$' +
+                    f'\n{int(level.values)}hPa {str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}'
+                )
+                plt.contour(
+                    dataset.lons,
+                    dataset.lats, 
+                    phi,
+                    colors='k',
+                    levels=20,
+                    linewidths=1,
+                )
+                plt.pcolormesh(
+                    dataset.lons,
+                    dataset.lats, 
+                    # v-np.array(v_g),
+                    # (u**2+v**2)**.5 - np.array((u_g**2+v_g**2)**.5),
+                    np.abs(u_gt)-np.abs(u_gx),
+                    vmin = -20,
+                    vmax = 20,
+                    cmap = 'seismic',
+                )
+                
+                plt.tight_layout()
+                
+                plt.colorbar()
+                
+                plt.savefig(f'../__tmp_outs/comparison_{int(level.values)}_{str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}.png')
+                plt.close('all')
+
     # tau = dataset[0]
     # if dataset.geostrophy != None:
     #     for valid_time in tau['valid_time']:
