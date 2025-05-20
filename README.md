@@ -38,6 +38,13 @@ cd PACE-Toolkit
 pip install -r requirements.txt
 ```
 
+## :chart_with_upwards_trend: MWE (demo)
+```bash
+python pace/evaluator.py
+```
+
+![The expected output is multiple images:](assets/torch_500_2023060100.png)
+
 ---
 
 ## 🗂️ Project Structure
