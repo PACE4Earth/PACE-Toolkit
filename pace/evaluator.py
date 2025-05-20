@@ -165,7 +165,7 @@ if __name__=="__main__":
                     ### deltas plot
                     
                     plt.title(
-                        r'$||u||_1 - ||u_g||_1$' +
+                        r'$|u| - |u_g|$' +
                         f'\nMAE = {np.mean(np.abs(delta_u)):1.2f}' +
                         f'\n{backend} {int(level.values)}hPa {str(valid_time.astype('datetime64[h]')).replace('-', '').replace('T', '')}'
                     )
