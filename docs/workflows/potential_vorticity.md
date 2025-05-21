@@ -76,11 +76,11 @@ Calculate:
 - RMSE between GraphCast and ERA5 PV
 - Skill Score 
 
-    $\mathrm{Skill}_{\mathrm{bounded}}=\frac{R M S E_{\mathrm{ERA} 5}-R M S E_{\mathrm{GraphCast}}}{R M S E_{\mathrm{ERA} 5}+R M S E_{\mathrm{GraphCast}}}$
+$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
 
-    +1 = perfect prediction (zero error)   
-    0 = same as ERA5  
-    –1 = very poor (RMSE much higher than baseline)
++1 = perfect prediction (zero error)   
+0 = same as ERA5  
+–1 = very poor (RMSE much higher than baseline)
 
 #### **Step 4: Flag Physically Unrealistic Values and Outliers**
 
