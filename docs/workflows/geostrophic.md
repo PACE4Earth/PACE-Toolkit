@@ -11,6 +11,7 @@ The method will later be adapted for other ML models (e.g., CorrDiff), but Graph
 Geostrophic balance assumes equilibrium between the Coriolis force and pressure gradient force, valid for large-scale, slowly varying atmospheric motions.
 
 In pressure coordinates:
+
 $$
 u_g=-\frac{1}{f} \frac{\partial \Phi}{\partial y}, \quad v_g=\frac{1}{f} \frac{\partial \Phi}{\partial x}
 $$
@@ -63,7 +64,12 @@ Longitude range: Global (0° to 360°)
 
 #### **Step 3: Compute Deviations**
 
-$\begin{aligned} & \Delta u=u-u_g, \quad \Delta v=v-v_g \\ & \text { - Compute RMSE: } R M S E_u=\sqrt{\frac{1}{N} \sum(\Delta u)^2}, \quad R M S E_v=\sqrt{\frac{1}{N} \sum(\Delta v)^2} \\ & \text { - Vector RMSE: } R M S E_{w i n d}=\sqrt{\frac{1}{N} \sum\left[\left(u-u_g\right)^2+\left(v-v_g\right)^2\right]}\end{aligned}$
+$\Delta u = u - u_g,\quad \Delta v = v - v_g$
+
+$\text{RMSE}_u = \sqrt{\frac{1}{N} \sum (\Delta u)^2},\quad \text{RMSE}_v = \sqrt{\frac{1}{N} \sum (\Delta v)^2}$ 
+
+$\text{RMSE}_{\text{wind}} = \sqrt{\frac{1}{N} \sum \left[(u - u_g)^2 + (v - v_g)^2\right]}$
+
 
 Also use relative metrics - ratio of the ageostrophic component to the geostrophic wind:
 
@@ -76,11 +82,11 @@ $r=\frac{\left|\vec{v}_{a g}\right|}{\left|\vec{v}_g\right|}$
 - Compute RMSE for ERA5
 - Define skill score:
 
-    $\mathrm{Skill}_{\mathrm{bounded}}=\frac{R M S E_{\mathrm{ERA} 5}-R M S E_{\mathrm{GraphCast}}}{R M S E_{\mathrm{ERA} 5}+R M S E_{\mathrm{GraphCast}}}$
+$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
 
-    +1 = perfect prediction (zero error)   
-    0 = same as ERA5  
-    –1 = very poor (RMSE much higher than baseline)
++1 = perfect prediction (zero error)   
+0 = same as ERA5  
+–1 = very poor (RMSE much higher than baseline)
 
 
 #### **Step 5: Mask Dynamically Active Regions (Optional)**
