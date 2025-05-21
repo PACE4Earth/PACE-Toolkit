@@ -8,7 +8,9 @@ This workflow evaluates the physical consistency of ML model outputs (starting w
 
 Hydrostatic balance is defined by:
 
-$\frac{\partial \Phi}{\partial p}=-\frac{R_d T}{p}$
+$$
+\frac{\partial \Phi}{\partial p}=-\frac{R_d T}{p}
+$$
 
 Where:
 - $\Phi=g z=$ geopotential
@@ -18,7 +20,7 @@ Where:
 
 Rewriting for vertical derivative of geopotential between pressure levels:
 
-$\Delta \Phi=-\int_{p_1}^{p_2} \frac{R_d T}{p} d p$
+$\Delta \Phi = -\displaystyle \int_{p_1}^{p_2} \dfrac{R_d T}{p} \, dp$
 
 Assuming discrete levels, this can be approximated as:
 
@@ -74,10 +76,11 @@ Absolute Error:
 $\Delta \Phi_{\text {error }}=\Delta \Phi_{\text {actual }}-\Delta \Phi_{\text {hydro }}$
 
 RMSE across all gridpoints:  
-$R M S E=\sqrt{\frac{1}{N} \sum\left(\Delta \Phi_{\mathrm{error}}\right)^2}$
+$RMSE=\sqrt{\dfrac{1}{N} \sum\left(\Delta \Phi_{\mathrm{error}}\right)^2}$
 
 Relative Error:  
-RelError $=\frac{\left|\Delta \Phi_{\text {error }}\right|}{\left|\Delta \Phi_{\text {hydro }}\right|}$
+
+$\text{RelError} =\dfrac{\Delta \Phi_{\text {error }}}{\Delta \Phi_{\text {hydro }}}$
 
 #### **Step 4: Compare to ERA5 Baseline**
 
@@ -85,11 +88,11 @@ RelError $=\frac{\left|\Delta \Phi_{\text {error }}\right|}{\left|\Delta \Phi_{\
 - Compute RMSE for ERA5
 - Define skill score:
 
-    $\mathrm{Skill}_{\mathrm{bounded}}=\frac{R M S E_{\mathrm{ERA} 5}-R M S E_{\mathrm{GraphCast}}}{R M S E_{\mathrm{ERA} 5}+R M S E_{\mathrm{GraphCast}}}$
+$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
 
-    +1 = perfect prediction (zero error)   
-    0 = same as ERA5  
-    –1 = very poor (RMSE much higher than baseline)
++1 = perfect prediction (zero error)   
+0 = same as ERA5  
+–1 = very poor (RMSE much higher than baseline)
 
 ####
 
