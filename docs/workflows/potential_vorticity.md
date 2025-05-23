@@ -65,7 +65,7 @@ Use the Ertel PV equation (in pressure coordinates):
 
 $PV=-g(\zeta + f) \cdot \nabla_p \theta$
 
-Tools: metpy.calc.relative_vorticity, xarray.gradient
+Tools: metpy.calc.relative_vorticity
 
 #### **Step 3: Compare to ERA5 PV Baseline**
 
@@ -84,7 +84,7 @@ $\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5
 
 #### **Step 4: Flag Physically Unrealistic Values and Outliers**
 
-- Identify and flag PV values outside expected ranges using
+Identify and flag PV values outside expected ranges using
 
 - Empirical distributions from PV climatology (eg. from ERA)
 
