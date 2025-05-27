@@ -1,0 +1,100 @@
+### **1. Objective**
+
+This workflow evaluates the physical energy consistency of ML-predicted subgrid processes via the Hill–Mandel macrohomogeneity condition. The principle ensures that energy exchange between resolved and subgrid (unresolved) components of the system is physically coherent.
+
+We implement this check for GraphCast model outputs and later adapt it to other downscaling frameworks (e.g., CorrDiff).
+
+---
+
+### **2. Theoretical Background**
+
+The **Hill–Mandel condition** ensures that the macroscopic (grid-scale) work is equal to the volume average of the microscopic (subgrid) work. In atmospheric models, this corresponds to:
+
+\\[
+\\langle \\dot{\\epsilon} : \\sigma \\rangle = \\dot{E}^{\\text{macro}}
+\\]
+
+Where:
+
+- \\( \\dot{\\epsilon} \\) is the strain rate tensor (rate of deformation)
+- \\( \\sigma \\) is the stress tensor (including pressure)
+- \\( \\langle \\cdot \\rangle \\) denotes volume averaging
+- \\( \\dot{E}^{\\text{macro}} \\) is the macroscopic (resolved) energy change rate
+
+In moist atmospheric flows, total energy per unit volume is:
+
+\\[
+E_{\\text{total}} = \\rho \\cdot \\left( c_{v,\\text{moist}} \\cdot T + \\frac{1}{2}(u^2 + v^2) + L_v \\cdot q_v \\right)
+\\]
+
+The Hill–Mandel principle implies that any subgrid parameterization (e.g., turbulence, convection) must not introduce artificial energy gain/loss inconsistent with this bulk energy budget.
+
+---
+
+### **3. Input Data**
+
+| **Variable Type** | **Variable Name** | **Required Levels** |
+|-------------------|-------------------|----------------------|
+| Temperature       | `t`               | All pressure levels  |
+| U wind component  | `u`               | All pressure levels  |
+| V wind component  | `v`               | All pressure levels  |
+| Specific humidity | `q` or `q_v`      | All pressure levels  |
+| Air pressure      | `p`               | All pressure levels  |
+| Air density       | `rho` *(optional)*| Derived or estimated |
+| Latitude/Longitude| `lat`, `lon`      | Grid-wide            |
+
+---
+
+### **4. Workflow Steps**
+
+1. **Compute total energy per grid cell**:
+
+\\[
+E_{\\text{cell}} = \\rho \\cdot \\left( c_{v,\\text{moist}} \\cdot T + \\frac{1}{2}(u^2 + v^2) + L_v \\cdot q_v \\right)
+\\]
+
+2. **Evaluate time derivative of total energy**:
+
+Using time steps \\( t_1 \\), \\( t_2 \\):
+
+\\[
+\\frac{\\partial E_{\\text{cell}}}{\\partial t} \\approx \\frac{E(t_2) - E(t_1)}{\\Delta t}
+\\]
+
+3. **Estimate divergence of energy fluxes**:
+
+\\[
+\\nabla \\cdot \\vec{F}_{\\text{energy}} = \\nabla \\cdot \\left( \\rho \\cdot \\vec{v} \\cdot h \\right)
+\\]
+
+where \\( h \\) is specific enthalpy:
+
+\\[
+h = c_{p,\\text{moist}} \\cdot T + L_v \\cdot q_v
+\\]
+
+4. **Check balance**:
+
+\\[
+\\frac{\\partial E}{\\partial t} + \\nabla \\cdot \\vec{F}_{\\text{energy}} \\approx 0
+\\]
+
+Significant deviation from 0 indicates energetic inconsistency.
+
+---
+
+### **5. Output and Visualization**
+
+- **Maps** of imbalance (residual of the energy budget) in space and time
+- **Zonal cross-sections** (lat-pressure) of energy residuals
+- **Scatter plots** of predicted vs. divergence-based energy change
+- Flagging of regions violating Hill–Mandel criterion
+
+---
+
+### **6. Tools and Libraries**
+
+- `xarray`, `numpy`, `torch`, `dask` — data handling and array computation
+- `matplotlib`, `cartopy` — plotting and map generation
+- Optional: `metpy` for advanced diagnostics
+"""
