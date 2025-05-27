@@ -1,93 +1,103 @@
-# Hill-Mandel Energy Consistency Evaluation
+### **1. Objective**
 
-## 1. Objective
+This workflow aims to assess the **Hill-Mandel energy consistency** between resolved and subgrid scales in ML-based atmospheric models like GraphCast. This consistency condition ensures that energy exchange between scales respects physical principles, thereby improving the reliability of model outputs.
 
-This workflow aims to evaluate the **energetic consistency** of machine learning model outputs (e.g., GraphCast) using the **Hill-Mandel principle**. This principle ensures that the energy calculated at the macro-scale matches the energy dissipated or stored at the micro-scale under homogenization assumptions.
+---
 
-It is commonly applied in continuum mechanics and is here adapted to atmospheric energy diagnostics to verify how consistent the energetics are across scales, particularly in coarse-grained (ML) atmospheric fields.
+### **2. Theoretical Background**
 
-## 2. Theoretical Background
-
-The Hill-Mandel condition in mechanics asserts that the macroscopic (averaged) stress-power equals the volume average of the microscopic stress-power:
+The Hill-Mandel condition ensures consistency between the macroscopic (resolved) and microscopic (subgrid) scale work contributions. It is expressed as:
 
 $$
-\langle oldsymbol{\sigma} : \dot{oldsymbol{arepsilon}} 
-angle = oldsymbol{\Sigma} : \dot{oldsymbol{E}}
+\langle \boldsymbol{\tau} : \nabla \mathbf{u} \rangle = \langle \boldsymbol{\tau} \rangle : \langle \nabla \mathbf{u} \rangle
 $$
 
-**Adapted for atmospheric energy analysis**, this translates to checking if the total energy budget derived from ML-predicted macro-scale variables (e.g., wind, temperature, pressure) matches the expected aggregate energy changes (kinetic + internal + latent + potential).
+Where:
 
-We compute both sides of the equation:
+* \$\boldsymbol{\tau}\$ is the subgrid-scale stress tensor
+* \$\mathbf{u}\$ is the velocity vector
+* \$\nabla \mathbf{u}\$ is the velocity gradient tensor
+* \$\langle \cdot \rangle\$ denotes spatial (volume) averaging
+* \$:\$ represents the double inner product (tensor contraction)
 
-- **Macro energy evolution** (from ML-predicted mean fields)
-- **Micro energy terms** (from resolved gradients and fields within a grid box)
+This condition implies that the average energy exchange due to subgrid stresses must match the energy exchange computed from averaged fields.
 
-Inconsistencies may signal energetic leakage due to poor scale separation or ML model imbalances.
+---
 
-## 3. Input Data
+### **3. Input Data**
 
-| **Variable Type**      | **Variable Name** | **Pressure Levels (hPa)** |
-|------------------------|-------------------|----------------------------|
-| Temperature            | t                 | 100–1000                   |
-| Specific humidity      | q                 | 100–1000                   |
-| Geopotential           | z                 | 100–1000                   |
-| U wind component       | u                 | 100–1000                   |
-| V wind component       | v                 | 100–1000                   |
-| Pressure               | p                 | 100–1000                   |
-| Surface pressure       | ps                | —                          |
-| Latitude, Longitude    | lat, lon          | —                          |
+**GraphCast Outputs Required (as Input):**
 
-## 4. Workflow Steps
+| **Variable Type**       | **Variable Name**                | **Levels / Grid**                    |
+| ----------------------- | -------------------------------- | ------------------------------------ |
+| U wind component        | \$u\$                            | All relevant pressure levels         |
+| V wind component        | \$v\$                            | All relevant pressure levels         |
+| W wind component        | \$w\$                            | Derived or computed if needed        |
+| Subgrid stress tensor   | \$\boldsymbol{\tau}\$            | Same spatial & vertical grid         |
+| Grid geometry / spacing | \$\Delta x, \Delta y, \Delta p\$ | Required for gradients and averaging |
 
-### Step 1: Calculate Energy Components
+---
 
-- **Kinetic Energy (KE)**:  
-  $$ KE = \frac{1}{2} (u^2 + v^2) $$
+### **4. Workflow Steps**
 
-- **Internal Energy (IE)**:  
-  $$ IE = c_v T $$
+**Step 1: Compute the velocity gradient tensor**
 
-- **Latent Heat Energy (LE)**:  
-  $$ LE = L_v q $$
+In 3D Cartesian coordinates:
 
-- **Potential Energy (PE)**:  
-  $$ PE = g z $$
-
-Total macro-scale energy:
 $$
-E_{macro} = KE + IE + LE + PE
+\nabla \mathbf{u} = \begin{bmatrix}
+\frac{\partial u}{\partial x} & \frac{\partial u}{\partial y} & \frac{\partial u}{\partial z} \\
+\frac{\partial v}{\partial x} & \frac{\partial v}{\partial y} & \frac{\partial v}{\partial z} \\
+\frac{\partial w}{\partial x} & \frac{\partial w}{\partial y} & \frac{\partial w}{\partial z} \\
+\end{bmatrix}
 $$
 
-### Step 2: Micro-scale Consistency Check
+**Step 2: Compute pointwise energy transfer**
 
-Compute divergence of energy fluxes within control volumes or grid boxes and compare with expected energy tendency (using finite differences or advection tendencies).
+Stress power at each grid point:
+
+$$
+P(\mathbf{x}) = \boldsymbol{\tau}(\mathbf{x}) : \nabla \mathbf{u}(\mathbf{x})
+$$
+
+**Step 3: Compute averages**
+
+Volume average:
+
+$$
+\langle P \rangle = \frac{1}{V} \int_V \boldsymbol{\tau} : \nabla \mathbf{u} \, dV
+$$
+
+Compare with:
+
+$$
+\langle \boldsymbol{\tau} \rangle : \langle \nabla \mathbf{u} \rangle
+$$
+
+**Step 4: Verify Hill-Mandel condition**
 
 Check:
+
 $$
-\langle \nabla \cdot (\text{Energy flux}) \rangle \overset{?}{=} \frac{\partial E_{macro}}{\partial t}
+\langle \boldsymbol{\tau} : \nabla \mathbf{u} \rangle \approx \langle \boldsymbol{\tau} \rangle : \langle \nabla \mathbf{u} \rangle
 $$
 
-### Step 3: Visualization
+---
 
-- Plot time evolution of domain-averaged energy terms.
-- Visualize spatial distribution of imbalance (residuals between LHS and RHS).
-- Histogram of residuals.
+### **5. Output and Diagnostics**
 
-## 5. Output and Diagnostics
+* Maps of local stress power \$P(\mathbf{x})\$
+* Time evolution of Hill-Mandel discrepancy
+* RMSE or relative difference:
 
-- Time series of total energy and its components.
-- Residual map: |macro energy rate – micro flux divergence|
-- Percentage of grid points exceeding acceptable imbalance thresholds.
-- Optional: Compare with ERA5 or physically-based reanalysis.
+$$
+\text{Error} = \frac{|\langle \boldsymbol{\tau} : \nabla \mathbf{u} \rangle - \langle \boldsymbol{\tau} \rangle : \langle \nabla \mathbf{u} \rangle|}{|\langle \boldsymbol{\tau} : \nabla \mathbf{u} \rangle|}
+$$
 
-## 6. Future Extensions
+---
 
-- Apply to 3D grid-resolving ML outputs (e.g., CorrDiff).
-- Extend to diabatic processes and include radiative and surface fluxes.
-- Use as loss function component during ML model training.
+### **6. Notes and Extensions**
 
-## 7. Tools and Libraries
-
-- `xarray`, `numpy`, `dask` – data handling and computation
-- `matplotlib`, `cartopy` – visualization and plotting
-- `pytorch` – GPU acceleration and ML integration
+* Include thermal and moisture fluxes in extended definitions.
+* Apply the method to different vertical levels.
+* Compare across models (GraphCast vs CorrDiff).
