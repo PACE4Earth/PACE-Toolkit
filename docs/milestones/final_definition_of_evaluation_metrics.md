@@ -290,9 +290,7 @@ Where:
    * RMSE at each level
    * Skill score:
 
-   $$
-   \text{Skill} = \frac{RMSE_{ERA5} - RMSE_{GC}}{RMSE_{ERA5} + RMSE_{GC}}
-   $$
+$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
 
 **Evaluation Output:**
 
