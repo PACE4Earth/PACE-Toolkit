@@ -51,7 +51,7 @@ where $\Phi = gz$ is the geopotential and $f$ is the Coriolis parameter.
 
 * RMSE and skill score relative to ERA5
 * Spatial maps of imbalance
-* Histograms and scatter plots (e.g., $|\vec{v} - \vec{v}_g|$ )
+* Histograms and scatter plots (e.g., $| \vec{v} - \vec{v}_g |$ )
 
 ---
 ### Hydrostatic Balance
@@ -182,8 +182,7 @@ $$
 $$
 
 where
-$\rho = \dfrac{p}{R_d T (1 + 0.61 q)}$,
-$\vec{v} = (u, v)$
+$$\rho = \dfrac{p}{R_d T (1 + 0.61 q)}, \quad \vec{v} = (u, v)$$
 
 **Input Data (GraphCast):**
 
@@ -195,7 +194,7 @@ $\vec{v} = (u, v)$
 
 1. Compute moist air density $\rho$
 2. Compute mass flux $\rho u, \rho v$
-3. Compute divergence $\nabla \cdot (\rho \vec{v})$
+3. Compute divergence $\nabla \cdot \rho \vec{v}$
 4. Calculate local time derivative $\partial \rho / \partial t$
 5. Evaluate residual:
 
