@@ -326,7 +326,11 @@ For irregular/global grids:
 Measures difference between distributions (e.g., PSDs):
 
 $$
-W_1(p_r, p_g) = \inf_{\gamma \in \Pi(p_r, p_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|] = \int_{-\infty}^{\infty}|P_r - P_g|
+W_1(p_r, p_g) = \inf_{\gamma \in \Pi(p_r, p_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|] 
+$$
+
+$$
+= \int_{-\infty}^{\infty}|P_r - P_g|
 $$
 
 $p_r, p_g$ - PSDs
