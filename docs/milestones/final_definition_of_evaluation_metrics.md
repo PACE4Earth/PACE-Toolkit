@@ -310,26 +310,26 @@ Assess the spatial scale representation of ML model outputs (e.g., GraphCast) by
 **Theoretical Background:**
 
 * **Power Spectrum Density (PSD):**
-  Quantifies energy distribution across spatial scales.
-  For regular grids:
+Quantifies energy distribution across spatial scales.
+For regular grids:
 
-  $$
-  \text{PSD} = \frac{|\text{FFT2}(x)|^2}{L_x L_y}
-  $$
+$$
+\text{PSD} = \frac{|\text{FFT2}(x)|^2}{L_x L_y}
+$$
 
-  For irregular/global grids:
+For irregular/global grids:
 
-  * Interpolate to uniform grid
-  * Use Lomb-Scargle periodogram (LSSA)
-  * Use spherical harmonics (e.g., `torch-harmonics`)
-  * Tile and assume locally uniform grid
+* Interpolate to uniform grid
+* Use Lomb-Scargle periodogram (LSSA)
+* Use spherical harmonics (e.g., `torch-harmonics`)
+* Tile and assume locally uniform grid
 
 * **Wasserstein Distance (WD):**
-  Measures difference between distributions (e.g., PSDs):
+Measures difference between distributions (e.g., PSDs):
 
-  $$
-  W_1(P_r, P_g) = \inf_{\gamma \in \Pi(P_r, P_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|]
-  $$
+$$
+W_1(P_r, P_g) = \inf_{\gamma \in \Pi(P_r, P_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|]
+$$
 
 **Input Data:**
 
