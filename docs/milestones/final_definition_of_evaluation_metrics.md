@@ -194,7 +194,7 @@ $$\rho = \dfrac{p}{R_d T (1 + 0.61 q)}, \quad \vec{v} = (u, v)$$
 
 1. Compute moist air density $\rho$
 2. Compute mass flux $\rho u, \rho v$
-3. Compute divergence $\nabla \cdot \rho \vec{v}$
+3. Compute divergence $\nabla \cdot (\rho \vec{v})$
 4. Calculate local time derivative $\partial \rho / \partial t$
 5. Evaluate residual:
 
@@ -328,6 +328,7 @@ Measures difference between distributions (e.g., PSDs):
 $$
 W_1(p_r, p_g) = \inf_{\gamma \in \Pi(p_r, p_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|] = \int_{-\infty}^{\infty}|P_r - P_g|
 $$
+
 $p_r, p_g$ - PSDs
 $P_r, P_g$ - respective CDFs
 
