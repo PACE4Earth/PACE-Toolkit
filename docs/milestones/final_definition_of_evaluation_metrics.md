@@ -15,7 +15,7 @@ This document provides a consolidated reference for the milestone. Individual me
 | Humidity–Temperature Check | Physical bounds between temperature and specific humidity | temperature, humidity               | Gridpoint           |
 | Mass Conservation          | Change in air mass vs. mass flux divergence (Continuity equation)          | wind, pressure                      | Global/Regional     |
 | Potential Vorticity (PV)   | Dynamic-thermodynamic consistency using Ertel PV          | wind, temperature, pressure         | Synoptic/Global     |
-| Spectral Power Analysis    | Distribution of energy across spatial scales              | wind, geopotential                  | Global              |
+| Spectral Power Analysis    | Distribution of energy across spatial scales              | wind, geopotential                  | Synoptic/Global              |
 
 ---
   
@@ -333,8 +333,8 @@ $$
 = \int_{-\infty}^{\infty}|P_r - P_g|
 $$
 
-$p_r, p_g$ - PSDs
-$P_r, P_g$ - respective CDFs
+* $p_r, p_g$ - PSDs
+* $P_r, P_g$ - respective CDFs
 
 **Input Data:**
 
@@ -354,11 +354,12 @@ $P_r, P_g$ - respective CDFs
 * PSD plots (log–log)
 * Wasserstein distance score
 * Spectral slope (optional)
-* Identify missing/high-bias scales in ML model
+* Identify missing/high-bias scales in ML model, effective resolution
 
 ---
 ### Case studies
 
+- Standard metrics computed on regions with a signifficant event.
 - Gradient matching (confluence on fronts).
 
 ---
