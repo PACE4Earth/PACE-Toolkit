@@ -370,7 +370,6 @@ $$
 
 
 ---
-## 3. References and Further Notes
+## 3. Further Notes
 
 * MetPy, xarray, dask, Pytorch for implementation
-* ERA5, Graphcast, Cordiff documentation
