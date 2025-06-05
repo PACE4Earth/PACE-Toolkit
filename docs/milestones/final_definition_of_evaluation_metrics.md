@@ -140,10 +140,10 @@ Evaluate whether GraphCast respects physical energy exchange between resolved an
 The Hill–Mandel condition tests if subgrid-scale energy transfer is consistent:
 
 $$
-\langle \boldsymbol{\tau} : \nabla \mathbf{u} \rangle \overset{?}{=} \langle \boldsymbol{\tau} \rangle : \langle \nabla \mathbf{u} \rangle
+\langle \bm{\tau} : \nabla \mathbf{u} \rangle \overset{?}{=} \langle \bm{\tau} \rangle : \langle \nabla \mathbf{u} \rangle
 $$
 
-* $\boldsymbol{\tau}$: subgrid stress tensor
+* $\bm{\tau}$: subgrid stress tensor
 * $\nabla \mathbf{u}$: velocity gradient tensor
 * $\langle \cdot \rangle$: spatial average
 * $:$: tensor contraction (double dot product)
@@ -151,14 +151,14 @@ $$
 **Input Data (GraphCast):**
 
 * Wind components: $u, v, w$ (or compute $w$)
-* Subgrid stress tensor $\boldsymbol{\tau}$
+* Subgrid stress tensor $\bm{\tau}$
 * Grid spacing $\Delta x, \Delta y, \Delta p$
 
 **Computation Method:**
 
 1. Compute 3D velocity gradient tensor
-2. Evaluate pointwise stress power: $P(\mathbf{x}) = \boldsymbol{\tau} : \nabla \mathbf{u}$
-3. Compute volume average of $P$ and compare to $\langle \boldsymbol{\tau} \rangle : \langle \nabla \mathbf{u} \rangle$
+2. Evaluate pointwise stress power: $P(\mathbf{x}) = \bm{\tau} : \nabla \mathbf{u}$
+3. Compute volume average of $P$ and compare to $\langle \bm{\tau} \rangle : \langle \nabla \mathbf{u} \rangle$
 4. Quantify discrepancy between both sides of the Hill–Mandel equation
 
 **Evaluation Output:**
@@ -309,7 +309,7 @@ Assess the spatial scale representation of ML model outputs (e.g., GraphCast) by
 
 **Theoretical Background:**
 
-* **Power Spectrum Density (PSD):**
+**Power Spectrum Density (PSD):**
 Quantifies energy distribution across spatial scales.
 For regular grids:
 
@@ -318,18 +318,19 @@ $$
 $$
 
 For irregular/global grids:
+  * Interpolate to uniform grid
+  * Use Lomb-Scargle periodogram (LSSA)
+  * Use spherical harmonics (e.g., `torch-harmonics`)
+  * Tile and assume locally uniform grid
 
-* Interpolate to uniform grid
-* Use Lomb-Scargle periodogram (LSSA)
-* Use spherical harmonics (e.g., `torch-harmonics`)
-* Tile and assume locally uniform grid
-
-* **Wasserstein Distance (WD):**
+ **Wasserstein Distance (WD):**
 Measures difference between distributions (e.g., PSDs):
 
 $$
-W_1(P_r, P_g) = \inf_{\gamma \in \Pi(P_r, P_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|]
+W_1(p_r, p_g) = \inf_{\gamma \in \Pi(p_r, p_g)} \mathbb{E}_{(x,y) \sim \gamma} [\|x - y\|] = \int_{-\infty}^{\infty}|P_r - P_g|
 $$
+$p_r, p_g$ - PSDs
+$P_r, P_g$ - respective CDFs
 
 **Input Data:**
 
@@ -352,7 +353,18 @@ $$
 * Identify missing/high-bias scales in ML model
 
 ---
+### Case studies
 
+- Gradient matching (confluence on fronts).
+
+---
+### Climatology
+
+- Extrema localization.
+- Diurnal and annual cycle (wind direction).
+
+
+---
 ## 3. References and Further Notes
 
 * MetPy, xarray, dask, Pytorch for implementation
