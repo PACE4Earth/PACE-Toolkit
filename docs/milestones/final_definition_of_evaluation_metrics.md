@@ -51,7 +51,7 @@ where $\Phi = gz$ is the geopotential and $f$ is the Coriolis parameter.
 
 * RMSE and skill score relative to ERA5
 * Spatial maps of imbalance
-* Histograms and scatter plots (e.g., $|\vec{v} - \vec{v}_g|$)
+* Histograms and scatter plots (e.g., $|\vec{v} - \vec{v}_g|$ )
 
 ---
 ### Hydrostatic Balance
@@ -140,10 +140,10 @@ Evaluate whether GraphCast respects physical energy exchange between resolved an
 The Hill–Mandel condition tests if subgrid-scale energy transfer is consistent:
 
 $$
-\langle \bm{\tau} : \nabla \mathbf{u} \rangle \overset{?}{=} \langle \bm{\tau} \rangle : \langle \nabla \mathbf{u} \rangle
+\langle {\tau} : \nabla \mathbf{u} \rangle \overset{?}{=} \langle {\tau} \rangle : \langle \nabla \mathbf{u} \rangle
 $$
 
-* $\bm{\tau}$: subgrid stress tensor
+* ${\tau}$: subgrid stress tensor
 * $\nabla \mathbf{u}$: velocity gradient tensor
 * $\langle \cdot \rangle$: spatial average
 * $:$: tensor contraction (double dot product)
@@ -151,14 +151,14 @@ $$
 **Input Data (GraphCast):**
 
 * Wind components: $u, v, w$ (or compute $w$)
-* Subgrid stress tensor $\bm{\tau}$
+* Subgrid stress tensor ${\tau}$
 * Grid spacing $\Delta x, \Delta y, \Delta p$
 
 **Computation Method:**
 
 1. Compute 3D velocity gradient tensor
-2. Evaluate pointwise stress power: $P(\mathbf{x}) = \bm{\tau} : \nabla \mathbf{u}$
-3. Compute volume average of $P$ and compare to $\langle \bm{\tau} \rangle : \langle \nabla \mathbf{u} \rangle$
+2. Evaluate pointwise stress power: $P(\mathbf{x}) = {\tau} : \nabla \mathbf{u}$
+3. Compute volume average of $P$ and compare to $\langle {\tau} \rangle : \langle \nabla \mathbf{u} \rangle$
 4. Quantify discrepancy between both sides of the Hill–Mandel equation
 
 **Evaluation Output:**
