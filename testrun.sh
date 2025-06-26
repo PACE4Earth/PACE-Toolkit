@@ -8,4 +8,4 @@
 
 module load Stages/2025 GCCcore/.13.3.0 SciPy-Stack/2024a PyTorch/2.5.1 netcdf4-python/1.7.1.post2-serial
 
-srun ./pace/evaluator.py
+srun python ./pace/evaluator.py
