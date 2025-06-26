@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import metpy
+# import metpy
 
 class GeostrophicWind(nn.Module):
     def __init__(self, dx, dy, f):
@@ -51,35 +51,31 @@ class GeostrophicWind(nn.Module):
         
         return u_g.view(shape).clamp(-100, 100), v_g.view(shape).clamp(-100, 100)
 
-from metpy import constants as mpconsts
-from metpy.calc import (
-    geospatial_gradient, 
-    coriolis_parameter,
-)
+# from metpy import constants as mpconsts
+# from metpy.calc import (
+#     geospatial_gradient, 
+#     coriolis_parameter,
+# )
 
-def lower_abs_boundary(xi):
-    mask = np.abs(xi) < 1e-5
-    xi[mask] = 1e-5 * np.sign(xi[mask]+1e-9)  
+# def metpy_geostrophic_wind(z, lat, lon, cos_lat):
+    
+#     z = z.metpy.quantify()
+#     dx, dy = metpy.calc.lat_lon_grid_deltas(lon, lat)
+    
+#     # f = coriolis_parameter(lat)
+#     # f.values = lower_abs_boundary(f.values)
 
-def metpy_geostrophic_wind(z, lat, lon, cos_lat):
+#     # dhdx, dhdy = geospatial_gradient(z, dx=dx, dy=dy)
+#     # u_g, v_g = -dhdy/f[:, None], dhdx/f[:, None]
     
-    z = z.metpy.quantify()
-    dx, dy = metpy.calc.lat_lon_grid_deltas(lon, lat)
+#     # return np.array(u_g), np.array(v_g)
     
-    # f = coriolis_parameter(lat)
-    # f.values = lower_abs_boundary(f.values)
+#     u_g, v_g = metpy.calc.geostrophic_wind(z, dx=dx, dy=dy)
+    
+#     u_g = np.nan_to_num(u_g.values, nan=0)
+#     v_g = np.nan_to_num(v_g.values, nan=0) * cos_lat[:, None]   
 
-    # dhdx, dhdy = geospatial_gradient(z, dx=dx, dy=dy)
-    # u_g, v_g = -dhdy/f[:, None], dhdx/f[:, None]
-    
-    # return np.array(u_g), np.array(v_g)
-    
-    u_g, v_g = metpy.calc.geostrophic_wind(z, dx=dx, dy=dy)
-    
-    u_g = np.nan_to_num(u_g.values, nan=0)
-    v_g = np.nan_to_num(v_g.values, nan=0) * cos_lat[:, None]   
-
-    return np.clip(u_g, -100, 100), np.clip(v_g, -100, 100)
+#     return np.clip(u_g, -100, 100), np.clip(v_g, -100, 100)
     
 # === Example usage ===
 # ncfile = "your_file.nc"
