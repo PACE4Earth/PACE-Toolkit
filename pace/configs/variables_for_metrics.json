@@ -1,0 +1,17 @@
+{
+    "geostrophic_balance" : [
+        "geopotential",
+        "u_component_of_wind",
+        "v_component_of_wind"
+    ],
+    "dummy_2d" : [
+        "mean_sea_level_pressure"
+    ],
+    "dummy_wrong" : [
+        "scoville_heat_units"
+    ],
+    "dummy_repetitive" : [
+        "u_component_of_wind",
+        "v_component_of_wind"
+    ]
+}
