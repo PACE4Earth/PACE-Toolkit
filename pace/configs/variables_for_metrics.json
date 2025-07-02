@@ -1,17 +1,58 @@
 {
-    "geostrophic_balance" : [
-        "geopotential",
-        "u_component_of_wind",
-        "v_component_of_wind"
-    ],
-    "dummy_2d" : [
-        "mean_sea_level_pressure"
-    ],
-    "dummy_wrong" : [
-        "scoville_heat_units"
-    ],
-    "dummy_repetitive" : [
-        "u_component_of_wind",
-        "v_component_of_wind"
-    ]
+  "geostrophic_balance": [
+    "geopotential", 
+    "u_component_of_wind", 
+    "v_component_of_wind"
+  ],
+  "hydrostatic_balance": [
+    "geopotential", 
+    "temperature", 
+    "specific_humidity"
+  ],
+  "energy_conservation": [
+    "temperature", 
+    "geopotential", 
+    "u_component_of_wind", 
+    "v_component_of_wind", 
+    "specific_humidity"
+  ],
+  "humidity_temperature": [
+    "temperature", 
+    "specific_humidity"
+  ],
+  "mass_conservation": [
+    "temperature", 
+    "specific_humidity", 
+    "u_component_of_wind", 
+    "v_component_of_wind", 
+    "mean_sea_level_pressure"
+  ],
+  "potential_vorticity": [
+    "temperature", 
+    "u_component_of_wind", 
+    "v_component_of_wind"
+  ],
+  "spectral_power_analysis": [
+    "temperature", 
+    "u_component_of_wind", 
+    "v_component_of_wind", 
+    "geopotential"
+  ],
+  "cross_variable": [
+    "temperature", 
+    "geopotential", 
+    "u_component_of_wind", 
+    "v_component_of_wind", 
+    "specific_humidity"
+  ],
+  "dummy_2d" : [
+    "mean_sea_level_pressure"
+  ],
+  "dummy_wrong" : [
+    "scoville_heat_units"
+  ],
+  "dummy_repetitive" : [
+    "u_component_of_wind",
+    "v_component_of_wind"
+  ]
 }

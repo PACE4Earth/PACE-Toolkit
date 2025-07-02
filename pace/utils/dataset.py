@@ -7,27 +7,40 @@ import netCDF4
 
 def inspect_nc(path):
     with xarray.open_dataset(path) as ds:
-        print(ds)
+        print(ds)   
             
-            
-def check_required_fields(path, metric_requirements):
+def check_required_fields(path, metric_requirements, aliases):
+    
+    print()
+    
+    ret = {}
     
     with xarray.open_dataset(path) as ds:
         available_fields = [
             var_name
             for var_name, var in ds.variables.items()
         ]
-        
-    ok = all(
-        req in available_fields
-        for req in metric_requirements
-    )
+       
+    for metric in metric_requirements:
+        try:
+            for alias in aliases[metric]:
+                if alias in available_fields:
+                    ret[metric] = alias
+        except Exception as e:
+            print(e)
+            ret[metric] = None
+               
+    for k,v in ret.items():
+        print(k,v)
     
-    return ok
-    
+    return ret
             
 class UnifiedDataset(torch.utils.data.Dataset):
     def __init__(self, config_path):
+        
+        # load aliases
+        with open("./pace/configs/aliases.json", "r") as f:
+            self.aliases = json.load(f)
         
         # load config
         with open(config_path, 'r') as f:
@@ -35,11 +48,13 @@ class UnifiedDataset(torch.utils.data.Dataset):
         for k, v in config['dataset'].items():
             setattr(self, k, v)
             
+        # print(self.path)
+        
         # check files
         print('Preparing files...', end=' ')
         self.files = [
-            os.path.join(self.path, timestamp_dir, 'output.nc')
-            for timestamp_dir in os.listdir(self.path)
+            os.path.join(self.path, f, 'output.nc') if not os.path.isfile else os.path.join(self.path, f)
+            for f in os.listdir(self.path)
         ]
         self.files.sort()
         print('Done')
@@ -51,17 +66,23 @@ class UnifiedDataset(torch.utils.data.Dataset):
         with open(self.metrics_path, 'r') as f:
             metrics_requirements = json.load(f)
         
-        req_fields = []
+        self.metrics = {}
         for metric in config['metrics']:
             req_for_this_metric = metrics_requirements[metric]
-            if check_required_fields(
+            found_for_this_metric = check_required_fields(
                 self.files[0], 
-                metrics_requirements[metric],
-            ): req_fields.extend(req_for_this_metric)
-            
-        self.required_fields = list(set(req_fields))
+                req_for_this_metric,
+                self.aliases
+            )
+            if any(f==None for f in found_for_this_metric.values()):
+                print(metric, ' is missing field for computation.')
+            else:
+                self.metrics[metric] = found_for_this_metric            
         
-        print('Done\nFields to be loaded:\n', self.required_fields)
+        
+        print('Done\nFields to be loaded:')
+        for k,v in self.metrics.items():
+            print(k, v)
             
     def __len__(self):
         return len(self.files)*len(self.lead_times)
@@ -71,7 +92,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         fields = []
         
         with xarray.open_dataset(self.files[idx]) as ds:
-            for var in self.required_fields:
+            for var in self.required_fields.values():
                 # print(var, end=' ')
                 tau = torch.tensor(ds[var].values[[0]])
                 if tau.dim()<5:
@@ -87,7 +108,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
 if __name__=="__main__":
     
-    config_path = "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/graphcast_extended.json"
+    # config_path = "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/graphcast_extended.json"
+    config_path = './pace/configs/test_data.json'
     
     dataset = UnifiedDataset(config_path=config_path)
     
