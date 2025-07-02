@@ -11,8 +11,6 @@ def inspect_nc(path):
             
 def check_required_fields(path, metric_requirements, aliases):
     
-    print()
-    
     ret = {}
     
     with xarray.open_dataset(path) as ds:
@@ -22,6 +20,7 @@ def check_required_fields(path, metric_requirements, aliases):
         ]
        
     for metric in metric_requirements:
+        ret[metric] = None
         try:
             for alias in aliases[metric]:
                 if alias in available_fields:
@@ -30,8 +29,8 @@ def check_required_fields(path, metric_requirements, aliases):
             print(e)
             ret[metric] = None
                
-    for k,v in ret.items():
-        print(k,v)
+    # for k,v in ret.items():
+    #     print(k,v)
     
     return ret
             
@@ -79,10 +78,17 @@ class UnifiedDataset(torch.utils.data.Dataset):
             else:
                 self.metrics[metric] = found_for_this_metric            
         
+        tmp = []
+        for k,v in self.metrics.items():
+            for canonical, true in v.items():
+                tmp.append(true)
+        self.required_fields = list(set(tmp))
         
         print('Done\nFields to be loaded:')
-        for k,v in self.metrics.items():
-            print(k, v)
+        [
+            print(req)
+            for req in self.required_fields 
+        ]
             
     def __len__(self):
         return len(self.files)*len(self.lead_times)
@@ -92,7 +98,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         fields = []
         
         with xarray.open_dataset(self.files[idx]) as ds:
-            for var in self.required_fields.values():
+            for var in self.required_fields:
                 # print(var, end=' ')
                 tau = torch.tensor(ds[var].values[[0]])
                 if tau.dim()<5:
@@ -114,6 +120,7 @@ if __name__=="__main__":
     dataset = UnifiedDataset(config_path=config_path)
     
     _ = dataset[0]
+    print(_.shape)
     
     dataloader = torch.utils.data.DataLoader(
         dataset,
