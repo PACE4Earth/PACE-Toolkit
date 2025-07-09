@@ -162,7 +162,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
         print('Static fields setup...', end=' ')
         self.grid = get_grid(self.files[0])
         print('Done\n')
-        
             
     def __len__(self):
         return len(self.files)*len(self.lead_times)
