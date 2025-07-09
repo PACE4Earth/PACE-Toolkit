@@ -13,18 +13,23 @@ def check_required_fields(path, metric_requirements, aliases):
     
     ret = {}
     
-    with xarray.open_dataset(path) as ds:
+    with xarray.open_dataset(path, engine='netcdf4') as ds:
         available_fields = [
             var_name
-            for var_name, rq in ds.variables.items()
+            for var_name, _ in ds.variables.items()
         ]
-       
+    
+    # print(available_fields)   
+    
     for metric in metric_requirements:
         ret[metric] = None
         try:
             for alias in aliases[metric]:
                 if alias in available_fields:
                     ret[metric] = alias
+                    break
+            else:
+                ret[metric] = None
         except Exception as e:
             print(e)
             ret[metric] = None
@@ -47,12 +52,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
         for k, v in config['dataset'].items():
             setattr(self, k, v)
             
-        # print(self.path)
-        
         # check files
         print('Preparing files...', end=' ')
         self.files = [
-            os.path.join(self.path, f, 'output.nc') if not os.path.isfile else os.path.join(self.path, f)
+            os.path.join(self.path, f, 'output.nc') 
+            if not os.path.isfile(os.path.join(self.path, f)) 
+            else os.path.join(self.path, f)
             for f in os.listdir(self.path)
         ]
         self.files.sort()
@@ -61,7 +66,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         # inspect_nc(self.files[0])
             
         # check required fields for the metrics
-        print('Checking required field for metrics...', end=' ')
+        print('Checking required field for metrics...')
         with open(self.metrics_path, 'r') as f:
             metrics_requirements = json.load(f)
         
@@ -74,8 +79,9 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 self.aliases
             )
             if any(f==None for f in found_for_this_metric.values()):
-                print(metric, ' is missing field for computation.')
+                print(f'{metric:<23}', 'is missing field/s for computation.')
             else:
+                print(f'{metric:<23}', 'is complete.')
                 self.metrics[metric] = found_for_this_metric            
         
         names_in_files = []
@@ -84,13 +90,13 @@ class UnifiedDataset(torch.utils.data.Dataset):
             for canonical, true in v.items():
                 canonical_names.append(canonical)
                 names_in_files.append(true)
-        self.canonical_names = list(set(canonical_names))
-        self.requested_names = list(set(names_in_files))
+        self.canonical_names = list(dict.fromkeys(canonical_names))
+        self.requested_names = list(dict.fromkeys(names_in_files))
         
         print('Done\nFields to be loaded:')
         [
-            print(req)
-            for req in self.canonical_names 
+            print(f'{cn:<20} <- {rn}')
+            for (cn, rn) in zip(self.canonical_names, self.requested_names)
         ]
             
     def __len__(self):
@@ -100,9 +106,9 @@ class UnifiedDataset(torch.utils.data.Dataset):
         
         fields = {}
         
-        with xarray.open_dataset(self.files[idx]) as ds:
+        with xarray.open_dataset(self.files[idx], engine='netcdf4') as ds:
             for rq, cn in zip(self.requested_names, self.canonical_names):
-                tau = torch.tensor(ds[rq].values[[0]])
+                tau = torch.tensor(ds[rq].values)
                 if tau.dim()<5:
                     tau = tau.unsqueeze(2)
                 fields[cn] = tau
@@ -111,8 +117,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
 if __name__=="__main__":
     
-    # config_path = "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/graphcast_extended.json"
-    config_path = './pace/configs/test_data.json'
+    config_path = './pace/configs/graphcast_extended.json'
+    # config_path = './pace/configs/test_data.json'
     
     dataset = UnifiedDataset(config_path=config_path)
     
