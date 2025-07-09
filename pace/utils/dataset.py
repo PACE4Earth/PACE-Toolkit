@@ -1,6 +1,7 @@
 import os
 import json
 
+import numpy as np
 import torch
 import xarray
 import netCDF4
@@ -10,7 +11,7 @@ def inspect_nc(path):
         print(ds)   
             
 def check_required_fields(path, metric_requirements, aliases):
-    
+
     ret = {}
     
     with xarray.open_dataset(path, engine='netcdf4') as ds:
@@ -18,9 +19,7 @@ def check_required_fields(path, metric_requirements, aliases):
             var_name
             for var_name, _ in ds.variables.items()
         ]
-    
-    # print(available_fields)   
-    
+        
     for metric in metric_requirements:
         ret[metric] = None
         try:
@@ -31,13 +30,53 @@ def check_required_fields(path, metric_requirements, aliases):
             else:
                 ret[metric] = None
         except Exception as e:
-            print(e)
+            # print(e)
             ret[metric] = None
-               
-    # for k,v in ret.items():
-    #     print(k,v)
     
     return ret
+
+def get_grid(path):
+    with xarray.open_dataset(path, engine='netcdf4') as ds:
+        try:
+            lats = ds['latitude'].values
+        except KeyError:
+            lats = ds['lat'].values
+        except Exception as e:
+            print(e)
+            return None
+        
+        try:
+            lons = ds['longitude'].values
+        except KeyError:
+            lons = ds['lon'].values
+        except Exception as e:
+            print(e)
+            return None    
+    
+    cos_lat = np.cos(np.deg2rad(lats))
+    dy = (np.gradient(lats))[:, None] * np.ones_like(lons)[None, :] * 111.32e3
+    
+    # coriolis
+    omega = 7.2921e-5
+    f = 2 * omega * np.sin(np.deg2rad(lats))[:, None] * np.ones_like(lons)[None, :]
+
+    mask = np.abs(f) < 1e-5
+    f[mask] = 1e-5 * np.sign(f[mask]+1e-9)    
+
+    ### ugly one linear gradient on periodic boundary
+    dx = (np.gradient(
+        np.concatenate(
+            [lons[[-1]]-360., lons, lons[[0]]+360.], 0
+        )
+    )[1:-1])[None, :] * np.cos(np.deg2rad(lats))[:, None] * 111.32e3
+    
+    return {
+        'lon': torch.tensor(lons),
+        'lat': torch.tensor(lats),
+        'dx': torch.tensor(dx),
+        'dy': torch.tensor(dy),
+        'f': torch.tensor(f)
+    }
             
 class UnifiedDataset(torch.utils.data.Dataset):
     def __init__(self, config_path):
@@ -61,7 +100,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
             for f in os.listdir(self.path)
         ]
         self.files.sort()
-        print('Done')
+        print('Done\n')
         
         # inspect_nc(self.files[0])
             
@@ -98,6 +137,11 @@ class UnifiedDataset(torch.utils.data.Dataset):
             print(f'{cn:<20} <- {rn}')
             for (cn, rn) in zip(self.canonical_names, self.requested_names)
         ]
+        
+        print('Static fields setup...', end=' ')
+        self.grid = get_grid(self.files[0])
+        print('Done\n')
+        
             
     def __len__(self):
         return len(self.files)*len(self.lead_times)
