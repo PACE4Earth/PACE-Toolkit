@@ -6,6 +6,8 @@ import torch
 import xarray
 import netCDF4
 
+from pathlib import Path
+
 def inspect_nc(path):
     with xarray.open_dataset(path) as ds:
         print(ds)   
@@ -79,16 +81,34 @@ def get_grid(path):
     }
             
 class UnifiedDataset(torch.utils.data.Dataset):
-    def __init__(self, config_path):
-        
+    def __init__(self, config_path=None):
+
         # load aliases
-        with open("./pace/configs/aliases.json", "r") as f:
+        aliases_path = Path(__file__).resolve().parent.parent / "configs" / "aliases.json"
+        with open(aliases_path, "r") as f:
             self.aliases = json.load(f)
         
-        # load config
-        with open(config_path, 'r') as f:
+        # Load JSON config
+        config_path = Path(__file__).resolve().parent.parent / "configs" / "graphcast_extended.json"
+        with open(config_path, "r") as f:
             config = json.load(f)
-        for k, v in config['dataset'].items():
+        
+        # Expand env variables in the config
+        def expand_env_vars(obj):
+            if isinstance(obj, dict):
+                return {k: expand_env_vars(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [expand_env_vars(i) for i in obj]
+            elif isinstance(obj, str):
+                return os.path.expandvars(obj)
+            else:
+                return obj
+
+        config = expand_env_vars(config)
+
+        # Set dataset config values as attributes
+        dataset_config = config["dataset"]
+        for k, v in dataset_config.items():
             setattr(self, k, v)
             
         # check files
@@ -106,7 +126,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
             
         # check required fields for the metrics
         print('Checking required field for metrics...')
-        with open(self.metrics_path, 'r') as f:
+        metrics_path = Path(__file__).resolve().parent.parent / "configs" / "variables_for_metrics.json"
+        with open(metrics_path, 'r') as f:
             metrics_requirements = json.load(f)
         
         self.metrics = {}

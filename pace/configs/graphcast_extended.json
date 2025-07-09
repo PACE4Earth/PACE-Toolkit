@@ -1,8 +1,7 @@
 {
   "dataset" : {
-    "path" : "/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021",
-    "lead_times" : [120],
-    "metrics_path" : "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/variables_for_metrics.json"
+    "path" : "${GRAPHCAST_EXTENDED_DATA_PATH}",
+    "lead_times" : [120]
   },
   "metrics" : [
     "geostrophic_balance",
