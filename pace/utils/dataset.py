@@ -16,7 +16,7 @@ def check_required_fields(path, metric_requirements, aliases):
     with xarray.open_dataset(path) as ds:
         available_fields = [
             var_name
-            for var_name, var in ds.variables.items()
+            for var_name, rq in ds.variables.items()
         ]
        
     for metric in metric_requirements:
@@ -78,16 +78,19 @@ class UnifiedDataset(torch.utils.data.Dataset):
             else:
                 self.metrics[metric] = found_for_this_metric            
         
-        tmp = []
+        names_in_files = []
+        canonical_names = []
         for k,v in self.metrics.items():
             for canonical, true in v.items():
-                tmp.append(true)
-        self.required_fields = list(set(tmp))
+                canonical_names.append(canonical)
+                names_in_files.append(true)
+        self.canonical_names = list(set(canonical_names))
+        self.requested_names = list(set(names_in_files))
         
         print('Done\nFields to be loaded:')
         [
             print(req)
-            for req in self.required_fields 
+            for req in self.canonical_names 
         ]
             
     def __len__(self):
@@ -98,12 +101,11 @@ class UnifiedDataset(torch.utils.data.Dataset):
         fields = {}
         
         with xarray.open_dataset(self.files[idx]) as ds:
-            for var in self.required_fields:
-                # print(var, end=' ')
-                tau = torch.tensor(ds[var].values[[0]])
+            for rq, cn in zip(self.requested_names, self.canonical_names):
+                tau = torch.tensor(ds[rq].values[[0]])
                 if tau.dim()<5:
                     tau = tau.unsqueeze(2)
-                fields[var] = tau
+                fields[cn] = tau
         
         return fields
 
@@ -115,8 +117,8 @@ if __name__=="__main__":
     dataset = UnifiedDataset(config_path=config_path)
     
     sample = dataset[0]
-    for var, field in sample.items():
-        print(var, field.shape)
+    for rq, field in sample.items():
+        print(rq, field.shape)
         
     dataloader = torch.utils.data.DataLoader(
         dataset,
