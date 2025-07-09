@@ -95,7 +95,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         
-        fields = []
+        fields = {}
         
         with xarray.open_dataset(self.files[idx]) as ds:
             for var in self.required_fields:
@@ -103,12 +103,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 tau = torch.tensor(ds[var].values[[0]])
                 if tau.dim()<5:
                     tau = tau.unsqueeze(2)
-                # print(tau.shape)
-                fields.append(tau)
-        
-        fields = torch.cat(fields, dim=2)
-        
-        # print(fields.shape)
+                fields[var] = tau
         
         return fields
 
@@ -119,9 +114,10 @@ if __name__=="__main__":
     
     dataset = UnifiedDataset(config_path=config_path)
     
-    _ = dataset[0]
-    print(_.shape)
-    
+    sample = dataset[0]
+    for var, field in sample.items():
+        print(var, field.shape)
+        
     dataloader = torch.utils.data.DataLoader(
         dataset,
     )
