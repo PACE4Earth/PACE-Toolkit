@@ -174,7 +174,8 @@ cython_debug/
 .pypirc
 
 # Logs
-job_output
-job_error
+# job_output
+# job_error
 
 tests/
+dirty_bit/
