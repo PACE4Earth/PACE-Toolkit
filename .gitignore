@@ -178,4 +178,4 @@ cython_debug/
 # job_error
 
 tests/
-dirty_bit/
+#dirty_bit/
