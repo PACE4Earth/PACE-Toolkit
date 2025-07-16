@@ -32,9 +32,11 @@ def setup():
     dist.init_process_group(
         backend="gloo",
         init_method=f"tcp://{master_addr}:{master_port}",
+        # init_method='env://',
         world_size=world_size,
         rank=rank
     )
+    print(f'{master_addr} : {master_port}')
     print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
 
 
@@ -55,7 +57,8 @@ def train():
         dataset,
         batch_size=None,
         sampler=sampler,
-        num_workers=num_workers
+        num_workers=num_workers,
+        shuffle=False,
     )
 
     # Get the rank for logging
