@@ -176,6 +176,7 @@ cython_debug/
 # Logs
 # job_output
 # job_error
+*_bk*
 
 tests/
 #dirty_bit/
