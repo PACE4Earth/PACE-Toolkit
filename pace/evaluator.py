@@ -80,7 +80,9 @@ def main(
         sampler.set_epoch(0)  # Needed for DistributedSampler
 
     for i, sample in enumerate(dataloader):
-        print(f"[Rank {rank}] Batch {i}, x.mean() = {sample['x'].mean().item()}")
+        print(f"Rank {rank} Batch {i}, x.mean() = {sample['x'].mean().item()}")
+        output = metric_handler(sample)
+        print(f'r{rank} {i} {output.keys()}')
 
     if distributed:
         dist.destroy_process_group()
