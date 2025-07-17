@@ -9,15 +9,16 @@ import torch.nn.functional as F
 # import metpy
 
 class GeostrophicWind(nn.Module):
-    def __init__(self, dx, dy, f):
+    def __init__(self, grid, epsilon=1e-5):
         super().__init__()
         
-        self.image_scale = 8.
-        
+                
         # Passed fields
-        self.register_buffer("f", torch.tensor(f))
-        self.register_buffer("dx", torch.tensor(dx))
-        self.register_buffer("dy", torch.tensor(dy))
+        self.register_buffer("f", grid['f'])
+        self.register_buffer("dx", grid['dx'])
+        self.register_buffer("dy", grid['dy'])
+        self.register_buffer("lat", grid['lat'])
+        self.epsilon = epsilon
 
         # Sobel kernels
         kernel_dx = torch.tensor([[-1, 0, 1],
@@ -30,56 +31,55 @@ class GeostrophicWind(nn.Module):
         self.register_buffer("kernel_dx", kernel_dx)
         self.register_buffer("kernel_dy", kernel_dy)
 
-
-    def forward(self, phi):
+    def compute_geostrophic(self, sample):
         
-        if type(phi)!=torch.Tensor:
-            phi = torch.tensor(phi)
-            
+        phi = sample['geopotential']
+        
+        # Ensure 4D shape [B, C, H, W]
         shape = phi.shape
-        while len(phi.shape)<4:
+        while len(phi.shape) < 4:
             phi = phi.unsqueeze(0)
-        
-        # this should be ammended for proper boundary conditions
+
+        # Padding before convolution (to preserve size)
         phi = F.pad(phi, (1, 1, 1, 1), mode='replicate')
 
+        # Compute gradients using Sobel filters
         dphi_dx = F.conv2d(phi, self.kernel_dx) / self.dx
         dphi_dy = F.conv2d(phi, self.kernel_dy) / self.dy
 
-        u_g =  dphi_dy / self.f
-        v_g =  dphi_dx / self.f
+        # Geostrophic wind equations
+        u_g = dphi_dy / self.f
+        v_g = dphi_dx / self.f
+
+        # Apply latitude mask (only 30°–80° N/S)
+        lat_mask = (self.lat >= 30) | (self.lat <= -30)
+        lat_mask &= (self.lat <= 80) & (self.lat >= -80)  # Combine both ranges
+
+        # Broadcast lat_mask to [1, 1, Y, 1]
+        lat_mask_2d = lat_mask.view(1, 1, -1, 1)
+
+        # Set outside of mask to NaN
+        u_g = u_g.masked_fill(~lat_mask_2d, torch.nan)
+        v_g = v_g.masked_fill(~lat_mask_2d, torch.nan)
+
+        return u_g.view(shape), v_g.view(shape)        
+
+    def forward(self, sample):
         
-        return u_g.view(shape).clamp(-100, 100), v_g.view(shape).clamp(-100, 100)
+        """
+        Computes ratio of ageostrophic and geostrophic wind component.
 
-# from metpy import constants as mpconsts
-# from metpy.calc import (
-#     geospatial_gradient, 
-#     coriolis_parameter,
-# )
+        Returns:
+            ratio (tensor of shape [Y, X])
+        """
+        u_g, v_g = self.compute_geostrophic(sample)
 
-# def metpy_geostrophic_wind(z, lat, lon, cos_lat):
-    
-#     z = z.metpy.quantify()
-#     dx, dy = metpy.calc.lat_lon_grid_deltas(lon, lat)
-    
-#     # f = coriolis_parameter(lat)
-#     # f.values = lower_abs_boundary(f.values)
+        u_ag = sample['u_component_of_wind'] - u_g
+        v_ag = sample['u_component_of_wind'] - v_g
 
-#     # dhdx, dhdy = geospatial_gradient(z, dx=dx, dy=dy)
-#     # u_g, v_g = -dhdy/f[:, None], dhdx/f[:, None]
-    
-#     # return np.array(u_g), np.array(v_g)
-    
-#     u_g, v_g = metpy.calc.geostrophic_wind(z, dx=dx, dy=dy)
-    
-#     u_g = np.nan_to_num(u_g.values, nan=0)
-#     v_g = np.nan_to_num(v_g.values, nan=0) * cos_lat[:, None]   
+        mag_geo = torch.sqrt(u_g**2 + v_g**2)
+        mag_ageo = torch.sqrt(u_ag**2 + v_ag**2)
 
-#     return np.clip(u_g, -100, 100), np.clip(v_g, -100, 100)
-    
-# === Example usage ===
-# ncfile = "your_file.nc"
-# z, lat, lon = load_geopotential_height(ncfile, variable='z', level=500)
-# u_g, v_g = compute_geostrophic_wind(z, lat, lon)
-# ds_out = xr.Dataset({'u_g': u_g, 'v_g': v_g})
-# print(ds_out)
+        ratio = mag_ageo / (mag_geo + self.epsilon)
+        
+        return ratio

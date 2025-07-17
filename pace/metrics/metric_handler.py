@@ -4,16 +4,14 @@ from torch import nn
 from geostrophic_new import GeostrophicWind
 
 METRIC_MODULES = {
-    'geostrophic_balance' : GeostrophicWind()
+    'geostrophic_balance' : GeostrophicWind
 } 
 
 class MetricHandler(nn.Module):
     def __init__(self, grid, metrics: list[str]):
         super().__init__()
-        
-        self.grid = grid
-        
-        self.metrics = {metric: METRIC_MODULES[metric] for metric in metrics}
+                
+        self.metrics = {metric: METRIC_MODULES[metric](grid) for metric in metrics}
 
     def forward(self, sample):
         
