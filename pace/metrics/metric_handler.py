@@ -17,7 +17,7 @@ class MetricHandler(nn.Module):
         
         outputs = {}
         
-        for metric, module in self.metrics:
+        for metric, module in self.metrics.items():
             outputs[metric] = module(sample)
         
         return outputs

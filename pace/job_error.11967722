@@ -1,0 +1,52 @@
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) HDF5-plugins/1.14.5
+
+The following have been reloaded with a version change:
+  1) HDF5/1.14.5-serial => HDF5/1.14.5
+
+Traceback (most recent call last):
+  File "/p/software/default/stages/2025/software/PyTorch/2.5.1-gcccoreflexiblas-13.3.0-3.4.4/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1243, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2025/software/Python/3.12.3-GCCcore-13.3.0/lib/python3.12/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2025/software/Python/3.12.3-GCCcore-13.3.0/lib/python3.12/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2025/software/Python/3.12.3-GCCcore-13.3.0/lib/python3.12/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2025/software/Python/3.12.3-GCCcore-13.3.0/lib/python3.12/multiprocessing/connection.py", line 1136, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2025/software/Python/3.12.3-GCCcore-13.3.0/lib/python3.12/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/default/stages/2025/software/PyTorch/2.5.1-gcccoreflexiblas-13.3.0-3.4.4/lib/python3.12/site-packages/torch/utils/data/_utils/signal_handling.py", line 73, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 2225311) is killed by signal: Killed. 
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/./evaluator.py", line 96, in <module>
+    main(
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/./evaluator.py", line 86, in main
+    for i, sample in enumerate(dataloader):
+  File "/p/software/default/stages/2025/software/PyTorch/2.5.1-gcccoreflexiblas-13.3.0-3.4.4/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 701, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/p/software/default/stages/2025/software/PyTorch/2.5.1-gcccoreflexiblas-13.3.0-3.4.4/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1448, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/p/software/default/stages/2025/software/PyTorch/2.5.1-gcccoreflexiblas-13.3.0-3.4.4/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1412, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/default/stages/2025/software/PyTorch/2.5.1-gcccoreflexiblas-13.3.0-3.4.4/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1256, in _try_get_data
+    raise RuntimeError(
+RuntimeError: DataLoader worker (pid(s) 2225311) exited unexpectedly
+srun: error: jwc01n038: tasks 0-1,3: Terminated
+srun: error: jwc01n038: task 2: Exited with exit code 1
+srun: Force Terminated StepId=11967722.0

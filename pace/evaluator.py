@@ -58,23 +58,27 @@ def main(
     rank, world_size = setup(
         distributed=distributed
     )
-    
-    dataset = UnifiedDataset(
-        DATASET_CONFIG_PATH
-    )
-    
-    if subset_length != None:
-        dataset = Subset(dataset, list(range(subset_length)))
-    
+     # Load the full dataset (UnifiedDataset instance)
+    full_dataset = UnifiedDataset(DATASET_CONFIG_PATH)
+
+    # Use a subset if requested, but keep the full_dataset reference
+    if subset_length is not None:
+        dataset = Subset(full_dataset, list(range(subset_length)))
+    else:
+        dataset = full_dataset
+
+    # Get DataLoader
     dataloader, sampler = get_dataloader(
         dataset=dataset,
         distributed=distributed,
     )
-    
+
+    # Use full_dataset to get metrics and grid info
     metric_handler = MetricHandler(
-        metrics=list(dataset.metrics.keys()), 
-        grid=dataset.grid
-    )    
+        metrics=list(full_dataset.metrics.keys()), 
+        grid=full_dataset.grid
+    )
+ 
     
     if distributed:
         sampler.set_epoch(0)  # Needed for DistributedSampler

@@ -4,9 +4,6 @@
     "lead_times" : [120]
   },
   "metrics" : [
-    "geostrophic_balance",
-    "dummy_2d",
-    "dummy_repetitive",
-    "dummy_wrong"
+    "geostrophic_balance"
   ]
 }
