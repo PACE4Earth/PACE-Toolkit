@@ -1,7 +1,7 @@
 {
   "dataset" : {
-    "path" : "${GRAPHCAST_EXTENDED_DATA_PATH}",
-    "lead_times" : [120]
+    "name" : "graphcast_extended",
+    "path" : "${GRAPHCAST_EXTENDED_DATA_PATH}"
   },
   "metrics" : [
     "geostrophic_balance"

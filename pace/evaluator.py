@@ -6,6 +6,7 @@ from torch.utils.data import (
     RandomSampler,
 )
 
+import torch
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from utils.dataset import UnifiedDataset
@@ -26,8 +27,10 @@ def setup(distributed=False):
             world_size=world_size,
             rank=rank
         )
+        print('__________________________________________________')
         print(f'{master_addr} : {master_port}')
         print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
+        print('__________________________________________________')
     else:
         rank = 0
         world_size = 1
@@ -41,6 +44,7 @@ def get_dataloader(dataset, distributed=False):
         sampler = RandomSampler(dataset)
 
     num_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 0))
+    # num_workers = 0
     dataloader = DataLoader(
         dataset,
         batch_size=None,
@@ -78,15 +82,15 @@ def main(
         metrics=list(full_dataset.metrics.keys()), 
         grid=full_dataset.grid
     )
- 
-    
+        
     if distributed:
         sampler.set_epoch(0)  # Needed for DistributedSampler
 
-    for i, sample in enumerate(dataloader):
-        print(f"Rank {rank} Batch {i}, x.mean() = {sample['x'].mean().item()}")
-        output = metric_handler(sample)
-        print(f'r{rank} {i} {output.keys()}')
+    with torch.no_grad():
+        for i, sample in enumerate(dataloader):
+            print(f"Rank {rank} Batch {i}, x.mean() = {sample['geopotential'].mean().item()}")
+            output = metric_handler(sample)
+            print(f'r{rank} {i} {output.keys()}')
 
     if distributed:
         dist.destroy_process_group()
@@ -95,5 +99,5 @@ def main(
 if __name__=="__main__":
     main(
         distributed=False,
-        subset_length=10,
+        subset_length=20,
     )

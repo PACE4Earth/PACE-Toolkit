@@ -120,8 +120,18 @@ class UnifiedDataset(torch.utils.data.Dataset):
             for f in os.listdir(self.path)
         ]
         self.files.sort()
+        
+        if dataset_config['name'] == "graphcast_extended":
+            self.lead_times = 40
+        else:
+            self.lead_times = 1
+        
         print('Done\n')
         
+        print('Static fields setup...', end=' ')
+        self.grid = get_grid(self.files[0])
+        print('Done\n')
+            
         # inspect_nc(self.files[0])
             
         # check required fields for the metrics
@@ -153,44 +163,47 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.canonical_names = list(dict.fromkeys(canonical_names))
         self.requested_names = list(dict.fromkeys(names_in_files))
         
-        print('Done\nFields to be loaded:')
+        print('Done\n\nFields to be loaded:')
         [
             print(f'{cn:<20} <- {rn}')
             for (cn, rn) in zip(self.canonical_names, self.requested_names)
         ]
         
-        print('Static fields setup...', end=' ')
-        self.grid = get_grid(self.files[0])
-        print('Done\n')
-            
     def __len__(self):
-        return len(self.files)*len(self.lead_times)
+        return len(self.files)*self.lead_times
 
     def __getitem__(self, idx):
         
+        file_idx = idx // self.lead_times
+        time_idx = idx % self.lead_times
+
+        # 2. Get the corresponding file path
+        file_path = self.files[file_idx]
+        
         fields = {}
         
-        with xarray.open_dataset(self.files[idx], engine='netcdf4') as ds:
+        with xarray.open_dataset(file_path, engine='netcdf4') as ds:
+            base_time = ds['time'].values[0]
+            ds = ds.isel(time=time_idx)
+            valid_time = ds['time'].values
             for rq, cn in zip(self.requested_names, self.canonical_names):
                 tau = torch.tensor(ds[rq].values)
-                if tau.dim()<5:
-                    tau = tau.unsqueeze(2)
+                tau = tau.squeeze()
+                if tau.dim()<3:
+                    tau = tau.unsqueeze(0)
                 fields[cn] = tau
+                print('\t', cn, tau.shape)
+        
+        lead_time = (valid_time - base_time) / np.timedelta64(1, 'h')
+        base_time = base_time.astype('datetime64[s]').astype(np.int64)
+        valid_time = valid_time.astype('datetime64[s]').astype(np.int64)
+        # back conversion performed via:
+        # sample['valid_time'].astype('datetime64[s]')
+        # print(base_time, lead_time, valid_time)
+        
+        fields['base_time'] = base_time
+        fields['valid_time'] = valid_time
+        fields['lead_time'] = lead_time
         
         return fields
-
-if __name__=="__main__":
-    
-    config_path = './pace/configs/graphcast_extended.json'
-    # config_path = './pace/configs/test_data.json'
-    
-    dataset = UnifiedDataset(config_path=config_path)
-    
-    sample = dataset[0]
-    for rq, field in sample.items():
-        print(rq, field.shape)
-        
-    dataloader = torch.utils.data.DataLoader(
-        dataset,
-    )
         

@@ -37,6 +37,7 @@ class GeostrophicWind(nn.Module):
         
         # Ensure 4D shape [B, C, H, W]
         shape = phi.shape
+        print('pre_pad', shape)
         while len(phi.shape) < 4:
             phi = phi.unsqueeze(0)
 
@@ -44,8 +45,16 @@ class GeostrophicWind(nn.Module):
         phi = F.pad(phi, (1, 1, 1, 1), mode='replicate')
 
         # Compute gradients using Sobel filters
-        dphi_dx = F.conv2d(phi, self.kernel_dx) / self.dx
-        dphi_dy = F.conv2d(phi, self.kernel_dy) / self.dy
+        dphi_dx = F.conv2d(
+            phi, 
+            self.kernel_dx.repeat(shape[-3], 1, 1, 1),
+            groups=shape[-3],
+        ) / self.dx
+        dphi_dy = F.conv2d(
+            phi, 
+            self.kernel_dy.repeat(shape[-3], 1, 1, 1),
+            groups=shape[-3],
+        ) / self.dy
 
         # Geostrophic wind equations
         u_g = dphi_dy / self.f
