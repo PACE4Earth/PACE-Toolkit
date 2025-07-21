@@ -1,9 +1,31 @@
 {
-  "dataset" : {
-    "name" : "graphcast_extended",
-    "path" : "${GRAPHCAST_EXTENDED_DATA_PATH}"
+  "datasets": {
+    "model": {
+      "name": "graphcast",
+      "path": "${GRAPHCAST_EXTENDED_DATA_PATH}"
+    },
+    "reference": {
+      "name": "era5",
+      "path": "${ERA5_PATH}"
+    }
   },
-  "metrics" : [
+  "metrics": [
     "geostrophic_balance"
-  ]
+  ],
+  "spatial": {
+    "pressure_levels": 37,
+    "lat_range": [40, 50],
+    "lon_range": [45, 50]
+  },
+  "time": {
+    "start": "20210601",
+    "end": "20210620",
+    "stride_hours": 6,
+    "lead_times": 40
+  },
+  "visualization": {
+    "enabled": true,
+    "plot_metrics": ["geostrophic_balance"],
+    "output_dir": "results/plots"
+  }
 }

@@ -84,7 +84,7 @@ class GeostrophicWind(nn.Module):
         u_g, v_g = self.compute_geostrophic(sample)
 
         u_ag = sample['u_component_of_wind'] - u_g
-        v_ag = sample['u_component_of_wind'] - v_g
+        v_ag = sample['v_component_of_wind'] - v_g
 
         mag_geo = torch.sqrt(u_g**2 + v_g**2)
         mag_ageo = torch.sqrt(u_ag**2 + v_ag**2)

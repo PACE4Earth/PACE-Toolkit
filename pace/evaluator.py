@@ -1,18 +1,18 @@
 import os
+import json
+import torch
+import torch.distributed as dist
 from torch.utils.data import (
-    Subset, 
-    DataLoader, 
-    DistributedSampler, 
+    Subset,
+    DataLoader,
+    DistributedSampler,
     RandomSampler,
 )
 
-import torch
-import torch.distributed as dist
-from torch.utils.data.distributed import DistributedSampler
 from utils.dataset import UnifiedDataset
 from metrics.metric_handler import MetricHandler
 
-DATASET_CONFIG_PATH = './pace/configs/graphcast_extended.json'
+DATASET_CONFIG_PATH = 'configs/graphcast_extended.json'
 
 def setup(distributed=False):
     if distributed:
@@ -44,7 +44,6 @@ def get_dataloader(dataset, distributed=False):
         sampler = RandomSampler(dataset)
 
     num_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 0))
-    # num_workers = 0
     dataloader = DataLoader(
         dataset,
         batch_size=None,
@@ -54,15 +53,14 @@ def get_dataloader(dataset, distributed=False):
     )
     return dataloader, sampler
 
-def main(
-    distributed=False, 
-    subset_length=None,
-    ):
-    
-    rank, world_size = setup(
-        distributed=distributed
-    )
-     # Load the full dataset (UnifiedDataset instance)
+def main(distributed=False, subset_length=None):
+    rank, world_size = setup(distributed=distributed)
+
+    # Load dataset config
+    with open(DATASET_CONFIG_PATH, 'r') as f:
+        config = json.load(f)
+
+    # Load the full dataset (UnifiedDataset instance)
     full_dataset = UnifiedDataset(DATASET_CONFIG_PATH)
 
     # Use a subset if requested, but keep the full_dataset reference
@@ -71,32 +69,45 @@ def main(
     else:
         dataset = full_dataset
 
-    # Get DataLoader
-    dataloader, sampler = get_dataloader(
-        dataset=dataset,
-        distributed=distributed,
-    )
+    # Prepare dataloader
+    dataloader, sampler = get_dataloader(dataset=dataset, distributed=distributed)
 
-    # Use full_dataset to get metrics and grid info
+    # Metric handler setup
     metric_handler = MetricHandler(
-        metrics=list(full_dataset.metrics.keys()), 
+        metrics=list(full_dataset.metrics.keys()),
         grid=full_dataset.grid
     )
-        
-    if distributed:
-        sampler.set_epoch(0)  # Needed for DistributedSampler
 
+    # If using distributed evaluation
+    if distributed:
+        sampler.set_epoch(0)
+
+    # Evaluation loop
     with torch.no_grad():
         for i, sample in enumerate(dataloader):
-            print(f"Rank {rank} Batch {i}, x.mean() = {sample['geopotential'].mean().item()}")
+            if i == 0 and rank == 0:
+                print(f"\n[Info] First batch sample keys: {list(sample.keys())}")
+                for k in sample:
+                    if isinstance(sample[k], torch.Tensor):
+                        print(f"    {k:<25} -> shape {tuple(sample[k].shape)}")
+                    else:
+                        print(f"    {k:<25} -> {sample[k]}")
+                print()
+
+            # Optional: simple inspection
+            if "geopotential" in sample:
+                print(f"Rank {rank} Batch {i}, geopotential mean: {sample['geopotential'].mean().item():.4f}")
+            elif "model_geopotential" in sample:
+                print(f"Rank {rank} Batch {i}, model geopotential mean: {sample['model_geopotential'].mean().item():.4f}")
+
+            # Run metrics
             output = metric_handler(sample)
-            print(f'r{rank} {i} {output.keys()}')
+            print(f"Rank {rank} Batch {i} -> metric keys: {list(output.keys())}")
 
     if distributed:
         dist.destroy_process_group()
-    
-    
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main(
         distributed=False,
         subset_length=20,
