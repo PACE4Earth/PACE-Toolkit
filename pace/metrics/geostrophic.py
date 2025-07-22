@@ -6,10 +6,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .operators import (
+    get_sobel_kernels,
+    get_uniform_kernel,
+    get_gaussian_kernel,
+    pad_finite_difference,
+)
+
 # import metpy
 
 class GeostrophicWind(nn.Module):
-    def __init__(self, grid, epsilon=1e-5):
+    def __init__(self, grid, epsilon=1e-5, smoothing='gaussian'):
         super().__init__()
         
                 
@@ -21,15 +28,21 @@ class GeostrophicWind(nn.Module):
         self.epsilon = epsilon
 
         # Sobel kernels
-        kernel_dx = torch.tensor([[-1, 0, 1],
-                                  [-2, 0, 2],
-                                  [-1, 0, 1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 8.0
-        kernel_dy = torch.tensor([[1, 2, 1],
-                                  [0, 0, 0],
-                                  [-1, -2, -1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 8.0
-        
+        kernel_dx, kernel_dy = get_sobel_kernels()
         self.register_buffer("kernel_dx", kernel_dx)
         self.register_buffer("kernel_dy", kernel_dy)
+        
+        # Currently hard-coded for 0.25° -> 2°
+        if smoothing=='uniform':
+            self.pad = (1, 2, 1, 2)
+            self.register_buffer('smoothing_kernel', get_uniform_kernel(kernel_size=4))
+        elif smoothing=='gaussian':
+            self.pad = (4, 4, 4, 4)
+            self.register_buffer('smoothing_kernel', get_gaussian_kernel(kernel_size=9, sigma=1.25))
+        else:
+            self.pad = (1, 2, 1, 2)
+            self.register_buffer('smoothing_kernel', get_uniform_kernel(kernel_size=4))
+        
 
     def compute_geostrophic(self, sample):
         
@@ -37,24 +50,24 @@ class GeostrophicWind(nn.Module):
         
         # Ensure 4D shape [B, C, H, W]
         shape = phi.shape
-        print('pre_pad', shape)
         while len(phi.shape) < 4:
             phi = phi.unsqueeze(0)
 
         # Padding before convolution (to preserve size)
-        phi = F.pad(phi, (1, 1, 1, 1), mode='replicate')
+        # phi = F.pad(phi, (1, 1, 1, 1), mode='replicate')
+        phi = pad_finite_difference(phi, pad_width=(2,2,2,2))
 
         # Compute gradients using Sobel filters
         dphi_dx = F.conv2d(
             phi, 
             self.kernel_dx.repeat(shape[-3], 1, 1, 1),
             groups=shape[-3],
-        ) / self.dx
+        )[..., 1:-1, 1:-1] / self.dx
         dphi_dy = F.conv2d(
             phi, 
             self.kernel_dy.repeat(shape[-3], 1, 1, 1),
             groups=shape[-3],
-        ) / self.dy
+        )[..., 1:-1, 1:-1] / self.dy
 
         # Geostrophic wind equations
         u_g = dphi_dy / self.f
@@ -90,6 +103,11 @@ class GeostrophicWind(nn.Module):
         mag_ageo = torch.sqrt(u_ag**2 + v_ag**2)
 
         ratio = mag_ageo / (mag_geo + self.epsilon)
+                
+        kernel = self.smoothing_kernel.repeat(ratio.shape[-3], 1, 1, 1).to(ratio.dtype)
+        
+        ratio = F.pad(ratio, self.pad, 'replicate')
+        ratio = F.conv2d(ratio, kernel, groups=ratio.shape[-3], padding=0)
         
         return ratio
                 

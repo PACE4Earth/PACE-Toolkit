@@ -1,0 +1,11 @@
+Preparing files... Done. Found 19 usable files.
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+
+Fields to be loaded:
+geopotential         <- geopotential
+u_component_of_wind  <- u_component_of_wind
+v_component_of_wind  <- v_component_of_wind
+Saved to /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast/20210401_00.nc
+Saved to /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast/20210401_12.nc

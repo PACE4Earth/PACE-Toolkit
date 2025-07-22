@@ -1,7 +1,8 @@
 import os
-import xarray as xr
-import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
 
 # Optional: Seaborn for prettier plots
 import seaborn as sns
@@ -36,7 +37,7 @@ def plot_metric_level_slice(ds, metric, level_index, show_geopotential=True):
     Lon, Lat = np.meshgrid(lon, lat)
 
     plt.figure(figsize=(12, 5))
-    plt.pcolormesh(Lon, Lat, data, cmap='viridis', shading='auto', vmax=10)
+    plt.pcolormesh(Lon, Lat, data, cmap='Grays', norm=colors.LogNorm(vmin=1e-2, vmax=10), shading='auto')
     plt.colorbar(label='Ageostrophic / Geostrophic Wind Magnitude', )
 
      # Add geopotential contours if requested and available
@@ -109,7 +110,7 @@ def process_metric(metric, datasets):
     for i, ds in enumerate(datasets):
         if metric not in ds:
             continue
-        # plot_metric_level_slice(ds, metric, level_index=36)
+        plot_metric_level_slice(ds.isel(lead_time=0), metric, level_index=15)
         plot_mean_geostrophic_wind_profile(ds) 
 
 if __name__ == "__main__":

@@ -7,6 +7,8 @@ import xarray as xr
 from pathlib import Path
 from datetime import datetime
 
+R_EARTH = 6371000.0
+OMEGA = 7.2921e-5
 
 def inspect_nc(path):
     with xr.open_dataset(path) as ds:
@@ -44,13 +46,17 @@ def get_grid(path, lat_range=None, lon_range=None):
         lon_min, lon_max = sorted(lon_range)
         lons = lons[(lons >= lon_min) & (lons <= lon_max)]
 
-    cos_lat = np.cos(np.deg2rad(lats))
-    dy = (np.gradient(lats))[:, None] * np.ones_like(lons)[None, :] * 111.32e3
-    omega = 7.2921e-5
-    f = 2 * omega * np.sin(np.deg2rad(lats))[:, None] * np.ones_like(lons)[None, :]
+    dlat_deg = np.gradient(lats)
+    dlon_deg = np.gradient(np.concatenate([[lons[-1]-360], lons, [lons[0]+360]]))[1:-1]
+    dphi = np.deg2rad(dlat_deg)
+    dlambda = np.deg2rad(dlon_deg)
+    
+    dy = R_EARTH * dphi
+    dy = dy[:, None] * np.ones_like(lons)[None, :]
+    dx = R_EARTH * np.cos(np.deg2rad(lats))[:, None] * dlambda[None, :]
+    
+    f = 2 * OMEGA * np.sin(np.deg2rad(lats))[:, None] * np.ones_like(lons)[None, :]
     f[np.abs(f) < 1e-5] = 1e-5 * np.sign(f[np.abs(f) < 1e-5] + 1e-9)
-    dx = np.gradient(np.concatenate([[lons[-1]-360], lons, [lons[0]+360]]))[1:-1]
-    dx = dx[None, :] * np.cos(np.deg2rad(lats))[:, None] * 111.32e3
 
     return {
         'lon': torch.tensor(lons),

@@ -14,8 +14,8 @@
   ],
   "spatial": {
     "pressure_levels": 37,
-    "lat_range": [40, 50],
-    "lon_range": [40, 50]
+    "lat_range": [30, 70],
+    "lon_range": [-180, 180]
   },
   "time": {
     "start": "20210401",
