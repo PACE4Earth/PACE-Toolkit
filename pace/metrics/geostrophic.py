@@ -92,3 +92,4 @@ class GeostrophicWind(nn.Module):
         ratio = mag_ageo / (mag_geo + self.epsilon)
         
         return ratio
+                

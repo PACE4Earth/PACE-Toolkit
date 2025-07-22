@@ -1,5 +1,10 @@
 import os
 import json
+from pathlib import Path
+import xarray as xr
+import numpy as np
+from collections import defaultdict
+import datetime
 import torch
 import torch.distributed as dist
 from torch.utils.data import (
@@ -12,7 +17,8 @@ from torch.utils.data import (
 from utils.dataset import UnifiedDataset
 from metrics.metric_handler import MetricHandler
 
-DATASET_CONFIG_PATH = 'configs/graphcast_extended.json'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_CONFIG_PATH =  os.path.join(BASE_DIR, 'configs', 'graphcast_extended.json')
 
 def setup(distributed=False):
     if distributed:
@@ -84,25 +90,82 @@ def main(distributed=False, subset_length=None):
 
     # Evaluation loop
     with torch.no_grad():
+        base_time_data = defaultdict(lambda: defaultdict(list))  # base_time -> var -> [leadtime slices]
+        base_time_coords = {}  # Store coords separately per base_time
+        collected_leadtimes = defaultdict(list)  # base_time -> [leadtime_hours]
+
         for i, sample in enumerate(dataloader):
-            if i == 0 and rank == 0:
-                print(f"\n[Info] First batch sample keys: {list(sample.keys())}")
-                for k in sample:
-                    if isinstance(sample[k], torch.Tensor):
-                        print(f"    {k:<25} -> shape {tuple(sample[k].shape)}")
-                    else:
-                        print(f"    {k:<25} -> {sample[k]}")
-                print()
+            valid_time = sample['lead_time'].item()
+            base_time = sample['base_time'].item()
+            leadtime_hours = int((valid_time - base_time) / 3600)
 
-            # Optional: simple inspection
-            if "geopotential" in sample:
-                print(f"Rank {rank} Batch {i}, geopotential mean: {sample['geopotential'].mean().item():.4f}")
-            elif "model_geopotential" in sample:
-                print(f"Rank {rank} Batch {i}, model geopotential mean: {sample['model_geopotential'].mean().item():.4f}")
+            # Convert base_time to datetime for filename
+            base_dt = datetime.datetime.utcfromtimestamp(base_time)
 
-            # Run metrics
             output = metric_handler(sample)
-            print(f"Rank {rank} Batch {i} -> metric keys: {list(output.keys())}")
+
+            if base_time not in base_time_coords:
+                base_time_coords[base_time] = {
+                    "lat": full_dataset.grid["lat"].numpy(),
+                    "lon": full_dataset.grid["lon"].numpy(),
+                    "level": list(range(37)),  # Replace with real pressure levels if known
+                }
+
+            for key, val in output.items():
+                if isinstance(val, torch.Tensor):
+                    val_np = val.cpu().numpy()
+
+                    # Remove batch/time dimension if singleton
+                    if val_np.ndim == 4 and val_np.shape[0] == 1:
+                        val_np = val_np.squeeze(0)
+
+                    base_time_data[base_time][key].append((leadtime_hours, val_np))
+
+            # Optional: add geopotential from sample
+            if 'geopotential' in sample:
+                geo = sample['geopotential'].cpu().numpy()
+                if geo.ndim == 4 and geo.shape[0] == 1:
+                    geo = geo.squeeze(0)
+                base_time_data[base_time]['geopotential'].append((leadtime_hours, geo))
+
+            collected_leadtimes[base_time].append(leadtime_hours)
+
+        # Now save one file per base_time
+        for base_time, var_data in base_time_data.items():
+            base_dt = datetime.datetime.utcfromtimestamp(base_time)
+            leadtimes_sorted = sorted(set(collected_leadtimes[base_time]))
+
+            coords = base_time_coords[base_time]
+            coords["lead_time"] = leadtimes_sorted
+            coords["base_time"] = base_dt  # scalar
+
+            data_vars = {}
+            for var_name, values in var_data.items():
+                # Sort by lead_time
+                values_sorted = sorted(values, key=lambda x: x[0])  # sort by leadtime
+                lead_vals = [v for _, v in values_sorted]
+
+                arr = np.stack(lead_vals, axis=0)  # Shape: (lead_time, ...)
+                if arr.ndim == 4:
+                    dims = ("lead_time", "level", "lat", "lon")
+                elif arr.ndim == 3:
+                    dims = ("lead_time", "lat", "lon")
+                else:
+                    raise ValueError(f"Unsupported output shape {arr.shape} for variable {var_name}")
+
+                data_vars[var_name] = (dims, arr)
+
+            ds_out = xr.Dataset(
+                data_vars=data_vars,
+                coords=coords,
+            )
+
+            save_dir = os.path.join(BASE_DIR, "outputs", full_dataset.name)
+            os.makedirs(save_dir, exist_ok=True)
+
+            out_path = os.path.join(save_dir, f"{base_dt.strftime('%Y%m%d_%H')}.nc")
+            ds_out.to_netcdf(out_path)
+            print(f"Saved to {out_path}")
 
     if distributed:
         dist.destroy_process_group()
@@ -110,5 +173,5 @@ def main(distributed=False, subset_length=None):
 if __name__ == "__main__":
     main(
         distributed=False,
-        subset_length=20,
+        subset_length=60,
     )
