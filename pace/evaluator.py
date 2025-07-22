@@ -104,6 +104,7 @@ def main(distributed=False, subset_length=None):
 
             output = metric_handler(sample)
 
+            # clean up with log_output handler, abstraction
             if base_time not in base_time_coords:
                 base_time_coords[base_time] = {
                     "lat": full_dataset.grid["lat"].numpy(),
@@ -150,6 +151,8 @@ def main(distributed=False, subset_length=None):
                     dims = ("lead_time", "level", "lat", "lon")
                 elif arr.ndim == 3:
                     dims = ("lead_time", "lat", "lon")
+                elif arr.ndim == 1:
+                    dims = ("value")
                 else:
                     raise ValueError(f"Unsupported output shape {arr.shape} for variable {var_name}")
 
@@ -173,5 +176,5 @@ def main(distributed=False, subset_length=None):
 if __name__ == "__main__":
     main(
         distributed=False,
-        subset_length=60,
+        subset_length=100,
     )

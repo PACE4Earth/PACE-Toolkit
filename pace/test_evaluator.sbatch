@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=00:05:00
+#SBATCH --time=00:15:00
 #SBATCH --output=job_output.%j
 #SBATCH --error=job_error.%j
 #SBATCH --account=weatherai

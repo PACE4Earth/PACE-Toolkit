@@ -1,7 +1,15 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-        
+      
+def standardize(xi, method='z', epsilon=1e-2):
+    
+    if method=='z':
+        xi = (xi - xi.mean()) / (xi.std() + epsilon)
+    else:
+        print('Not implemented standardization method.')
+    
+    return xi
 
 def get_sobel_kernels():
     

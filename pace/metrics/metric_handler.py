@@ -2,9 +2,11 @@ import torch
 from torch import nn
 
 from .geostrophic import GeostrophicWind
+from .correlation import SampleWiseCorrelation
 
 METRIC_MODULES = {
-    'geostrophic_balance' : GeostrophicWind
+    'geostrophic_balance' : GeostrophicWind,
+    'correlation' : SampleWiseCorrelation,
 } 
 
 class MetricHandler(nn.Module):

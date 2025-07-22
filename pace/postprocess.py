@@ -110,7 +110,7 @@ def process_metric(metric, datasets):
     for i, ds in enumerate(datasets):
         if metric not in ds:
             continue
-        plot_metric_level_slice(ds.isel(lead_time=0), metric, level_index=15)
+        plot_metric_level_slice(ds.isel(lead_time=0), metric, level_index=30)
         plot_mean_geostrophic_wind_profile(ds) 
 
 if __name__ == "__main__":
