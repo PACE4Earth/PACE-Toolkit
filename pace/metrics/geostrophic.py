@@ -16,7 +16,7 @@ from .operators import (
 # import metpy
 
 class GeostrophicWind(nn.Module):
-    def __init__(self, grid, epsilon=1e-5, smoothing='gaussian'):
+    def __init__(self, grid, epsilon=1e-5, smoothing='uniform'):
         super().__init__()
         
                 

@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import xarray as xr
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+from matplotlib import colors, ticker
 
 # Optional: Seaborn for prettier plots
 import seaborn as sns
@@ -25,36 +25,42 @@ def load_all_outputs():
     return datasets
 
 def plot_metric_level_slice(ds, metric, level_index, show_geopotential=True):
-    """Plot a single level slice for a given metric."""
+    """Plot a single level slice for a given metric"""
     if metric not in ds:
         print(f"Metric {metric} not found in dataset.")
         return
 
-    data = ds[metric].isel(level=level_index)
+    data = ds[metric].sel(level=level_index)
     base_time_hour = ds['base_time'].values.astype('datetime64[h]')
     lon = ds['lon']
-    lat = ds['lat']
+    lat = ds['lat'] 
     Lon, Lat = np.meshgrid(lon, lat)
 
-    plt.figure(figsize=(12, 5))
-    plt.pcolormesh(Lon, Lat, data, cmap='Grays', norm=colors.LogNorm(vmin=1e-2, vmax=10), shading='auto')
-    plt.colorbar(label='Ageostrophic / Geostrophic Wind Magnitude', )
+    fig, ax = plt.subplots(figsize=(12, 5))
+    pcm = ax.pcolormesh(Lon, Lat, data, cmap='viridis', norm=colors.LogNorm(vmin=1e-2, vmax=10), shading='auto')
 
-     # Add geopotential contours if requested and available
+    cbar = fig.colorbar(pcm, ax=ax, pad=0.02)
+    cbar.set_label('Ageostrophic / Geostrophic Wind Magnitude', fontsize=14)
+
+    # Add geopotential contours if requested
     if show_geopotential and 'geopotential' in ds:
-        geo = ds['geopotential'].isel(level=level_index)
-        geopotential_height = geo / 9.80665  # in meters
-        cs = plt.contour(lon, lat, geopotential_height, colors='white', linewidths=0.8)
-        plt.clabel(cs, inline=True, fontsize=8, fmt='%1.0f')
+        geo = ds['geopotential'].sel(level=level_index)
+        geopotential_height = geo / 9.80665  # convert from m²/s² to meters
+        cs = ax.contour(lon, lat, geopotential_height, levels=20, colors='white', linewidths=0.9)
+        ax.clabel(cs, inline=False, fontsize=8, fmt='%1.0f', use_clabeltext=True); [txt.set_bbox(dict(facecolor='black', alpha=0.6, edgecolor='none', boxstyle='round,pad=0.2')) for txt in cs.labelTexts]
 
-    plt.title(f'Ratio of Ageostrophic to Geostrophic Wind, Level: {level_index}, Time: {base_time_hour}')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.grid(True)
-    plt.xlim([min(lon), max(lon)])
-    plt.ylim([min(lat), max(lat)])
+    ax.set_title(f'Graphcast: Ratio of Ageostrophic to Geostrophic Wind\nLevel: {level_index} hPa | Base Time: {base_time_hour} | Lead Time: 6h', fontsize=16)
+    ax.set_xlabel('Longitude', fontsize=14)
+    ax.set_ylabel('Latitude', fontsize=14)
+    ax.set_xlim([min(lon), max(lon)])
+    # ax.set_ylim([min(lat), max(lat)])
+    ax.set_ylim([30, 80])
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}°'))
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: f'{y:.0f}°'))
+
     plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS_DIR, f"{metric}_level{level_index}.png"), dpi=300)
+    plot_path = os.path.join(PLOTS_DIR, f"{metric}_level{level_index}.png")
+    plt.savefig(plot_path, dpi=300)
     plt.close()
 
 def plot_mean_geostrophic_wind_profile(ds, n_leads=5):
@@ -68,28 +74,45 @@ def plot_mean_geostrophic_wind_profile(ds, n_leads=5):
         print("No lead_time dimension in dataset.")
         return
 
-    # Select 5 evenly spaced lead times
+    # Select n_leads evenly spaced lead times
     total_leads = ds.dims["lead_time"]
+    ds["lead_time"] = ds["lead_time"] + 6
     lead_indices = np.linspace(0, total_leads - 1, n_leads, dtype=int)
 
     plt.figure(figsize=(6, 8))
+    ax = plt.gca()
+
     for idx in lead_indices:
         lead = ds["lead_time"].isel(lead_time=idx).item()
         profile = ds[metric].isel(lead_time=idx).mean(dim=["lat", "lon"])
-        plt.plot(profile, ds["level"], label=f"Lead time: {lead}h")
+        ax.plot(profile, ds["level"], label=f"Graphcast: Lead time {lead}h", linewidth=2)
 
     base_time_hour = ds['base_time'].values.astype('datetime64[h]')
 
-    plt.gca().invert_yaxis()  # So level 0 (top) is at top, 36 bottom
+    ax.invert_yaxis()  # So level 1000 is at bottom, 100 at top
+    ax.set_yticks([1000, 800, 600, 400, 200, 1])
+    ax.set_ylim(bottom=1000)
 
-    plt.title(f"Mean Ageo/Geostrophic Wind Ratio, Time: {base_time_hour}")
-    plt.xlabel("Mean Ageo/Geostrophic Wind Ratio")
-    plt.ylabel("Pressure Level Index (0=top)")
-    plt.grid(True)
+    # Style axes and grid
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    for spine in ['left', 'bottom']:
+        ax.spines[spine].set_color('black')
+
+    ax.tick_params(axis='both', colors='black')
+    ax.grid(True, which='both', color='black', linestyle='--', linewidth=0.5, alpha=0.4)
+
+    ax.set_title(f"Mean Ageo/Geostrophic Wind Ratio\nBase Time: {base_time_hour}", fontsize=16)
+    ax.set_xlabel("Mean Ageo/Geostrophic Wind Ratio", fontsize=14)
+    ax.set_ylabel("Pressure Level (hPa)", fontsize=14)
+
+    ax.legend(frameon=True, loc='center right', fontsize=14,
+              framealpha=0.9, edgecolor='black', fancybox=True)
+
     plt.tight_layout()
-    plt.legend()
     plt.savefig(os.path.join(PLOTS_DIR, "mean_geostrophic_wind_vertical_profile.png"), dpi=300)
     plt.close()
+
 
 
 def compute_global_skill_stats(ds, metric):
@@ -110,8 +133,8 @@ def process_metric(metric, datasets):
     for i, ds in enumerate(datasets):
         if metric not in ds:
             continue
-        plot_metric_level_slice(ds.isel(lead_time=0), metric, level_index=30)
-        plot_mean_geostrophic_wind_profile(ds) 
+        plot_metric_level_slice(ds.isel(lead_time=0), metric, level_index=500)
+        # plot_mean_geostrophic_wind_profile(ds) 
 
 if __name__ == "__main__":
     datasets = load_all_outputs()
