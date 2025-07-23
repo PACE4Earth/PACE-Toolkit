@@ -77,6 +77,7 @@ def main(distributed=False, subset_length=None):
 
     # Prepare dataloader
     dataloader, sampler = get_dataloader(dataset=dataset, distributed=distributed)
+    print('Dataset lenght:\t', dataset.__len__())
 
     # Metric handler setup
     metric_handler = MetricHandler(
@@ -113,14 +114,16 @@ def main(distributed=False, subset_length=None):
                 }
 
             for key, val in output.items():
-                if isinstance(val, torch.Tensor):
-                    val_np = val.cpu().numpy()
+                
+                if key != 'correlation':
+                    if isinstance(val, torch.Tensor):
+                        val_np = val.cpu().numpy()
 
-                    # Remove batch/time dimension if singleton
-                    if val_np.ndim == 4 and val_np.shape[0] == 1:
-                        val_np = val_np.squeeze(0)
+                        # Remove batch/time dimension if singleton
+                        if val_np.ndim == 4 and val_np.shape[0] == 1:
+                            val_np = val_np.squeeze(0)
 
-                    base_time_data[base_time][key].append((leadtime_hours, val_np))
+                        base_time_data[base_time][key].append((leadtime_hours, val_np))
 
             # Optional: add geopotential from sample
             if 'geopotential' in sample:
@@ -130,6 +133,20 @@ def main(distributed=False, subset_length=None):
                 base_time_data[base_time]['geopotential'].append((leadtime_hours, geo))
 
             collected_leadtimes[base_time].append(leadtime_hours)
+
+        if 'correlation' in metric_handler.metrics.keys():
+            
+            fig, ax = metric_handler.metrics['correlation'].evaluate_corr()
+            
+            fig.savefig(
+                    os.path.join(BASE_DIR, 'plots', 'corrs.png')
+                )    
+            
+            for key in ['t2m_u10m', 't2m_v10m', 't2m_mslp', 'u10m_v10m', 'u10m_mslp', 'v10m_mslp']:
+                fig, ax = metric_handler.metrics['correlation'].visualize(key)
+                fig.savefig(
+                    os.path.join(BASE_DIR, 'plots', f'bivariate_{key}.png')
+                )                
 
         # Now save one file per base_time
         for base_time, var_data in base_time_data.items():
@@ -176,5 +193,5 @@ def main(distributed=False, subset_length=None):
 if __name__ == "__main__":
     main(
         distributed=False,
-        subset_length=100,
+        subset_length=600,
     )

@@ -1,6 +1,9 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+        
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from .operators import standardize
 
@@ -66,6 +69,34 @@ class SampleWiseCorrelation(nn.Module):
                 'bins': (bins_x, bins_y),
                 'range': settings['range']
             }
+            
+        self.corr = torch.zeros(1, 4, 4)
+
+    def evaluate_corr(self):
+        
+        mean_corr = self.corr[1:].mean(dim=0)
+        std_corr = self.corr[1:].std(dim=0)
+        
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
+        
+        for ax in axs.flatten():
+            ax.set_xticks([0.5, 1.5, 2.5, 3.5])
+            ax.set_xticklabels(['t2m', 'u10m', 'v10', 'mslp'])
+            ax.set_yticks([0.5, 1.5, 2.5, 3.5])
+            ax.set_yticklabels(['t2m', 'u10m', 'v10', 'mslp'])
+        
+        axs[0].set_title('Corr. mean')
+        axs[1].set_title('Corr. std')
+        
+        im1 = axs[0].pcolormesh(mean_corr, vmin=-1, vmax=1, cmap='seismic')
+        # Add a colorbar to the first subplot
+        fig.colorbar(im1, ax=axs[0])
+
+        # Do the same for the second subplot
+        im2 = axs[1].pcolormesh(std_corr, vmin=0, vmax=0.5, cmap='hot')
+        fig.colorbar(im2, ax=axs[1])
+        
+        return fig, axs
 
     def to(self, device):
         """Moves all managed histograms to the specified device."""
@@ -108,13 +139,8 @@ class SampleWiseCorrelation(nn.Module):
         """Returns the histogram tensor for a specific key."""
         return self.histograms.get(key, {}).get('tensor')
 
-    def visualize(self, key, ax=None, cmap='viridis'):
+    def visualize(self, key, ax=None, cmap='hot'):
         """Visualizes the histogram for a given key using its specific range."""
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            print("Matplotlib not installed. Please run 'pip install matplotlib'.")
-            return None, None
 
         hist_info = self.histograms.get(key)
         if not hist_info:
@@ -127,24 +153,32 @@ class SampleWiseCorrelation(nn.Module):
         else:
             fig = ax.get_figure()
 
-        data = hist_info['tensor'].cpu().numpy()
+        data = hist_info['tensor']
+        # norm
+        data = (data / data.sum()).clamp(min=1e-8).cpu().numpy()
+        
         range_x, range_y = hist_info['range']
         extent = [range_x[0], range_x[1], range_y[0], range_y[1]]
 
-        im = ax.imshow(data, cmap=cmap, extent=extent, origin='lower', aspect='auto')
+        im = ax.imshow(
+            data, 
+            cmap=cmap, 
+            norm=colors.LogNorm(), 
+            extent=extent, 
+            origin='lower', 
+            aspect='auto',
+        )
         
-        ax.set_xlabel("X-axis")
-        ax.set_ylabel("Y-axis")
-        ax.set_title(f"Histogram for '{key}'")
-        fig.colorbar(im, ax=ax, label='Counts')
+        ax.set_xlabel(f'{key.split('_')[0]}')
+        ax.set_ylabel(f'{key.split('_')[1]}')
+        ax.set_title(f"Histogram for {key}")
+        fig.colorbar(im, ax=ax, label='Prob. density')
         
         return fig, ax
         
     def forward(self, sample):
                 
-        print('>> sample:', sample['2m_temperature'].shape)
-                
-        # z = torch.zeros()
+        # print('>> sample:', sample['2m_temperature'].shape)
                 
         z_temperature = standardize(sample['2m_temperature']).flatten()
         z_u10m = standardize(sample['10m_u_component_of_wind']).flatten()
@@ -185,18 +219,16 @@ class SampleWiseCorrelation(nn.Module):
         self.update(
             'u10m_mslp', 
             sample['10m_u_component_of_wind'].flatten(), 
-            sample['mean_sea_level_prssure'].flatten(),
+            sample['mean_sea_level_pressure'].flatten(),
         )
         
         self.update(
             'v10m_mslp', 
             sample['10m_v_component_of_wind'].flatten(), 
-            sample['mean_sea_level_prssure'].flatten(),
+            sample['mean_sea_level_pressure'].flatten(),
         )
         
-        corr = torch.cov(data)        
-        print(corr.shape, corr)
-        
-        # histogram accumulation
-        
+        corr = torch.cov(data)   
+        self.corr = torch.cat([self.corr, corr.unsqueeze(0)], dim=0)     
+                
         return corr
