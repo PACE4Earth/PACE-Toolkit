@@ -10,7 +10,6 @@
     }
   },
   "metrics": [
-    "geostrophic_balance",
     "correlation"
   ],
   "spatial": {
