@@ -9,10 +9,10 @@ from .operators import standardize
 
 WIND_MIN = -30      # m/s
 WIND_MAX = 30       # m/s
-T_MIN = 230         # K
+T_MIN = 220         # K
 T_MAX = 325         # K
 MSLP_MIN = 95000    # Pa
-MSLP_MAX = 105000   # Pa
+MSLP_MAX = 107000   # Pa
 
 range=(
     (-1.0, 1.0), # t2m, u10m 
@@ -77,7 +77,7 @@ class SampleWiseCorrelation(nn.Module):
         mean_corr = self.corr[1:].mean(dim=0)
         std_corr = self.corr[1:].std(dim=0)
         
-        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4), sharey=True)
         
         for ax in axs.flatten():
             ax.set_xticks([0.5, 1.5, 2.5, 3.5])
@@ -95,6 +95,8 @@ class SampleWiseCorrelation(nn.Module):
         # Do the same for the second subplot
         im2 = axs[1].pcolormesh(std_corr, vmin=0, vmax=0.5, cmap='hot')
         fig.colorbar(im2, ax=axs[1])
+        
+        fig.tight_layout()
         
         return fig, axs
 
