@@ -229,12 +229,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
             elif 'lon' in ds:
                 ds = ds.sel(lon=slice(self.lon_min, self.lon_max))
 
-            # Limit pressure levels if requested
-            if self.pressure_levels is not None:
-                level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
-                if level_dim:
-                    ds = ds.isel({level_dim: slice(0, self.pressure_levels)})
-
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
                 tau = torch.tensor(ds[rq].values)
@@ -252,5 +246,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields['base_time'] = base_time_ts
             fields['lead_time'] = lead_time_ts
+
+            # Limit pressure levels if requested
+            if self.pressure_levels is not None:
+                level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
+                if level_dim:
+                    ds = ds.isel({level_dim: slice(0, self.pressure_levels)})
+                    fields['pressure_levels'] = torch.tensor(ds[level_dim].values)
 
         return fields

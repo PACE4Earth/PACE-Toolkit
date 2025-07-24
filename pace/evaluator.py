@@ -18,7 +18,7 @@ from utils.dataset import UnifiedDataset
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH =  os.path.join(BASE_DIR, 'configs', 'graphcast_extended_devel.json')
+DATASET_CONFIG_PATH =  os.path.join(BASE_DIR, 'configs', 'graphcast_extended.json')
 
 def setup(distributed=False):
     if distributed:
@@ -197,5 +197,5 @@ def main(distributed=False, subset_length=None):
 if __name__ == "__main__":
     main(
         distributed=False,
-        subset_length=600,
+        subset_length=40,
     )
