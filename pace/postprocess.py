@@ -13,7 +13,7 @@ MODEL = "graphcast"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "outputs", MODEL)
 PLOTS_DIR = os.path.join(BASE_DIR, "plots")
-METRICS = ["hydrostatic_balance_abs_error", "hydrostatic_balance_rel_error"]
+METRICS = ["geostrophic_balance"]
 
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
@@ -54,19 +54,11 @@ def plot_spatial_slice(ds, metric, lead_time, level, show_geopotential=True):
         cs = ax.contour(lon, lat, geopotential_height, levels=20, colors='white', linewidths=0.9)
         ax.clabel(cs, inline=False, fontsize=8, fmt='%1.0f', use_clabeltext=True); [txt.set_bbox(dict(facecolor='black', alpha=0.6, edgecolor='none', boxstyle='round,pad=0.2')) for txt in cs.labelTexts]
 
-    # if show_q and 'specific_humidity' in ds:
-    #     geo = ds['specific_humidity'].sel(level=level, lead_time=lead_time, method="nearest")
-    #     geopotential_height = geo / 9.80665  # convert from m²/s² to meters
-    #     cs = ax.contour(lon, lat, geopotential_height, levels=20, colors='white', linewidths=0.9)
-    #     ax.clabel(cs, inline=False, fontsize=8, fmt='%1.0f', use_clabeltext=True); [txt.set_bbox(dict(facecolor='black', alpha=0.6, edgecolor='none', boxstyle='round,pad=0.2')) for txt in cs.labelTexts]
-
     ax.set_title(f'Graphcast: {metric.replace('_', ' ').capitalize()}\nLevel: {level} hPa | Base: {base_time_hour} | Lead: 6h', fontsize=16)
     ax.set_xlabel('Longitude', fontsize=14)
     ax.set_ylabel('Latitude', fontsize=14)
     ax.set_xlim([min(lon), max(lon)])
     ax.set_ylim([min(lat), max(lat)])
-    # ax.set_xlim([0, 100])
-    # ax.set_ylim([20, 80])
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}°'))
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: f'{y:.0f}°'))
 

@@ -38,7 +38,12 @@ def get_grid(path, lat_range=None, lon_range=None):
             lons = ds['longitude'].values
         except KeyError:
             lons = ds['lon'].values
+    
+    # Ensure latitude is increasing
+    if lats[0] > lats[-1]:
+        lats = lats[::-1]
 
+    # Subset latitude and longitude if ranges provided
     if lat_range is not None:
         lat_min, lat_max = sorted(lat_range)
         lats = lats[(lats >= lat_min) & (lats <= lat_max)]
@@ -46,13 +51,21 @@ def get_grid(path, lat_range=None, lon_range=None):
         lon_min, lon_max = sorted(lon_range)
         lons = lons[(lons >= lon_min) & (lons <= lon_max)]
 
+    # Check if longitude is global
+    lon_span = lons[-1] - lons[0]
+    is_global = lon_span > 359.99
+
     dlat_deg = np.gradient(lats)
-    dlon_deg = np.gradient(np.concatenate([[lons[-1]-360], lons, [lons[0]+360]]))[1:-1]
     dphi = np.deg2rad(dlat_deg)
+
+    if is_global:
+        dlon_deg_ext = np.gradient(np.concatenate([[lons[-1] - 360], lons, [lons[0] + 360]]))[1:-1]  # Wrapping for gradient at edges
+    else:
+        dlon_deg = np.gradient(lons)
+
     dlambda = np.deg2rad(dlon_deg)
     
-    dy = R_EARTH * dphi
-    dy = dy[:, None] * np.ones_like(lons)[None, :]
+    dy = (R_EARTH * dphi)[:, None] * np.ones((len(lats), len(lons)))
     dx = R_EARTH * np.cos(np.deg2rad(lats))[:, None] * dlambda[None, :]
     
     f = 2 * OMEGA * np.sin(np.deg2rad(lats))[:, None] * np.ones_like(lons)[None, :]
@@ -76,7 +89,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         # Load config
         if config_path is None:
-            config_path = Path(__file__).resolve().parent.parent / "configs" / "graphcast_extended.json"
+            config_path = Path(__file__).resolve().parent.parent / "configs" / "dataset_config.json"
         else:
             config_path = Path(config_path)
 
