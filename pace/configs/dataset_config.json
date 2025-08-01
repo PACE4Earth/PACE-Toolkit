@@ -6,7 +6,7 @@
     },
     "reference": {
       "name": "era5",
-      "path": "${ERA5_PATH}"
+      "path": "${ERA5_DATA_PATH}"
     }
   },
   "metrics": [
@@ -24,6 +24,7 @@
     "lead_times": 40
   },
   "visualization": {
+    "n_fullfield_samples": 10,
     "enabled": true,
     "plot_metrics": ["geostrophic_balance"],
     "output_dir": "results/plots"

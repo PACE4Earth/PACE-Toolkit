@@ -110,4 +110,7 @@ class GeostrophicWind(nn.Module):
         ratio = F.conv2d(ratio, kernel, groups=ratio.shape[-3], padding=0)
         
         return ratio
-                
+
+    def output_keys(self):
+        return ['geostrophic_wind_ratio']
+        

@@ -90,3 +90,6 @@ class HydrostaticBalance(nn.Module):
         rel_error_padded = torch.cat([nan_pad_rel, rel_error], dim=1)
 
         return abs_error_padded, rel_error_padded
+    
+    def output_keys(self):
+        return ['hydrostatic_abs_error', 'hydrostatic_rel_error']

@@ -6,29 +6,48 @@ from .correlation import SampleWiseCorrelation
 from .hydrostatic import HydrostaticBalance 
 
 METRIC_MODULES = {
-    'geostrophic_balance' : GeostrophicWind,
-    'correlation' : SampleWiseCorrelation,
+    'geostrophic_balance': GeostrophicWind,
+    'correlation': SampleWiseCorrelation,
     'hydrostatic_balance': HydrostaticBalance
-} 
+}
 
 class MetricHandler(nn.Module):
     def __init__(self, grid, metrics: list[str]):
         super().__init__()
-        self.metrics = {metric: METRIC_MODULES[metric](grid) for metric in metrics}
+        self.metrics = {
+            metric_name: METRIC_MODULES[metric_name](grid)
+            for metric_name in metrics
+        }
 
-    def forward(self, sample):
+    def forward(self, sample: dict) -> dict:
+        """
+        Compute all registered metrics on the given sample.
+        Returns a dict of outputs with descriptive names.
+        """
         outputs = {}
 
         for metric_name, module in self.metrics.items():
             result = module(sample)
 
-            # If hydrostatic_balance returns tuple of two tensors:
-            if metric_name == 'hydrostatic_balance':
-                abs_error, rel_error = result
-                outputs[f'{metric_name}_abs_error'] = abs_error
-                outputs[f'{metric_name}_rel_error'] = rel_error
+            # Handle multiple outputs (e.g., tuple or dict)
+            if isinstance(result, tuple):
+                keys = module.output_keys() if hasattr(module, 'output_keys') else [f"{metric_name}_{i}" for i in range(len(result))]
+                for k, val in zip(keys, result):
+                    outputs[k] = val
+            elif isinstance(result, dict):
+                for k, v in result.items():
+                    outputs[f"{metric_name}_{k}"] = v
             else:
-                # For other metrics, assume single tensor output
                 outputs[metric_name] = result
 
         return outputs
+
+    def get_metric_names(self) -> list:
+        """Returns a flat list of all expected output keys from all metrics."""
+        names = []
+        for metric_name, module in self.metrics.items():
+            if hasattr(module, 'output_keys'):
+                names.extend(module.output_keys())
+            else:
+                names.append(metric_name)
+        return names
