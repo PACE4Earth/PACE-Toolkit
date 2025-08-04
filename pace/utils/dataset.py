@@ -150,15 +150,41 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.files = []
         for file in candidate_files:
             path = Path(file)
-            candidates = [path.stem, path.parent.name, path.parent.parent.name]
-            best_dt, best_score = None, 0
-            for candidate in candidates:
-                dt, score = try_parse_datetime_from_str(candidate)
-                if dt is not None and score > best_score:
-                    best_dt, best_score = dt, score
+            # Try to read time variable type first
+            try:  
+                with xr.open_dataset(path, engine='netcdf4') as ds:
+                    time_var = ds['time'].values
+                    if np.issubdtype(time_var.dtype, np.datetime64):
+                        fallback_base_dt = pd.to_datetime(time_var[0])
+                        time_is_absolute = True
+                    elif np.issubdtype(time_var.dtype, (np.timedelta64, np.integer)):
+                        fallback_base_dt = None
+                        time_is_absolute = False
+                    else:
+                        print(f"Warning: Unsupported time dtype in {file}, skipping.")
+                        continue
+            except Exception as e:
+                print(f"Error reading {file}: {e}")
+                continue
 
-            if best_dt and self.start_dt <= best_dt <= lead_end_dt:
-                self.files.append((file, best_dt))
+            # Try to parse base_time from filename only if time is not absolute
+            best_dt, best_score = None, 0
+            if not time_is_absolute:
+                candidates = [path.stem, path.parent.name, path.parent.parent.name]
+                for candidate in candidates:
+                    dt, score = try_parse_datetime_from_str(candidate)
+                    if dt is not None and score > best_score:
+                        best_dt, best_score = dt, score
+
+            # Determine base_dt
+            base_dt = best_dt if best_dt is not None else fallback_base_dt
+            if base_dt is None:
+                print(f"Warning: Could not determine base_time for {file}, skipping.")
+                continue
+
+            if self.start_dt <= base_dt <= lead_end_dt:
+                self.files.append((file, base_dt))
+
 
         print(f"Done. Found {len(self.files)} usable files.\n")
         if not self.files:
@@ -215,10 +241,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.fullfield_sample_flags = [False] * len(self.samples)
 
     def select_matching_fullfield_samples(self, other_dataset):
-        # 1. Find common valid times
         shared_valid_times = sorted(set(self.valid_times) & set(other_dataset.valid_times))
-
-        # 2. Randomly choose N from shared valid times
         rng = np.random.default_rng(42)
         chosen_valid_times = rng.choice(
             shared_valid_times,
@@ -226,17 +249,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
             replace=False
         )
         chosen_valid_times_set = set(chosen_valid_times)
-
-        # 3. For reference: flag ALL matching valid times
         other_dataset.fullfield_sample_flags = [
             other_dataset.valid_time_map[(base_dt, lead_idx)] in chosen_valid_times_set
             for (_, base_dt, lead_idx) in other_dataset.samples
         ]
-
-        # 4. For model: flag ONLY the first sample for each valid time
         selected_valid_times = set()
         flags = []
-
         for (file_path, base_dt, lead_idx) in self.samples:
             vt = self.valid_time_map[(base_dt, lead_idx)]
             if vt in chosen_valid_times_set:
@@ -247,16 +265,10 @@ class UnifiedDataset(torch.utils.data.Dataset):
                     selected_valid_times.add(vt)
             else:
                 flags.append(False)
-
-            # optional early exit if done
             if len(selected_valid_times) >= len(chosen_valid_times_set):
-                # Fill remaining with False if loop breaks early
                 flags.extend([False] * (len(self.samples) - len(flags)))
                 break
-
         self.fullfield_sample_flags = flags
-
-
 
     def __len__(self):
         return len(self.samples)
