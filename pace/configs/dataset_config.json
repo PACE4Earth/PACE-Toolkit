@@ -10,7 +10,8 @@
     }
   },
   "metrics": [
-    "geostrophic_balance"
+    "geostrophic_balance",
+    "hydrostatic_balance"
   ],
   "spatial": {
     "pressure_levels": 3,

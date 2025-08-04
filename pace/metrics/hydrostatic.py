@@ -6,6 +6,8 @@ class HydrostaticBalance(nn.Module):
         super().__init__()
         self.Rd = 287.05  # J/(kg·K), gas constant for dry air
         self.epsilon = 1e-5
+        p_levels = grid.get('pressure_levels', None)
+        self.p_levels = p_levels.float() * 100.0  # Convert hPa to Pa if needed
 
     def virtual_temperature(self, temperature, specific_humidity):
         """
@@ -48,7 +50,7 @@ class HydrostaticBalance(nn.Module):
             'geopotential': [B, L, H, W] in m²/s²
             'temperature': [B, L, H, W] in K
             'specific_humidity': [B, L, H, W] in kg/kg
-            'pressure_levels': list or array of [L] in hPa (top to bottom)
+        'pressure_levels': list or array of [L] in hPa (top to bottom) - from the grid
 
         Returns:
             abs_error_padded: Absolute deviation [B, L, H, W]
@@ -57,10 +59,9 @@ class HydrostaticBalance(nn.Module):
         phi = sample['geopotential']          # [B, L, H, W]
         T = sample['temperature']             # [B, L, H, W]
         q = sample['specific_humidity']       # [B, L, H, W]
-        p_levels = sample['pressure_levels']  # [L] in hPa
 
-        # Convert pressure levels to tensor in Pa
-        p_levels = torch.tensor(p_levels, dtype=torch.float32, device=phi.device) * 100.0  # [L] in Pa
+        # Convert pressure levels to tensor 
+        p_levels = self.p_levels.to(phi.device)
 
         # Flip pressure levels if in descending order
         if p_levels[0] > p_levels[-1]:

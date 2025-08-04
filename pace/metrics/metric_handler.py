@@ -38,7 +38,12 @@ class MetricHandler(nn.Module):
                 for k, v in result.items():
                     outputs[f"{metric_name}_{k}"] = v
             else:
-                outputs[metric_name] = result
+                if hasattr(module, 'output_keys'):
+                    key = module.output_keys()[0]
+                else:
+                    key = metric_name
+                outputs[key] = result
+
 
         return outputs
 

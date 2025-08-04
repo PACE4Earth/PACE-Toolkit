@@ -1,6 +1,5 @@
 import os
 import json
-import random
 import shutil
 from pathlib import Path
 import xarray as xr
@@ -10,7 +9,6 @@ import datetime
 import torch
 import torch.distributed as dist
 from torch.utils.data import (
-    Subset,
     DataLoader,
     DistributedSampler,
     RandomSampler,
@@ -21,6 +19,7 @@ from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config.json')
+
 
 def setup(distributed=False):
     if distributed:
@@ -42,6 +41,7 @@ def setup(distributed=False):
 
     return rank, world_size
 
+
 def get_dataloader(dataset, distributed=False):
     if distributed:
         sampler = DistributedSampler(dataset)
@@ -58,8 +58,12 @@ def get_dataloader(dataset, distributed=False):
     )
     return dataloader, sampler
 
+
 def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadtime_dict):
+    if os.path.exists(save_dir):
+        shutil.rmtree(save_dir)
     os.makedirs(save_dir, exist_ok=True)
+
     for base_time, var_data in dataset_dict.items():
         base_dt = datetime.datetime.utcfromtimestamp(base_time)
         leadtimes_sorted = sorted(set(leadtime_dict[base_time]))
@@ -72,13 +76,11 @@ def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadti
 
         data_vars = {}
         for var_name, values in var_data.items():
-            # Sort by lead time
             values_sorted = sorted(values, key=lambda x: x[0])
             lead_vals = [v for _, v in values_sorted]
             arr = np.stack(lead_vals, axis=0)
 
             if arr.ndim == 4:
-                # spatial dims mean
                 arr = arr.mean(axis=(-1, -2))
                 dims = ("lead_time", "level")
             elif arr.ndim == 3:
@@ -98,6 +100,7 @@ def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadti
         ds_out.to_netcdf(out_path)
         print(f"Saved summary to {out_path}")
 
+
 def main(distributed=False):
     rank, world_size = setup(distributed=distributed)
 
@@ -109,7 +112,6 @@ def main(distributed=False):
     model_name = config["datasets"]["model"]["name"]
     reference_name = config["datasets"].get("reference", {}).get("name")
 
-    # Select matching fullfield samples and update flags in datasets
     fullfield_sample_indices = model_dataset.select_matching_fullfield_samples(reference_dataset or model_dataset)
 
     metric_handler = MetricHandler(
@@ -125,8 +127,7 @@ def main(distributed=False):
     leadtimes_ref = defaultdict(list)
 
     # --- MODEL SUMMARY ---
-    dataset = model_dataset
-    dataloader, sampler = get_dataloader(dataset, distributed=distributed)
+    dataloader, sampler = get_dataloader(model_dataset, distributed=distributed)
     if distributed:
         sampler.set_epoch(0)
 
@@ -155,8 +156,8 @@ def main(distributed=False):
     if reference_dataset:
         reference_dataloader, _ = get_dataloader(reference_dataset, distributed=distributed)
         if distributed:
-            # Optional: set epoch if using distributed sampler
             pass
+
         with torch.no_grad():
             for i, sample in enumerate(reference_dataloader):
                 base_dt = sample["base_time"]
@@ -178,6 +179,7 @@ def main(distributed=False):
 
                 leadtimes_ref[base_time].append(leadtime_hours)
 
+    # --- SAVE SUMMARY OUTPUTS ---
     summary_dir = os.path.join(BASE_DIR, "outputs", "summary", model_name)
     save_dataset_to_netcdf(model_outputs, model_coords, summary_dir, job_name=f"job{rank}", leadtime_dict=leadtimes_model)
 
@@ -185,7 +187,7 @@ def main(distributed=False):
         summary_dir_ref = os.path.join(BASE_DIR, "outputs", "summary", reference_name)
         save_dataset_to_netcdf(reference_outputs, reference_coords, summary_dir_ref, job_name=f"job{rank}", leadtime_dict=leadtimes_ref)
 
-    # --- Save fullfield outputs ---
+    # --- SAVE FULLFIELD OUTPUTS ---
     for tag in [model_name, reference_name]:
         if tag is None:
             continue
@@ -194,8 +196,6 @@ def main(distributed=False):
             shutil.rmtree(full_dir)
         os.makedirs(full_dir)
 
-    # Iterate only over dataset indices where fullfield_sample_flags is True
-    # The select_matching_fullfield_samples updates these flags accordingly
     for dataset, tag in zip([model_dataset, reference_dataset], [model_name, reference_name]):
         if dataset is None or tag is None:
             continue
