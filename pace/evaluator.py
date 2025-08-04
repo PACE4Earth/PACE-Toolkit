@@ -72,15 +72,17 @@ def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadti
 
         data_vars = {}
         for var_name, values in var_data.items():
+            # Sort by lead time
             values_sorted = sorted(values, key=lambda x: x[0])
             lead_vals = [v for _, v in values_sorted]
             arr = np.stack(lead_vals, axis=0)
 
             if arr.ndim == 4:
-                arr = arr.mean(axis=(-1, -2))  # spatial mean -> (lead, level)
+                # spatial dims mean
+                arr = arr.mean(axis=(-1, -2))
                 dims = ("lead_time", "level")
             elif arr.ndim == 3:
-                arr = arr.mean(axis=-1)  # -> (lead, level) or similar
+                arr = arr.mean(axis=-1)
                 dims = ("lead_time", "level")
             elif arr.ndim == 2:
                 dims = ("lead_time", "level")
@@ -96,7 +98,7 @@ def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadti
         ds_out.to_netcdf(out_path)
         print(f"Saved summary to {out_path}")
 
-def main(distributed=False, subset_length=None):
+def main(distributed=False):
     rank, world_size = setup(distributed=distributed)
 
     with open(DATASET_CONFIG_PATH, 'r') as f:
@@ -105,14 +107,10 @@ def main(distributed=False, subset_length=None):
     model_dataset = UnifiedDataset(DATASET_CONFIG_PATH, dataset_key="model")
     reference_dataset = UnifiedDataset(DATASET_CONFIG_PATH, dataset_key="reference") if "reference" in config.get("datasets", {}) else None
     model_name = config["datasets"]["model"]["name"]
-    reference_name = config["datasets"]["reference"]["name"] if reference_dataset else None
-    n_fullfield_samples = config.get("visualizations", {}).get("n_fullfield_samples", 10)
+    reference_name = config["datasets"].get("reference", {}).get("name")
 
-    dataset = Subset(model_dataset, list(range(subset_length))) if subset_length is not None else model_dataset
-    dataloader, sampler = get_dataloader(dataset, distributed=distributed)
-
-    if distributed:
-        sampler.set_epoch(0)
+    # Select matching fullfield samples and update flags in datasets
+    fullfield_sample_indices = model_dataset.select_matching_fullfield_samples(reference_dataset or model_dataset)
 
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),
@@ -125,30 +123,25 @@ def main(distributed=False, subset_length=None):
     reference_coords = defaultdict(dict)
     leadtimes_model = defaultdict(list)
     leadtimes_ref = defaultdict(list)
-    stored_samples = []
+
+    # --- MODEL SUMMARY ---
+    dataset = model_dataset
+    dataloader, sampler = get_dataloader(dataset, distributed=distributed)
+    if distributed:
+        sampler.set_epoch(0)
 
     with torch.no_grad():
         for i, sample in enumerate(dataloader):
-            base_time = sample["base_time"].item()
-            valid_time = sample["lead_time"].item()
-            leadtime_hours = int((valid_time - base_time) / 3600)
-
-            base_dt = datetime.datetime.utcfromtimestamp(base_time)
-            valid_dt = datetime.datetime.utcfromtimestamp(valid_time)
+            base_dt = sample["base_time"]
+            lead_dt = sample["lead_time"]
+            leadtime_hours = int(lead_dt.total_seconds() / 3600)
+            base_time = int(base_dt.timestamp())
 
             output = metric_handler(sample)
-            ref_output = None
-            if reference_dataset:
-                reference_sample = reference_dataset[i]
-                ref_output = metric_handler(reference_sample)
 
             if base_time not in model_coords:
                 model_coords[base_time] = {
                     "level": model_dataset.grid["pressure_levels"].numpy()
-                }
-            if base_time not in reference_coords and ref_output is not None:
-                reference_coords[base_time] = {
-                    "level": reference_dataset.grid["pressure_levels"].numpy()
                 }
 
             for key, val in output.items():
@@ -156,23 +149,34 @@ def main(distributed=False, subset_length=None):
                     val_np = val.squeeze(0).cpu().numpy() if val.ndim == 4 and val.shape[0] == 1 else val.cpu().numpy()
                     model_outputs[base_time][key].append((leadtime_hours, val_np))
 
-            if ref_output is not None:
-                for key, val in ref_output.items():
+            leadtimes_model[base_time].append(leadtime_hours)
+
+    # --- REFERENCE SUMMARY ---
+    if reference_dataset:
+        reference_dataloader, _ = get_dataloader(reference_dataset, distributed=distributed)
+        if distributed:
+            # Optional: set epoch if using distributed sampler
+            pass
+        with torch.no_grad():
+            for i, sample in enumerate(reference_dataloader):
+                base_dt = sample["base_time"]
+                lead_dt = sample["lead_time"]
+                leadtime_hours = int(lead_dt.total_seconds() / 3600)
+                base_time = int(base_dt.timestamp())
+
+                output = metric_handler(sample)
+
+                if base_time not in reference_coords:
+                    reference_coords[base_time] = {
+                        "level": reference_dataset.grid["pressure_levels"].numpy()
+                    }
+
+                for key, val in output.items():
                     if isinstance(val, torch.Tensor):
                         val_np = val.squeeze(0).cpu().numpy() if val.ndim == 4 and val.shape[0] == 1 else val.cpu().numpy()
                         reference_outputs[base_time][key].append((leadtime_hours, val_np))
 
-            leadtimes_model[base_time].append(leadtime_hours)
-            if ref_output is not None:
                 leadtimes_ref[base_time].append(leadtime_hours)
-
-            total_seen = len(stored_samples)
-            if len(stored_samples) < n_fullfield_samples:
-                stored_samples.append((output, ref_output, base_dt, valid_dt, leadtime_hours))
-            else:
-                replace_idx = random.randint(0, total_seen)
-                if replace_idx < n_fullfield_samples:
-                    stored_samples[replace_idx] = (output, ref_output, base_dt, valid_dt, leadtime_hours)
 
     summary_dir = os.path.join(BASE_DIR, "outputs", "summary", model_name)
     save_dataset_to_netcdf(model_outputs, model_coords, summary_dir, job_name=f"job{rank}", leadtime_dict=leadtimes_model)
@@ -181,28 +185,37 @@ def main(distributed=False, subset_length=None):
         summary_dir_ref = os.path.join(BASE_DIR, "outputs", "summary", reference_name)
         save_dataset_to_netcdf(reference_outputs, reference_coords, summary_dir_ref, job_name=f"job{rank}", leadtime_dict=leadtimes_ref)
 
+    # --- Save fullfield outputs ---
     for tag in [model_name, reference_name]:
+        if tag is None:
+            continue
         full_dir = os.path.join(BASE_DIR, "outputs", "fullfields", tag)
         if os.path.exists(full_dir):
             shutil.rmtree(full_dir)
         os.makedirs(full_dir)
 
-    for idx, (model_metrics, ref_metrics, base_dt, valid_dt, leadtime_hours) in enumerate(stored_samples):
-        for tag, metrics, grid in zip(
-            [model_name, reference_name],
-            [model_metrics, ref_metrics],
-            [model_dataset.grid, reference_dataset.grid if reference_dataset else None]
-        ):
-            if metrics is None:
+    # Iterate only over dataset indices where fullfield_sample_flags is True
+    # The select_matching_fullfield_samples updates these flags accordingly
+    for dataset, tag in zip([model_dataset, reference_dataset], [model_name, reference_name]):
+        if dataset is None or tag is None:
+            continue
+
+        for idx, flag in enumerate(dataset.fullfield_sample_flags):
+            if not flag:
                 continue
+
+            sample = dataset[idx]
+            metrics = metric_handler(sample)
+            base_dt = sample["base_time"]
+            lead_dt = sample["lead_time"]
+            leadtime_hours = int(lead_dt.total_seconds() / 3600)
 
             data_vars = {}
             coords = {
-                "lat": grid["lat"].numpy(),
-                "lon": grid["lon"].numpy(),
-                "level": grid["pressure_levels"].numpy(),
+                "lat": dataset.grid["lat"].numpy(),
+                "lon": dataset.grid["lon"].numpy(),
+                "level": dataset.grid["pressure_levels"].numpy(),
                 "base_time": base_dt,
-                "valid_time": valid_dt,
                 "lead_time": leadtime_hours
             }
 
@@ -214,12 +227,13 @@ def main(distributed=False, subset_length=None):
                         data_vars[key] = (dims, arr)
 
             ds = xr.Dataset(data_vars=data_vars, coords=coords)
-            out_path = os.path.join(BASE_DIR, "outputs", "fullfields", tag, f"valid{valid_dt.strftime('%Y%m%d_%H')}.nc")
+            out_path = os.path.join(BASE_DIR, "outputs", "fullfields", tag, f"valid{base_dt.strftime('%Y%m%d_%H')}_lead{leadtime_hours:03d}.nc")
             ds.to_netcdf(out_path)
             print(f"Saved full field to {out_path}")
 
     if distributed:
         dist.destroy_process_group()
 
+
 if __name__ == "__main__":
-    main(distributed=False, subset_length=40)
+    main(distributed=False)

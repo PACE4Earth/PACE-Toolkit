@@ -13,13 +13,13 @@
     "geostrophic_balance"
   ],
   "spatial": {
-    "pressure_levels": 37,
+    "pressure_levels": 3,
     "lat_range": [49, 50],
     "lon_range": [49, 50]
   },
   "time": {
     "start": "20210401",
-    "end": "20210415",
+    "end": "20210411",
     "stride_hours": 6,
     "lead_times": 40
   },
