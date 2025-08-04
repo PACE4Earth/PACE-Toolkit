@@ -10,7 +10,8 @@
     }
   },
   "metrics": [
-    "geostrophic_balance"
+    "geostrophic_balance",
+    "hydrostatic_balance"
   ],
   "spatial": {
     "pressure_levels": 3,
@@ -25,6 +26,7 @@
   },
   "visualization": {
     "n_fullfield_samples": 8,
+    "summary_stats": ["mean", "stdev", "min", "max"],
     "enabled": true,
     "plot_metrics": ["geostrophic_balance"],
     "output_dir": "results/plots"

@@ -5,7 +5,6 @@ from pathlib import Path
 import xarray as xr
 import numpy as np
 from collections import defaultdict
-import datetime
 import torch
 import torch.distributed as dist
 from torch.utils.data import (
@@ -56,7 +55,7 @@ def get_dataloader(dataset, distributed=False):
     )
     return dataloader, sampler
 
-def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadtime_dict):
+def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadtime_dict, summary_stats):
     if os.path.exists(save_dir):
         shutil.rmtree(save_dir)
     os.makedirs(save_dir, exist_ok=True)
@@ -77,19 +76,67 @@ def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadti
             arr = np.stack(lead_vals, axis=0)
 
             if arr.ndim == 4:
-                arr = arr.mean(axis=(-1, -2))
                 dims = ("lead_time", "level")
+                if "mean" in summary_stats:
+                    mean_arr = arr.mean(axis=(-1, -2))
+                    data_vars[f"{var_name}_mean"] = (dims, mean_arr)
+                if "stdev" in summary_stats:
+                    std_arr = arr.std(axis=(-1, -2))
+                    data_vars[f"{var_name}_stdev"] = (dims, std_arr)
+                if "min" in summary_stats:
+                    min_arr = arr.min(axis=(-1, -2))
+                    data_vars[f"{var_name}_min"] = (dims, min_arr)
+                if "max" in summary_stats:
+                    max_arr = arr.max(axis=(-1, -2))
+                    data_vars[f"{var_name}_max"] = (dims, max_arr)
+
             elif arr.ndim == 3:
-                arr = arr.mean(axis=-1)
-                dims = ("lead_time", "level")
+                dims = ("lead_time",)
+                if "mean" in summary_stats:
+                    mean_arr = arr.mean(axis=-1)
+                    data_vars[f"{var_name}_mean"] = (dims, mean_arr)
+                if "stdev" in summary_stats:
+                    std_arr = arr.std(axis=-1)
+                    data_vars[f"{var_name}_stdev"] = (dims, std_arr)
+                if "min" in summary_stats:
+                    min_arr = arr.min(axis=-1)
+                    data_vars[f"{var_name}_min"] = (dims, min_arr)
+                if "max" in summary_stats:
+                    max_arr = arr.max(axis=-1)
+                    data_vars[f"{var_name}_max"] = (dims, max_arr)
+
             elif arr.ndim == 2:
                 dims = ("lead_time", "level")
+                if "mean" in summary_stats:
+                    mean_arr = arr
+                    data_vars[f"{var_name}_mean"] = (dims, mean_arr)
+                if "stdev" in summary_stats:
+                    std_arr = np.zeros_like(arr)
+                    data_vars[f"{var_name}_stdev"] = (dims, std_arr)
+                if "min" in summary_stats:
+                    min_arr = arr
+                    data_vars[f"{var_name}_min"] = (dims, min_arr)
+                if "max" in summary_stats:
+                    max_arr = arr
+                    data_vars[f"{var_name}_max"] = (dims, max_arr)
+
             elif arr.ndim == 1:
                 dims = ("lead_time",)
+                if "mean" in summary_stats:
+                    mean_arr = arr
+                    data_vars[f"{var_name}_mean"] = (dims, mean_arr)
+                if "stdev" in summary_stats:
+                    std_arr = np.zeros_like(arr)
+                    data_vars[f"{var_name}_stdev"] = (dims, std_arr)
+                if "min" in summary_stats:
+                    min_arr = arr
+                    data_vars[f"{var_name}_min"] = (dims, min_arr)
+                if "max" in summary_stats:
+                    max_arr = arr
+                    data_vars[f"{var_name}_max"] = (dims, max_arr)
+
             else:
                 raise ValueError(f"Unsupported shape for summary var '{var_name}': {arr.shape}")
-
-            data_vars[var_name] = (dims, arr)
 
         ds_out = xr.Dataset(data_vars=data_vars, coords=coords)
         out_path = os.path.join(save_dir, f"{job_name}_{base_dt.strftime('%Y%m%d_%H')}.nc")
@@ -171,12 +218,13 @@ def main(distributed=False):
                 leadtimes_ref[base_dt].append(lead_dt)
 
     # --- SAVE SUMMARY OUTPUTS ---
+    summary_stats = config.get("visualization", {}).get("summary_stats", ["mean"])
     summary_dir = os.path.join(BASE_DIR, "outputs", "summary", model_name)
-    save_dataset_to_netcdf(model_outputs, model_coords, summary_dir, job_name=f"job{rank}", leadtime_dict=leadtimes_model)
+    save_dataset_to_netcdf(model_outputs, model_coords, summary_dir, job_name=f"job{rank}", leadtime_dict=leadtimes_model, summary_stats=summary_stats)
 
     if reference_dataset:
         summary_dir_ref = os.path.join(BASE_DIR, "outputs", "summary", reference_name)
-        save_dataset_to_netcdf(reference_outputs, reference_coords, summary_dir_ref, job_name=f"job{rank}", leadtime_dict=leadtimes_ref)
+        save_dataset_to_netcdf(reference_outputs, reference_coords, summary_dir_ref, job_name=f"job{rank}", leadtime_dict=leadtimes_ref, summary_stats=summary_stats)
 
     # --- SAVE FULLFIELD OUTPUTS ---
     for tag in [model_name, reference_name]:
