@@ -109,7 +109,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.spatial_config = self.config.get("spatial", {})
         self.time_config = self.config.get("time", {})
-        self.n_fullfield_samples = self.config.get("visualizations", {}).get("n_fullfield_samples", 10)
+        self.n_fullfield_samples = self.config.get("visualization", {}).get("n_fullfield_samples", 10)
 
         self.lat_min, self.lat_max = sorted(self.spatial_config.get("lat_range", [-90, 90]))
         self.lon_min, self.lon_max = sorted(self.spatial_config.get("lon_range", [0, 360]))
@@ -132,8 +132,10 @@ class UnifiedDataset(torch.utils.data.Dataset):
                     path = Path(os.path.join(root, file))
                     candidates = [path.stem, path.parent.name, path.parent.parent.name]
                     for c in candidates:
-                        if c[:8].isdigit() and self.start[:8] <= c[:8] <= self.end[:8]:
-                            candidate_files.append(path)
+                        if len(c) >= 8 and c[:8].isdigit():
+                            if self.start[:8] <= c[:8] <= self.end[:8]:
+                                candidate_files.append(path)
+
 
         candidate_files.sort()
 

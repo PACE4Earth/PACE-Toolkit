@@ -10,8 +10,7 @@
     }
   },
   "metrics": [
-    "geostrophic_balance",
-    "hydrostatic_balance"
+    "geostrophic_balance"
   ],
   "spatial": {
     "pressure_levels": 3,
@@ -20,12 +19,12 @@
   },
   "time": {
     "start": "20210401",
-    "end": "20210411",
+    "end": "20210412",
     "stride_hours": 6,
     "lead_times": 40
   },
   "visualization": {
-    "n_fullfield_samples": 10,
+    "n_fullfield_samples": 8,
     "enabled": true,
     "plot_metrics": ["geostrophic_balance"],
     "output_dir": "results/plots"

@@ -20,7 +20,6 @@ from metrics.metric_handler import MetricHandler
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config.json')
 
-
 def setup(distributed=False):
     if distributed:
         rank = int(os.environ['SLURM_PROCID'])
@@ -41,7 +40,6 @@ def setup(distributed=False):
 
     return rank, world_size
 
-
 def get_dataloader(dataset, distributed=False):
     if distributed:
         sampler = DistributedSampler(dataset)
@@ -58,18 +56,16 @@ def get_dataloader(dataset, distributed=False):
     )
     return dataloader, sampler
 
-
 def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadtime_dict):
     if os.path.exists(save_dir):
         shutil.rmtree(save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
-    for base_time, var_data in dataset_dict.items():
-        base_dt = datetime.datetime.utcfromtimestamp(base_time)
-        leadtimes_sorted = sorted(set(leadtime_dict[base_time]))
+    for base_dt, var_data in dataset_dict.items():
+        leadtimes_sorted = sorted(set(leadtime_dict[base_dt]))
 
         coords = {
-            "level": coords_dict[base_time]["level"],
+            "level": coords_dict[base_dt]["level"],
             "lead_time": leadtimes_sorted,
             "base_time": base_dt,
         }
@@ -99,7 +95,6 @@ def save_dataset_to_netcdf(dataset_dict, coords_dict, save_dir, job_name, leadti
         out_path = os.path.join(save_dir, f"{job_name}_{base_dt.strftime('%Y%m%d_%H')}.nc")
         ds_out.to_netcdf(out_path)
         print(f"Saved summary to {out_path}")
-
 
 def main(distributed=False):
     rank, world_size = setup(distributed=distributed)
@@ -135,22 +130,20 @@ def main(distributed=False):
         for i, sample in enumerate(dataloader):
             base_dt = sample["base_time"]
             lead_dt = sample["lead_time"]
-            leadtime_hours = int(lead_dt.total_seconds() / 3600)
-            base_time = int(base_dt.timestamp())
 
             output = metric_handler(sample)
 
-            if base_time not in model_coords:
-                model_coords[base_time] = {
+            if base_dt not in model_coords:
+                model_coords[base_dt] = {
                     "level": model_dataset.grid["pressure_levels"].numpy()
                 }
 
             for key, val in output.items():
                 if isinstance(val, torch.Tensor):
                     val_np = val.squeeze(0).cpu().numpy() if val.ndim == 4 and val.shape[0] == 1 else val.cpu().numpy()
-                    model_outputs[base_time][key].append((leadtime_hours, val_np))
+                    model_outputs[base_dt][key].append((lead_dt, val_np))
 
-            leadtimes_model[base_time].append(leadtime_hours)
+            leadtimes_model[base_dt].append(lead_dt)
 
     # --- REFERENCE SUMMARY ---
     if reference_dataset:
@@ -162,22 +155,20 @@ def main(distributed=False):
             for i, sample in enumerate(reference_dataloader):
                 base_dt = sample["base_time"]
                 lead_dt = sample["lead_time"]
-                leadtime_hours = int(lead_dt.total_seconds() / 3600)
-                base_time = int(base_dt.timestamp())
 
                 output = metric_handler(sample)
 
-                if base_time not in reference_coords:
-                    reference_coords[base_time] = {
+                if base_dt not in reference_coords:
+                    reference_coords[base_dt] = {
                         "level": reference_dataset.grid["pressure_levels"].numpy()
                     }
 
                 for key, val in output.items():
                     if isinstance(val, torch.Tensor):
                         val_np = val.squeeze(0).cpu().numpy() if val.ndim == 4 and val.shape[0] == 1 else val.cpu().numpy()
-                        reference_outputs[base_time][key].append((leadtime_hours, val_np))
+                        reference_outputs[base_dt][key].append((lead_dt, val_np))
 
-                leadtimes_ref[base_time].append(leadtime_hours)
+                leadtimes_ref[base_dt].append(lead_dt)
 
     # --- SAVE SUMMARY OUTPUTS ---
     summary_dir = os.path.join(BASE_DIR, "outputs", "summary", model_name)
@@ -216,7 +207,7 @@ def main(distributed=False):
                 "lon": dataset.grid["lon"].numpy(),
                 "level": dataset.grid["pressure_levels"].numpy(),
                 "base_time": base_dt,
-                "lead_time": leadtime_hours
+                "lead_time": lead_dt
             }
 
             for key, val in metrics.items():
@@ -233,7 +224,6 @@ def main(distributed=False):
 
     if distributed:
         dist.destroy_process_group()
-
 
 if __name__ == "__main__":
     main(distributed=False)
