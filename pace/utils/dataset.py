@@ -272,6 +272,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 break
         self.fullfield_sample_flags = flags
 
+        print(self.__len__())
+
     def __len__(self):
         return len(self.samples)
 

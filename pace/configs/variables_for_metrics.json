@@ -44,6 +44,12 @@
     "10m_v_component_of_wind", 
     "mean_sea_level_pressure"
   ],
+  "correlation_map": [
+    "2m_temperature",  
+    "10m_u_component_of_wind", 
+    "10m_v_component_of_wind", 
+    "mean_sea_level_pressure"
+  ],
   "dummy_2d" : [
     "mean_sea_level_pressure"
   ],

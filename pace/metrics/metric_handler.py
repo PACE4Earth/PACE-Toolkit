@@ -4,11 +4,13 @@ from torch import nn
 from .geostrophic import GeostrophicWind
 from .correlation import SampleWiseCorrelation
 from .hydrostatic import HydrostaticBalance 
+from .correlation_map import CorrelationMap
 
 METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,
     'correlation': SampleWiseCorrelation,
-    'hydrostatic_balance': HydrostaticBalance
+    'correlation_map': CorrelationMap,
+    'hydrostatic_balance': HydrostaticBalance,
 }
 
 class MetricHandler(nn.Module):
