@@ -13,17 +13,17 @@ files = [
 
 files.sort()
 
-# this_path = files[-1]
-this_path = '/p/scratch/hclimrep/pavel1/CorrDiff/crea2_6h/Output/Output_allVars/corrdiff_output_ensemble_6h_8.nc'
+this_path = files[-1]
+# this_path = '/p/scratch/hclimrep/pavel1/CorrDiff/crea2_6h/Output/Output_allVars/corrdiff_output_ensemble_6h_8.nc'
 
-with xr.open_dataset(this_path, engine='netcdf4') as ds:
+with xr.open_dataset(this_path, group='prediction', engine='netcdf4') as ds:
     print(ds)
-    cfg = ast.literal_eval(ds.attrs['cfg'])
-    for k, v in cfg.items():
-        print(k, v)
-        print()
-    da = ds.isel(time=0).values
-    print(da)    
+    # cfg = ast.literal_eval(ds.attrs['cfg'])
+    # for k, v in cfg.items():
+    #     print(k, v)
+    #     print()
+    # da = ds.isel(time=0).values
+    # print(da)    
 #     output_filename = cfg['generation']['io']['output_filename']
     
 # try:
