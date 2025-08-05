@@ -179,5 +179,5 @@ cython_debug/
 *_bk*
 
 tests/
-dirty_bit/test_zarr
+*.zarr/
 outputs/
