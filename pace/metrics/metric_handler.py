@@ -13,6 +13,7 @@ METRIC_MODULES = {
     'correlation_map': CorrelationMap,
     'hydrostatic_balance': HydrostaticBalance,
     'humidity_temperature': HumidityConsistency,
+    'potential_vorticity': PotentialVorticity,
 }
 
 class MetricHandler(nn.Module):
