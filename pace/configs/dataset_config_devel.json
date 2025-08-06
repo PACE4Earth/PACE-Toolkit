@@ -6,6 +6,9 @@
     }
   },
   "metrics": [
+    "geostrophic_balance",
+    "hydrostatic_balance",
+    "correlation",
     "correlation_map"
   ],
   "spatial": {
@@ -15,7 +18,7 @@
   },
   "time": {
     "start": "20210401",
-    "end": "20210630",
+    "end": "20210531",
     "stride_hours": 6,
     "lead_times": 40
   },

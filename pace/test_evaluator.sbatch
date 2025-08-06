@@ -7,8 +7,13 @@
 #SBATCH --account=weatherai
 
 # ❗ Load modules for a CPU environment
-ml Stages/2025 GCC/13.3.0 GCCcore/.13.3.0 SciPy-Stack/2024a PyTorch/2.5.1 netcdf4-python/1.7.1.post2-serial
-ml ParaStationMPI/5.11.0-1
+# ml Stages/2025 GCC/13.3.0 GCCcore/.13.3.0 SciPy-Stack/2024a PyTorch/2.5.1 netcdf4-python/1.7.1.post2-serial
+# ml ParaStationMPI/5.11.0-1
+
+module purge -f
+ml Stages/2024  GCCcore/.12.3.0 zarr/2.18.3
+ml SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial
+ml ParaStationMPI/5.9.2-1
 
 # Set path to GraphCast data
 export GRAPHCAST_EXTENDED_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"

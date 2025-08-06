@@ -171,8 +171,8 @@ class SampleWiseCorrelation(nn.Module):
             aspect='auto',
         )
         
-        ax.set_xlabel(f'{key.split('_')[0]}')
-        ax.set_ylabel(f'{key.split('_')[1]}')
+        ax.set_xlabel(key.split('_')[0])
+        ax.set_xlabel(key.split('_')[1])
         ax.set_title(f"Histogram for {key}")
         fig.colorbar(im, ax=ax, label='Prob. density')
         

@@ -8,10 +8,11 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
+from utils.output_logger import IndexedZarrSaver
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config_devel.json')
 
 
 def setup(distributed=False):
@@ -106,6 +107,8 @@ def main(distributed=False):
     # Expand outputs_dir from config or use default
     outputs_dir = os.path.expandvars(config.get("outputs_dir", os.path.join(BASE_DIR, "outputs")))
     os.makedirs(outputs_dir, exist_ok=True)
+    
+    output_logger = IndexedZarrSaver(path=outputs_dir)
 
     model_dataset = UnifiedDataset(DATASET_CONFIG_PATH, dataset_key="model")
     reference_dataset = UnifiedDataset(
@@ -132,68 +135,84 @@ def main(distributed=False):
         sampler.set_epoch(0)
 
     with torch.no_grad():
-        for sample in dataloader:
+        for it, sample in enumerate(dataloader):
             metrics = metric_handler(sample)
-            base_dt = sample["base_time"]
-            lead_dt = sample["lead_time"]
+            metrics['base_time'] = sample['base_time']
+            metrics['lead_time'] = sample['lead_time']
+            
+            output_logger(metrics)
+            
+            # for k,v in metrics.items():
+            #     if isinstance(v, torch.Tensor):
+            #         print(k, v.shape)
+            #     else:
+            #         print(k, v)
+                    
+            # if it == (len(dataloader)-1):
+                # logger.evaluate()
+                # ...
+                
+########################################################################
+    #         base_dt = sample["base_time"]
+    #         lead_dt = sample["lead_time"]
 
-            base_times_model.append(base_dt)
-            lead_times_model.append(lead_dt)
+    #         base_times_model.append(base_dt)
+    #         lead_times_model.append(lead_dt)
 
-            for key, val in metrics.items():
-                if isinstance(val, torch.Tensor):
-                    arr = val.squeeze(0).cpu().numpy()  # (level, lat, lon)
-                    model_metrics_data[key].append(arr)
+    #         for key, val in metrics.items():
+    #             if isinstance(val, torch.Tensor):
+    #                 arr = val.squeeze(0).cpu().numpy()  # (level, lat, lon)
+    #                 model_metrics_data[key].append(arr)
 
-    for key in model_metrics_data:
-        model_metrics_data[key] = np.stack(model_metrics_data[key], axis=0)
+    # for key in model_metrics_data:
+    #     model_metrics_data[key] = np.stack(model_metrics_data[key], axis=0)
 
-    aggregated_model, model_coords = aggregate_samples(
-        model_metrics_data,
-        base_times_model,
-        lead_times_model,
-        levels=model_dataset.grid["pressure_levels"].numpy(),
-        lats=model_dataset.grid["lat"].numpy(),
-        lons=model_dataset.grid["lon"].numpy()
-    )
+    # aggregated_model, model_coords = aggregate_samples(
+    #     model_metrics_data,
+    #     base_times_model,
+    #     lead_times_model,
+    #     levels=model_dataset.grid["pressure_levels"].numpy(),
+    #     lats=model_dataset.grid["lat"].numpy(),
+    #     lons=model_dataset.grid["lon"].numpy()
+    # )
 
-    save_fullfields_to_netcdf(aggregated_model, model_coords, os.path.join(outputs_dir, f"{model_name}_fullfields.nc"))
+    # save_fullfields_to_netcdf(aggregated_model, model_coords, os.path.join(outputs_dir, f"{model_name}_fullfields.nc"))
 
     # --- REFERENCE FULLFIELDS ---
-    if reference_dataset:
-        reference_metrics_data = defaultdict(list)
-        base_times_ref = []
-        lead_times_ref = []
+    # if reference_dataset:
+    #     reference_metrics_data = defaultdict(list)
+    #     base_times_ref = []
+    #     lead_times_ref = []
 
-        ref_dataloader, _ = get_dataloader(reference_dataset, distributed=distributed)
+    #     ref_dataloader, _ = get_dataloader(reference_dataset, distributed=distributed)
 
-        with torch.no_grad():
-            for sample in ref_dataloader:
-                metrics = metric_handler(sample)
-                base_dt = sample["base_time"]
-                lead_dt = sample["lead_time"]
+    #     with torch.no_grad():
+    #         for sample in ref_dataloader:
+    #             metrics = metric_handler(sample)
+    #             base_dt = sample["base_time"]
+    #             lead_dt = sample["lead_time"]
 
-                base_times_ref.append(base_dt)
-                lead_times_ref.append(lead_dt)
+    #             base_times_ref.append(base_dt)
+    #             lead_times_ref.append(lead_dt)
 
-                for key, val in metrics.items():
-                    if isinstance(val, torch.Tensor):
-                        arr = val.squeeze(0).cpu().numpy()
-                        reference_metrics_data[key].append(arr)
+    #             for key, val in metrics.items():
+    #                 if isinstance(val, torch.Tensor):
+    #                     arr = val.squeeze(0).cpu().numpy()
+    #                     reference_metrics_data[key].append(arr)
 
-        for key in reference_metrics_data:
-            reference_metrics_data[key] = np.stack(reference_metrics_data[key], axis=0)
+    #     for key in reference_metrics_data:
+    #         reference_metrics_data[key] = np.stack(reference_metrics_data[key], axis=0)
 
-        aggregated_ref, reference_coords = aggregate_samples(
-            reference_metrics_data,
-            base_times_ref,
-            lead_times_ref,
-            levels=reference_dataset.grid["pressure_levels"].numpy(),
-            lats=reference_dataset.grid["lat"].numpy(),
-            lons=reference_dataset.grid["lon"].numpy()
-        )
+    #     aggregated_ref, reference_coords = aggregate_samples(
+    #         reference_metrics_data,
+    #         base_times_ref,
+    #         lead_times_ref,
+    #         levels=reference_dataset.grid["pressure_levels"].numpy(),
+    #         lats=reference_dataset.grid["lat"].numpy(),
+    #         lons=reference_dataset.grid["lon"].numpy()
+    #     )
 
-        save_fullfields_to_netcdf(aggregated_ref, reference_coords, os.path.join(outputs_dir, f"{reference_name}_fullfields.nc"))
+    #     save_fullfields_to_netcdf(aggregated_ref, reference_coords, os.path.join(outputs_dir, f"{reference_name}_fullfields.nc"))
 
     if distributed:
         dist.destroy_process_group()
