@@ -12,6 +12,8 @@ ml ParaStationMPI/5.11.0-1
 
 # Set path to GraphCast data
 export GRAPHCAST_EXTENDED_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
+export ERA5_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_download/2021"
+export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/shared/pace/outputs"
 
 # Set the master address and port
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))

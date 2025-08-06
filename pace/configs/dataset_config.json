@@ -9,6 +9,7 @@
       "path": "${ERA5_DATA_PATH}"
     }
   },
+  "outputs_dir": "${OUTPUTS_DIR_PATH}",
   "metrics": [
     "geostrophic_balance",
     "hydrostatic_balance"
