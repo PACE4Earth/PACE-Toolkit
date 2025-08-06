@@ -82,7 +82,7 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
     }
 
 class UnifiedDataset(torch.utils.data.Dataset):
-    def __init__(self, config_path=None, dataset_key='model'):
+    def __init__(self, config_path=None, dataset_key='model', shared_valid_times=None):
         aliases_path = Path(__file__).resolve().parent.parent / "configs" / "aliases.json"
         with open(aliases_path, "r") as f:
             self.aliases = json.load(f)
@@ -108,16 +108,15 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.path = dataset_config.get("path", "")
 
         self.spatial_config = self.config.get("spatial", {})
-        self.time_config = self.config.get("time", {})
-        self.n_fullfield_samples = self.config.get("visualization", {}).get("n_fullfield_samples", 10)
-
         self.lat_min, self.lat_max = sorted(self.spatial_config.get("lat_range", [-90, 90]))
         self.lon_min, self.lon_max = sorted(self.spatial_config.get("lon_range", [0, 360]))
         self.pressure_levels = self.spatial_config.get("pressure_levels", None)
 
+        self.time_config = self.config.get("time", {})
         self.start = self.time_config.get("start")
         self.end = self.time_config.get("end")
         self.stride_hours = self.time_config.get("stride_hours", 6)
+        self.sample_percent = self.time_config.get("sample_percent", 1)
         self.max_lead = self.time_config.get("lead_times", 1)
 
         self.start_dt = datetime.strptime(self.start, "%Y%m%d")
@@ -136,7 +135,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
                             if self.start[:8] <= c[:8] <= self.end[:8]:
                                 candidate_files.append(path)
 
-
         candidate_files.sort()
 
         def try_parse_datetime_from_str(s):
@@ -152,8 +150,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.files = []
         for file in candidate_files:
             path = Path(file)
-            # Try to read time variable type first
-            try:  
+            try:
                 with xr.open_dataset(path, engine='netcdf4') as ds:
                     time_var = ds['time'].values
                     if np.issubdtype(time_var.dtype, np.datetime64):
@@ -169,7 +166,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 print(f"Error reading {file}: {e}")
                 continue
 
-            # Try to parse base_time from filename only if time is not absolute
             best_dt, best_score = None, 0
             if not time_is_absolute:
                 candidates = [path.stem, path.parent.name, path.parent.parent.name]
@@ -178,7 +174,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
                     if dt is not None and score > best_score:
                         best_dt, best_score = dt, score
 
-            # Determine base_dt
             base_dt = best_dt if best_dt is not None else fallback_base_dt
             if base_dt is None:
                 print(f"Warning: Could not determine base_time for {file}, skipping.")
@@ -186,7 +181,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             if self.start_dt <= base_dt <= lead_end_dt:
                 self.files.append((file, base_dt))
-
 
         print(f"Done. Found {len(self.files)} usable files.\n")
         if not self.files:
@@ -215,7 +209,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 self.metrics[metric] = found
             else:
                 print(f'{metric:<23} is missing field/s for computation.')
-        print("\n\n")
 
         self.canonical_names = list(dict.fromkeys([k for v in self.metrics.values() for k in v]))
         self.requested_names = list(dict.fromkeys([v for d in self.metrics.values() for v in d.values()]))
@@ -240,39 +233,19 @@ class UnifiedDataset(torch.utils.data.Dataset):
                     self.valid_time_map[(base_dt, lead_idx)] = valid_time
 
         self.valid_times = sorted(set(self.valid_time_map.values()))
-        self.fullfield_sample_flags = [False] * len(self.samples)
 
-    def select_matching_fullfield_samples(self, other_dataset):
-        shared_valid_times = sorted(set(self.valid_times) & set(other_dataset.valid_times))
         rng = np.random.default_rng(42)
-        chosen_valid_times = rng.choice(
-            shared_valid_times,
-            size=min(self.n_fullfield_samples, len(shared_valid_times)),
-            replace=False
-        )
-        chosen_valid_times_set = set(chosen_valid_times)
-        other_dataset.fullfield_sample_flags = [
-            other_dataset.valid_time_map[(base_dt, lead_idx)] in chosen_valid_times_set
-            for (_, base_dt, lead_idx) in other_dataset.samples
-        ]
-        selected_valid_times = set()
-        flags = []
-        for (file_path, base_dt, lead_idx) in self.samples:
-            vt = self.valid_time_map[(base_dt, lead_idx)]
-            if vt in chosen_valid_times_set:
-                if vt in selected_valid_times:
-                    flags.append(False)
-                else:
-                    flags.append(True)
-                    selected_valid_times.add(vt)
-            else:
-                flags.append(False)
-            if len(selected_valid_times) >= len(chosen_valid_times_set):
-                flags.extend([False] * (len(self.samples) - len(flags)))
-                break
-        self.fullfield_sample_flags = flags
+        if shared_valid_times is not None:
+            chosen_valid_times = shared_valid_times
+        else:
+            num_samples = max(1, round(len(self.valid_times) * (self.sample_percent / 100.0)))
+            chosen_valid_times = set(rng.choice(self.valid_times, size=num_samples, replace=False))
 
-        print(self.__len__())
+        self.samples = [(fp, bd, li) for (fp, bd, li) in self.samples if self.valid_time_map[(bd, li)] in chosen_valid_times]
+        self.chosen_valid_times = chosen_valid_times 
+
+        print(f"\nSelected {len(self.samples)} samples for {self.name}.")
+        print("---------------------------------------------\n")
 
     def __len__(self):
         return len(self.samples)
@@ -318,34 +291,32 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         return fields
 
+
 def main():
     config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/dataset_config.json"
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
-    reference_dataset = UnifiedDataset(config_path, dataset_key="reference") if "reference" in model_dataset.config.get("datasets", {}) else None
+    reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
+    print(f"len model: {model_dataset.__len__()}")
 
     if reference_dataset:
-        model_dataset.select_matching_fullfield_samples(reference_dataset)
+        print(f"len ref: {reference_dataset.__len__()}")
 
     print("\nModel valid times:", model_dataset.valid_times)
-    print(f"\n{model_dataset.n_fullfield_samples} randomly selected fullfield samples:")
     for i, (file_path, base_dt, lead_idx) in enumerate(model_dataset.samples):
-        if model_dataset.fullfield_sample_flags[i]:
-            valid_time = model_dataset.valid_time_map[(base_dt, lead_idx)]
-            print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-            sample = model_dataset[i]
-            print("  base_time:", sample['base_time'])
-            print("  lead_time:", sample['lead_time'])
+        valid_time = model_dataset.valid_time_map[(base_dt, lead_idx)]
+        print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+        sample = model_dataset[i]
+        print("  base_time:", sample['base_time'])
+        print("  lead_time:", sample['lead_time'])
 
     if reference_dataset:
         print("\nReference valid times:", reference_dataset.valid_times)
-        print(f"\n{reference_dataset.n_fullfield_samples} matching fullfield samples:")
         for i, (file_path, base_dt, lead_idx) in enumerate(reference_dataset.samples):
-            if reference_dataset.fullfield_sample_flags[i]:
-                valid_time = reference_dataset.valid_time_map[(base_dt, lead_idx)]
-                print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-                sample = reference_dataset[i]
-                print("  base_time:", sample['base_time'])
-                print("  lead_time:", sample['lead_time'])
+            valid_time = reference_dataset.valid_time_map[(base_dt, lead_idx)]
+            print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+            sample = reference_dataset[i]
+            print("  base_time:", sample['base_time'])
+            print("  lead_time:", sample['lead_time'])
 
 if __name__ == "__main__":
     main()
