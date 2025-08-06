@@ -6,6 +6,7 @@ from .correlation import SampleWiseCorrelation
 from .hydrostatic import HydrostaticBalance 
 from .correlation_map import CorrelationMap
 from .humidity import HumidityConsistency
+from .potential_vorticity import PotentialVorticity
 
 METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,
