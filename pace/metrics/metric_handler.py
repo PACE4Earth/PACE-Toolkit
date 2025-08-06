@@ -5,12 +5,14 @@ from .geostrophic import GeostrophicWind
 from .correlation import SampleWiseCorrelation
 from .hydrostatic import HydrostaticBalance 
 from .correlation_map import CorrelationMap
+from .humidity import HumidityConsistency
 
 METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,
     'correlation': SampleWiseCorrelation,
     'correlation_map': CorrelationMap,
     'hydrostatic_balance': HydrostaticBalance,
+    'humidity_temperature': HumidityConsistency,
 }
 
 class MetricHandler(nn.Module):
