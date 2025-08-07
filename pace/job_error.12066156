@@ -1,0 +1,166 @@
+The following modules were not unloaded:
+  (Use "module --force purge" to unload all):
+
+  1) Stages/2025
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+
+The following have been reloaded with a version change:
+  1) Stages/2025 => Stages/2024
+
+Lmod has detected the following error: These module(s) or extension(s) exist
+but cannot be loaded as requested: "ParaStationMPI/5.9.2-1"
+   Try: "module spider ParaStationMPI/5.9.2-1" to see how to load the
+module(s).
+
+
+
+[W socket.cpp:436] [c10d] The server socket cannot be initialized on [::]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwc00n114.juwels]:16156 (errno: 97 - Address family not supported by protocol).
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+    main(distributed=True)
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+    shutil.rmtree(self.path)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+    main(distributed=True)
+    main(distributed=True)
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+    main(distributed=True)
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+    _rmtree_safe_fd(fd, path, onerror)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+    shutil.rmtree(self.path)
+    shutil.rmtree(self.path)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 111, in <module>
+    main(distributed=True)
+    main(distributed=True)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+    shutil.rmtree(self.path)
+    main(distributed=True)
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    _rmtree_safe_fd(fd, path, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/evaluator.py", line 72, in main
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    _rmtree_safe_fd(fd, path, onerror)
+    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    _rmtree_safe_fd(fd, path, onerror)
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vas1/PACE-Toolkit/pace/utils/output_logger.py", line 31, in __init__
+    shutil.rmtree(self.path)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+    shutil.rmtree(self.path)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    shutil.rmtree(self.path)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 732, in rmtree
+    _rmtree_safe_fd(fd, path, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 666, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    onerror(os.rmdir, fullname, sys.exc_info())
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    _rmtree_safe_fd(fd, path, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 664, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 683, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    os.rmdir(entry.name, dir_fd=topfd)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+FileNotFoundError: [Errno 2] No such file or directory: 'hydrostatic_rel_error'
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 666, in _rmtree_safe_fd
+    onerror(os.unlink, fullname, sys.exc_info())
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 681, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 666, in _rmtree_safe_fd
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+    onerror(os.rmdir, fullname, sys.exc_info())
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 666, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 664, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 666, in _rmtree_safe_fd
+FileNotFoundError: [Errno 2] No such file or directory: '0.0.0.0'
+    _rmtree_safe_fd(fd, path, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    os.rmdir(entry.name, dir_fd=topfd)
+FileNotFoundError: [Errno 2] No such file or directory: 'hydrostatic_rel_error'
+    onerror(os.rmdir, fullname, sys.exc_info())
+    onerror(os.rmdir, fullname, sys.exc_info())
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 664, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 664, in _rmtree_safe_fd
+    onerror(os.rmdir, fullname, sys.exc_info())
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 664, in _rmtree_safe_fd
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 660, in _rmtree_safe_fd
+    os.rmdir(entry.name, dir_fd=topfd)
+    os.rmdir(entry.name, dir_fd=topfd)
+FileNotFoundError: [Errno 2] No such file or directory: 'hydrostatic_rel_error'
+FileNotFoundError: [Errno 2] No such file or directory: 'hydrostatic_rel_error'
+    os.rmdir(entry.name, dir_fd=topfd)
+    _rmtree_safe_fd(dirfd, fullname, onerror)
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 666, in _rmtree_safe_fd
+FileNotFoundError: [Errno 2] No such file or directory: 'hydrostatic_rel_error'
+    onerror(os.rmdir, fullname, sys.exc_info())
+  File "/p/software/juwels/stages/2024/software/Python/3.11.3-GCCcore-12.3.0/lib/python3.11/shutil.py", line 664, in _rmtree_safe_fd
+    os.rmdir(entry.name, dir_fd=topfd)
+FileNotFoundError: [Errno 2] No such file or directory: 'hydrostatic_rel_error'
+srun: error: jwc00n114: tasks 0-3,5-7: Exited with exit code 1
+srun: error: jwc00n114: task 4: Terminated
+srun: Force Terminated StepId=12066156.0

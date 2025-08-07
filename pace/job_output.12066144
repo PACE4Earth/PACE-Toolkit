@@ -1,0 +1,50 @@
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+IndexedZarrSaver initialized at '/p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr'. Ready to save forecasts.
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr
+IndexedZarrSaver initialized at '/p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr'. Ready to save forecasts.
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/162h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/168h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/204h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/24h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/138h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/150h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/240h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/174h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/192h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/96h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/12h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/84h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/120h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/180h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/108h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-06 00:00:00/0h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-08 00:00:00/6h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-12 00:00:00/12h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-09 00:00:00/12h
+Saved: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-02 00:00:00/0h

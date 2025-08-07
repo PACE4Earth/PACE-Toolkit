@@ -12,7 +12,7 @@ from utils.output_logger import IndexedZarrSaver
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config_devel.json')
 
 def setup(distributed=False):
     if distributed:
@@ -108,4 +108,4 @@ def main(distributed=False):
         dist.destroy_process_group()
 
 if __name__ == "__main__":
-    main(distributed=False)
+    main(distributed=True)

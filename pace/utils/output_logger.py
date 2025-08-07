@@ -10,9 +10,11 @@ import torch.nn as nn
 
 class IndexedZarrSaver(nn.Module):
     """
-    A torch.nn.Module that saves forecasts and provides integer-based access. 🗂️
+    A torch.nn.Module that saves forecasts and provides integer-based access. 
 
-    This module saves data to a hierarchical structure: `root/base_time/lead_time/`.
+    This module saves data to a hierarchical structure: `root/base_time/lead_time/`,
+    where lead_time is saved in the format '240h'.
+
     It also maintains an internal `_index` array within the Zarr store, mapping
     an integer index to each (base_time, lead_time) pair.
 
@@ -61,20 +63,24 @@ class IndexedZarrSaver(nn.Module):
         }
 
     def forward(self, sample: dict) -> dict:
-        base_times = sample['base_time']
-        lead_times = sample['lead_time']
-
-        sample.pop('lead_time')
-        sample.pop('base_time')
+        base_times = sample.pop('base_time')
+        lead_times = sample.pop('lead_time')
 
         is_batch = isinstance(base_times, (list, tuple))
         new_indices = []
+
+        def format_lead_time(lt):
+            # Convert timedelta to hours string like "240h"
+            if isinstance(lt, torch.Tensor):
+                lt = lt.item()
+            hours = int(lt.total_seconds() // 3600)
+            return f"{hours}h"
 
         if is_batch:
             paths_to_append = []
             for i in range(len(base_times)):
                 base_t_key = str(base_times[i])
-                lead_t_key = str(lead_times[i])
+                lead_t_key = format_lead_time(lead_times[i])
                 paths_to_append.append([base_t_key, lead_t_key])
 
                 lead_group = self.root.require_group(base_t_key).require_group(lead_t_key)
@@ -89,7 +95,7 @@ class IndexedZarrSaver(nn.Module):
             self.index_array.append(paths_to_append)
         else:
             base_t_key = str(base_times)
-            lead_t_key = str(lead_times)
+            lead_t_key = format_lead_time(lead_times)
 
             lead_group = self.root.require_group(base_t_key).require_group(lead_t_key)
 

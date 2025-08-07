@@ -1,0 +1,196 @@
+Process group initialized for rank 3 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+Process group initialized for rank 2 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+Process group initialized for rank 0 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+Process group initialized for rank 6 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+Process group initialized for rank 5 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+Process group initialized for rank 1 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
+Process group initialized for rank 7 of 8 on CPU.
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+[IndexedZarrSaver] Removing existing zarr directory: /p/project1/hclimrep/vas1/PACE-Toolkit/pace/outputs/graphcast.zarr
