@@ -41,20 +41,20 @@ class MPIZarrSaver:
         lock_path = os.path.join(self.path, '.zarrlock')
         lock = zarr.ProcessSynchronizer(lock_path)
         
-        self.saver = IndexedZarrSaver(self.path, synchronizer=lock)
+        self.saver = ZarrHandler(self.path, synchronizer=lock)
         if self.rank == 0:
             print(f"All {self.size} ranks have opened the synchronized Zarr archive.")
 
     def save(self, sample: dict):
         """A wrapper for the forward call to save a sample from any rank."""
-        print(f"Rank {self.rank}: Saving data for base_time {sample['base_time']}")
+        # print(f"Rank {self.rank}: Saving data for base_time {sample['base_time']}")
         self.saver(sample)
 
     def get_saver_instance(self):
         """Returns the underlying saver object for inspection, e.g., len()."""
         return self.saver
 
-class IndexedZarrSaver(nn.Module):
+class ZarrHandler(nn.Module):
     """
     A torch.nn.Module that saves forecasts and provides integer-based access. 
 
@@ -67,13 +67,13 @@ class IndexedZarrSaver(nn.Module):
     This allows the saver instance to be used like a dataset for easy retrieval:
     `data = saver[0]`
     """
-    def __init__(self, path: str, synchronizer=None):
+    def __init__(self, path: str, mode='a', synchronizer=None):
         
         super().__init__()
         
         self.path = path  # e.g., outputs/graphcast.zarr
 
-        self.root = zarr.open_group(self.path, mode='a', synchronizer=synchronizer)
+        self.root = zarr.open_group(self.path, mode=mode, synchronizer=synchronizer)
 
         self.index_array = self.root['_index']
 

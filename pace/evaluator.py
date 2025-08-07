@@ -1,15 +1,18 @@
 import os
-from mpi4py import MPI
 import json
-import xarray as xr
-import numpy as np
+from mpi4py import MPI
 from collections import defaultdict
+
+import numpy as np
+import xarray as xr
+import zarr
+
 import torch
 import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
-from utils.output_logger import MPIZarrSaver, IndexedZarrSaver
+from utils.output_logger import MPIZarrSaver, ZarrHandler
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -60,7 +63,6 @@ def main(distributed=False):
     assert world_size == comm.Get_size(), "Mismatch between torch.distributed and MPI world sizes!"
     assert rank == comm.Get_rank(), "Mismatch between torch.distributed and MPI ranks!"
 
-
     with open(DATASET_CONFIG_PATH, 'r') as f:
         config = json.load(f)
 
@@ -69,7 +71,10 @@ def main(distributed=False):
     
     print('output dir:', outputs_dir)
 
-    model_dataset = UnifiedDataset(DATASET_CONFIG_PATH, dataset_key="model")
+    model_dataset = UnifiedDataset(
+        DATASET_CONFIG_PATH, 
+        dataset_key="model",
+    )
     reference_dataset = UnifiedDataset(
         DATASET_CONFIG_PATH,
         dataset_key="reference",
@@ -79,8 +84,8 @@ def main(distributed=False):
     model_name = config["datasets"]["model"]["name"]
     reference_name = config["datasets"].get("reference", {}).get("name")
 
-    # model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
-    # reference_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{reference_name}.zarr")) if reference_dataset else None
+    # model_output_logger = ZarrHandler(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+    # reference_output_logger = ZarrHandler(path=os.path.join(outputs_dir, f"{reference_name}.zarr")) if reference_dataset else None
 
     model_output_logger = MPIZarrSaver(
         path=os.path.join(outputs_dir, f"{model_name}.zarr"), 
@@ -95,6 +100,7 @@ def main(distributed=False):
         metrics=list(model_dataset.metrics.keys()),
         grid=model_dataset.grid
     )
+    
 
     def evaluate_and_log(dataset, logger, dataset_name):
         dataloader, sampler = get_dataloader(dataset, distributed=distributed)
@@ -102,7 +108,7 @@ def main(distributed=False):
             sampler.set_epoch(0)
 
         with torch.no_grad():
-            for sample in dataloader:
+            for it, sample in enumerate(dataloader):
                 metrics = metric_handler(sample)
                 sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"]}
                 # logger(sample_out)
@@ -125,8 +131,40 @@ def main(distributed=False):
         # evaluate_and_log(reference_dataset, passthrough_logger, dataset_name=reference_name)
         evaluate_and_log(reference_dataset, reference_output_logger, dataset_name=reference_name)
 
+    comm.Barrier()
+
     if distributed:
         dist.destroy_process_group()
+
+    print(f"Rank {comm.Get_rank()} waiting at barrier.")
+    comm.Barrier()
+    print(f"Rank {comm.Get_rank()} passed barrier.")
+
+    # 2. On a single rank (e.g., Rank 0), perform final actions.
+    if comm.Get_rank() == 0:
+        print("\n--- All ranks finished writing. Now performing final check. ---")
+        
+        # Optional but recommended: Consolidate metadata for faster reads later.
+        # This reads all the small `.zarray`, `.zgroup` files and puts them
+        # into a single `.zmetadata` file.
+        try:
+            print("Consolidating Zarr metadata...")
+            zarr.consolidate_metadata(os.path.join(outputs_dir, f"{model_name}.zarr"))
+            print("Metadata consolidated.")
+        except Exception as e:
+            print(f"Could not consolidate metadata: {e}")
+
+        # 3. Create a NEW reader instance AFTER the barrier.
+        #    This guarantees it reads the final state from the disk.
+        print("Initializing a fresh reader object for final verification...")
+        final_dataset = ZarrHandler(path=os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
+        # 4. NOW the length will be correct. ✅
+        print(f"Final dataset size: {len(final_dataset)}")
+        
+        if len(final_dataset) > 0:
+            first_item = final_dataset[0]
+            print(f"Successfully read first item with base_time: {first_item['base_time']}")
+
 
 if __name__ == "__main__":
     main(distributed=True)
