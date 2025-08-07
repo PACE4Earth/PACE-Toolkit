@@ -1,0 +1,276 @@
+Process group initialized for rank 0 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Process group initialized for rank 3 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Process group initialized for rank 2 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Process group initialized for rank 1 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Process group initialized for rank 4 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Process group initialized for rank 6 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Process group initialized for rank 7 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Process group initialized for rank 5 of 8 on CPU.
+output dir: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Rank 3: Saving data for base_time 2021-04-01 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/174h
+Rank 3: Saving data for base_time 2021-04-01 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/162h
+Rank 5: Saving data for base_time 2021-04-01 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/24h
+Rank 5: Saving data for base_time 2021-04-01 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/192h
+Rank 1: Saving data for base_time 2021-04-01 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/12h
+Rank 1: Saving data for base_time 2021-04-02 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/96h
+Rank 0: Saving data for base_time 2021-04-02 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/240h
+Rank 0: Saving data for base_time 2021-04-01 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/120h
+Rank 3: Saving data for base_time 2021-04-09 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-09 00:00:00/12h
+Rank 4: Saving data for base_time 2021-04-02 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/138h
+Rank 4: Saving data for base_time 2021-04-02 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/150h
+Rank 6: Saving data for base_time 2021-04-02 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/168h
+Rank 6: Saving data for base_time 2021-04-02 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/180h
+Rank 2: Saving data for base_time 2021-04-01 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/204h
+Rank 2: Saving data for base_time 2021-04-02 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/84h
+Rank 5: Saving data for base_time 2021-04-12 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-12 00:00:00/12h
+Rank 7: Saving data for base_time 2021-04-01 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/108h
+Rank 7: Saving data for base_time 2021-04-02 12:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/240h
+Rank 0: Saving data for base_time 2021-04-12 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-12 00:00:00/12h
+Rank 1: Saving data for base_time 2021-04-02 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-02 00:00:00/0h
+Rank 6: Saving data for base_time 2021-04-02 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-02 00:00:00/0h
+Rank 4: Saving data for base_time 2021-04-08 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-08 00:00:00/6h
+Rank 2: Saving data for base_time 2021-04-06 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-06 00:00:00/0h
+Rank 7: Saving data for base_time 2021-04-06 00:00:00
+Saved: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr/2021-04-06 00:00:00/0h

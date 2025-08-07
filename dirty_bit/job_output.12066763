@@ -1,0 +1,13 @@
+Rank 3: Saving data for base_time 2025-08-07T03:00:00Z
+Rank 2: Saving data for base_time 2025-08-07T02:00:00Z
+Rank 1: Saving data for base_time 2025-08-07T01:00:00Z
+Rank 0: Initializing Zarr archive at mpi_output.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Rank 0: Saving data for base_time 2025-08-07T00:00:00Z
+
+--- Rank 0: Verifying final archive ---
+Total forecasts saved: 1
+Rank 6: Saving data for base_time 2025-08-07T06:00:00Z
+Rank 4: Saving data for base_time 2025-08-07T04:00:00Z
+Rank 5: Saving data for base_time 2025-08-07T05:00:00Z
+Rank 7: Saving data for base_time 2025-08-07T07:00:00Z

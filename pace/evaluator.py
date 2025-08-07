@@ -1,4 +1,5 @@
 import os
+from mpi4py import MPI
 import json
 import xarray as xr
 import numpy as np
@@ -8,7 +9,7 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
-from utils.output_logger import IndexedZarrSaver
+from utils.output_logger import MPIZarrSaver, IndexedZarrSaver
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -53,11 +54,20 @@ def get_dataloader(dataset, distributed=False):
 def main(distributed=False):
     rank, world_size = setup(distributed=distributed)
 
+    comm = MPI.COMM_WORLD
+    
+    # Optional sanity check: Ensure the worlds are consistent
+    assert world_size == comm.Get_size(), "Mismatch between torch.distributed and MPI world sizes!"
+    assert rank == comm.Get_rank(), "Mismatch between torch.distributed and MPI ranks!"
+
+
     with open(DATASET_CONFIG_PATH, 'r') as f:
         config = json.load(f)
 
     outputs_dir = os.path.expandvars(config.get("outputs_dir", os.path.join(BASE_DIR, "outputs")))
     os.makedirs(outputs_dir, exist_ok=True)
+    
+    print('output dir:', outputs_dir)
 
     model_dataset = UnifiedDataset(DATASET_CONFIG_PATH, dataset_key="model")
     reference_dataset = UnifiedDataset(
@@ -69,8 +79,17 @@ def main(distributed=False):
     model_name = config["datasets"]["model"]["name"]
     reference_name = config["datasets"].get("reference", {}).get("name")
 
-    model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
-    reference_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{reference_name}.zarr")) if reference_dataset else None
+    # model_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+    # reference_output_logger = IndexedZarrSaver(path=os.path.join(outputs_dir, f"{reference_name}.zarr")) if reference_dataset else None
+
+    model_output_logger = MPIZarrSaver(
+        path=os.path.join(outputs_dir, f"{model_name}.zarr"), 
+        comm=comm,
+    )
+    reference_output_logger = MPIZarrSaver(
+        path=os.path.join(outputs_dir, f"{reference_name}.zarr"),
+        comm=comm,
+    ) if reference_dataset else None
 
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),
@@ -86,23 +105,25 @@ def main(distributed=False):
             for sample in dataloader:
                 metrics = metric_handler(sample)
                 sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"]}
-                logger(sample_out)
+                # logger(sample_out)
+                logger.save(sample_out)
 
     # Evaluate model
     evaluate_and_log(model_dataset, model_output_logger, dataset_name=model_name)
 
     # Save reference outputs if available
     if reference_dataset:
-        def passthrough_logger(sample):
-            sample_out = {
-                name: tensor for name, tensor in sample.items()
-                if name not in ["lat", "lon"] and torch.is_tensor(tensor)
-            }
-            sample_out["base_time"] = sample["base_time"]
-            sample_out["lead_time"] = sample["lead_time"]
-            reference_output_logger(sample_out)
+        # def passthrough_logger(sample):
+        #     sample_out = {
+        #         name: tensor for name, tensor in sample.items()
+        #         if name not in ["lat", "lon"] and torch.is_tensor(tensor)
+        #     }
+        #     sample_out["base_time"] = sample["base_time"]
+        #     sample_out["lead_time"] = sample["lead_time"]
+        #     reference_output_logger.save(sample_out)
 
-        evaluate_and_log(reference_dataset, passthrough_logger, dataset_name=reference_name)
+        # evaluate_and_log(reference_dataset, passthrough_logger, dataset_name=reference_name)
+        evaluate_and_log(reference_dataset, reference_output_logger, dataset_name=reference_name)
 
     if distributed:
         dist.destroy_process_group()
