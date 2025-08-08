@@ -277,7 +277,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
             if self.pressure_levels is not None and level_dim:
-                ds = ds.isel({level_dim: slice(0, self.pressure_levels)})
+                ds = ds.isel({level_dim: slice(0, len(self.pressure_levels))})
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
@@ -290,6 +290,31 @@ class UnifiedDataset(torch.utils.data.Dataset):
             fields['lead_time'] = lead_time
 
         return fields
+    
+    # NEW: Construct from a precomputed sample list and minimal metadata
+    @classmethod
+    def from_sample_list(cls, sample_list, grid, metrics, requested_names, canonical_names, config_path=None, dataset_key='model'):
+        obj = cls.__new__(cls)
+
+        # Reassign basic metadata
+        obj.samples = sample_list
+        obj.grid = grid
+        obj.metrics = metrics
+        obj.requested_names = requested_names
+        obj.canonical_names = canonical_names
+        obj.name = dataset_key
+
+        # Minimal needed for __getitem__
+        obj.config = {}
+        obj.lat_min = float(grid['lat'].min())
+        obj.lat_max = float(grid['lat'].max())
+        obj.lon_min = float(grid['lon'].min())
+        obj.lon_max = float(grid['lon'].max())
+        obj.pressure_levels = grid['pressure_levels']
+        
+        obj.is_model_dataset = dataset_key == 'model'
+
+        return obj
 
 
 def main():
