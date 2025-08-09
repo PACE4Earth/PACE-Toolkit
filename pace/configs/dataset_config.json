@@ -10,12 +10,12 @@
     }
   },
   "outputs_dir": "${OUTPUTS_DIR_PATH}",
-  "metrics": [
-    "geostrophic_balance",
-    "hydrostatic_balance",
-    "correlation",
-    "correlation_map"
-  ],
+   "metrics": {
+    "geostrophic_balance": ["geostrophic_wind_ratio"],
+    "hydrostatic_balance": ["all"],
+    "correlation": ["all"],
+    "correlation_map": ["all"]
+  },
   "spatial": {
     "pressure_levels": 3,
     "lat_range": [49, 50],
@@ -29,9 +29,9 @@
     "sample_percent": 10
   },
   "visualization": {
-    "summary_stats": ["mean", "stdev", "min", "max"],
     "enabled": true,
+    "summary_stats": ["mean", "stdev", "min", "max"],
     "plot_metrics": ["geostrophic_balance"],
-    "output_dir": "results/plots"
+    "plots_dir": "plots"
   }
 }

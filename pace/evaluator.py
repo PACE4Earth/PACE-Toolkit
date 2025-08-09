@@ -2,6 +2,7 @@ import os
 import json
 from mpi4py import MPI
 from collections import defaultdict
+import time
 
 import numpy as np
 import xarray as xr
@@ -16,7 +17,7 @@ from utils.output_logger import MPIZarrSaver, ZarrHandler
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config_devel.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'dataset_config.json')
 
 def setup(distributed=False):
     if distributed:
@@ -62,6 +63,7 @@ def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None
     }
 
 def main(distributed=False):
+    time_start = time.perf_counter()
     rank, world_size = setup(distributed=distributed)
     comm = MPI.COMM_WORLD
     assert world_size == comm.Get_size()
@@ -179,6 +181,9 @@ def main(distributed=False):
         if reference_name:
             ref_dataset = ZarrHandler(path=os.path.join(outputs_dir, f"{reference_name}.zarr"), mode='r')
             print(f"Reference dataset size: {len(ref_dataset)}")
+    
+        time_end = time.perf_counter()
+        print(f"Elapsed time: {time_end - time_start:.2f} s")
 
 if __name__ == "__main__":
     main(distributed=True)

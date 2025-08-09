@@ -1,10 +1,12 @@
 import torch
 from torch import nn
+import json
+from pathlib import Path
 
 from .geostrophic import GeostrophicWind
 from .correlation import SampleWiseCorrelation
-from .hydrostatic import HydrostaticBalance 
 from .correlation_map import CorrelationMap
+from .hydrostatic import HydrostaticBalance
 from .humidity import HumidityConsistency
 from .potential_vorticity import PotentialVorticity
 
@@ -17,48 +19,109 @@ METRIC_MODULES = {
     'potential_vorticity': PotentialVorticity,
 }
 
+
 class MetricHandler(nn.Module):
     def __init__(self, grid, metrics: list[str]):
-        super().__init__()
-        self.metrics = {
-            metric_name: METRIC_MODULES[metric_name](grid)
-            for metric_name in metrics
+        """
+        config_path: path to JSON config file, with format:
+        {
+            "metrics": {
+                "geostrophic_balance": ["geostrophic_wind_ratio"],
+                "hydrostatic_balance": ["hydrostatic_rmse"],
+                "humidity_temperature": ["all"]   # "all" = all available outputs
+            }
         }
+        """
+        super().__init__()
+        config_path = Path(__file__).resolve().parent.parent / "configs" / "dataset_config.json"
+
+        with open(config_path, "r") as f:
+            config = json.load(f)
+
+        if "metrics" not in config or not isinstance(config["metrics"], dict):
+            raise ValueError(f"Invalid config format in {config_path}: missing 'metrics' dict")
+            
+        self.metrics_config = {}
+        self.metrics = {}
+        self.available_keys_map = {}  # metric_name -> ordered output_keys
+
+        for metric_name, keys in config["metrics"].items():
+            if metric_name not in METRIC_MODULES:
+                raise KeyError(f"Unknown metric '{metric_name}' in config")
+
+            module = METRIC_MODULES[metric_name](grid)
+
+            # Get authoritative key order from module, or fallback
+            if hasattr(module, "output_keys"):
+                available_keys = module.output_keys()
+            else:
+                available_keys = [metric_name]
+
+            # Handle "all" case (case-insensitive)
+            if keys and len(keys) == 1 and str(keys[0]).lower() == "all":
+                keys = available_keys
+            else:
+                # Filter keys in the order of available_keys, not config order
+                keys = [k for k in available_keys if k in keys]
+
+                missing = [k for k in keys if k not in available_keys]
+                if missing:
+                    raise KeyError(
+                        f"Invalid output key(s) {missing} for metric '{metric_name}'. "
+                        f"Available: {available_keys}"
+                    )
+
+            self.metrics_config[metric_name] = keys
+            self.metrics[metric_name] = module
+            self.available_keys_map[metric_name] = available_keys
 
     def forward(self, sample: dict) -> dict:
-        """
-        Compute all registered metrics on the given sample.
-        Returns a dict of outputs with descriptive names.
-        """
         outputs = {}
 
         for metric_name, module in self.metrics.items():
             result = module(sample)
+            available_keys = self.available_keys_map[metric_name]
+            selected_keys = self.metrics_config[metric_name]
 
-            # Handle multiple outputs (e.g., tuple or dict)
             if isinstance(result, tuple):
-                keys = module.output_keys() if hasattr(module, 'output_keys') else [f"{metric_name}_{i}" for i in range(len(result))]
-                for k, val in zip(keys, result):
-                    outputs[k] = val
-            elif isinstance(result, dict):
-                for k, v in result.items():
-                    outputs[f"{metric_name}_{k}"] = v
-            else:
-                if hasattr(module, 'output_keys'):
-                    key = module.output_keys()[0]
-                else:
-                    key = metric_name
-                outputs[key] = result
+                if len(result) != len(available_keys):
+                    raise ValueError(
+                        f"Metric '{metric_name}' returned {len(result)} outputs, "
+                        f"but output_keys() reports {len(available_keys)}."
+                    )
 
+                # Map by index according to output_keys
+                for idx, key in enumerate(available_keys):
+                    if key in selected_keys:
+                        outputs[key] = result[idx]
+
+            elif isinstance(result, dict):
+                for key in available_keys:
+                    if key in selected_keys:
+                        if key not in result:
+                            raise KeyError(
+                                f"Key '{key}' from output_keys not found in dict output of metric '{metric_name}'"
+                            )
+                        outputs[key] = result[key]
+
+            else:
+                if len(available_keys) != 1:
+                    raise ValueError(
+                        f"Metric '{metric_name}' returned a single output but "
+                        f"output_keys() has {len(available_keys)}."
+                    )
+                if available_keys[0] in selected_keys:
+                    outputs[available_keys[0]] = result
 
         return outputs
 
-    def get_metric_names(self) -> list:
-        """Returns a flat list of all expected output keys from all metrics."""
-        names = []
-        for metric_name, module in self.metrics.items():
-            if hasattr(module, 'output_keys'):
-                names.extend(module.output_keys())
-            else:
-                names.append(metric_name)
-        return names
+    def get_metric_names(self) -> list[str]:
+        """
+        Returns all output keys in the order of each metric's output_keys(),
+        filtered according to config.
+        """
+        ordered_keys = []
+        for metric_name, available_keys in self.available_keys_map.items():
+            selected_keys = self.metrics_config[metric_name]
+            ordered_keys.extend([k for k in available_keys if k in selected_keys])
+        return ordered_keys
