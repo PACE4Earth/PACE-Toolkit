@@ -151,6 +151,7 @@ class ZarrDataset(Dataset):
             # Auto-discover variables from the first sample if not provided
             first_base, first_lead = self.samples[0]
             self.variables = list(self.root[first_base][first_lead].keys())
+            print(self.variables)
 
 
     def _create_sample_map(self):
@@ -196,26 +197,23 @@ class ZarrDataset(Dataset):
             raise IndexError("Index out of range")
 
         base_time, lead_time = self.samples[idx]
+        
+        output = {}
+        
+        output['base_time'] = base_time
+        output['lead_time'] = lead_time
+        
         data_group = self.root[base_time][lead_time]
 
         data_tensors = {}
         for var_name in self.variables:
-            # Your structure has an extra nesting level for the array itself.
-            # e.g., 'correlation' is a group containing the actual data array.
-            # We assume the array is the first item inside this group.
-            variable_group = data_group[var_name]
-            array_key = list(variable_group.keys())[0]
-            zarr_array = variable_group[array_key]
+
+            zarr_array = data_group[var_name]
             
-            # zarr_array[:] reads the data into a NumPy array
+            # print(var_name, type(zarr_array), zarr_array.shape)
+            
             numpy_array = zarr_array[:]
+            output[var_name] = torch.from_numpy(numpy_array)
             
-            # Convert NumPy array to PyTorch tensor
-            data_tensors[var_name] = torch.from_numpy(numpy_array)
-            
-        return {
-            'base_time': base_time,
-            'lead_time': lead_time,
-            'data': data_tensors
-        }
+        return output
 

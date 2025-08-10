@@ -1,0 +1,109 @@
+Process group initialized for rank 7 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 6 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 5 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 4 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 3 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 1 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 2 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Process group initialized for rank 0 of 8 on CPU.
+output dir: /p/scratch/hclimrep/shared/pace/outputs
+Preparing files for graphcast...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 15 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 12 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 5 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/shared/pace/outputs/era5.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/120h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/150h
+Rank 1 processed 2 samples.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/24h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/96h
+Rank 0 processed 2 samples.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/174h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 00:00:00/180h
+Rank 2 processed 2 samples.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 00:00:00/204h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/84h
+Rank 3 processed 2 samples.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/12h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/138h
+Rank 4 processed 2 samples.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/162h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/240h
+Rank 6 processed 2 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/108h
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-02 12:00:00/168h
+Rank 5 processed 2 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/graphcast.zarr/2021-04-01 12:00:00/192h
+Rank 7 processed 1 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/era5.zarr/2021-04-12 00:00:00/12h
+Rank 4 processed 1 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/era5.zarr/2021-04-08 00:00:00/6h
+Rank 2 processed 1 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/era5.zarr/2021-04-09 00:00:00/12h
+Rank 3 processed 1 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/era5.zarr/2021-04-06 00:00:00/0h
+Rank 1 processed 1 samples.
+Rank 1 waiting at barrier.
+Rank 1 passed barrier.
+Saved: /p/scratch/hclimrep/shared/pace/outputs/era5.zarr/2021-04-02 00:00:00/0h
+Rank 0 processed 1 samples.
+Rank 0 waiting at barrier.
+Rank 0 passed barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+['correlation', 'geostrophic_wind_ratio', 'hydrostatic_abs_error', 'hydrostatic_rel_error', 'hydrostatic_rmse']
+Model dataset size: 15
+base_time 2021-04-01 00:00:00
+lead_time 120h
+correlation torch.Size([4, 4])
+geostrophic_wind_ratio torch.Size([1, 3, 5, 5])
+hydrostatic_abs_error torch.Size([1, 3, 5, 5])
+hydrostatic_rel_error torch.Size([1, 3, 5, 5])
+hydrostatic_rmse torch.Size([1, 3, 5, 5])
+['correlation', 'geostrophic_wind_ratio', 'hydrostatic_abs_error', 'hydrostatic_rel_error', 'hydrostatic_rmse']
+Reference dataset size: 5
+Elapsed time: 14.64 s

@@ -113,8 +113,6 @@ class MetricHandler(nn.Module):
                 if available_keys[0] in selected_keys:
                     outputs[available_keys[0]] = result
                     
-        outputs['idx'] = sample['idx']
-
         return outputs
 
     def get_metric_names(self) -> list[str]:

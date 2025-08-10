@@ -170,11 +170,11 @@ def main(distributed=False):
         
         model_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
         print(f"Model dataset size: {len(model_dataset)}")
-        # for k,v in model_dataset[0]:
-        #     if isinstance(v, torch.Tensor):
-        #         print(k, v.shape)
-        #     else:
-        #         print(k, v)
+        for k,v in model_dataset[0].items():
+            if isinstance(v, torch.Tensor):
+                print(k, v.shape)
+            else:
+                print(k, v)
 
         if reference_name:
             ref_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{reference_name}.zarr"))

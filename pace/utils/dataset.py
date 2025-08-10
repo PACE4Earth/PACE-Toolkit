@@ -288,8 +288,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields['base_time'] = base_dt
             fields['lead_time'] = lead_time
-            
-            fields['idx'] = torch.tensor(idx)
 
         return fields
     
