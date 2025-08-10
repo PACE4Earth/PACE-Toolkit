@@ -87,7 +87,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         with open(aliases_path, "r") as f:
             self.aliases = json.load(f)
 
-        config_path = Path(config_path) if config_path else Path(__file__).resolve().parent.parent / "configs" / "dataset_config.json"
+        config_path = Path(config_path) if config_path else Path(__file__).resolve().parent.parent / "configs" / "config.json"
         with open(config_path, "r") as f:
             self.config = json.load(f)
 

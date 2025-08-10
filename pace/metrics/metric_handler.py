@@ -33,7 +33,7 @@ class MetricHandler(nn.Module):
         }
         """
         super().__init__()
-        config_path = Path(__file__).resolve().parent.parent / "configs" / "dataset_config.json"
+        config_path = Path(__file__).resolve().parent.parent / "configs" / "config.json"
 
         with open(config_path, "r") as f:
             config = json.load(f)

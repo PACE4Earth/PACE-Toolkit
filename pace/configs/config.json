@@ -14,24 +14,25 @@
     "geostrophic_balance": ["geostrophic_wind_ratio"],
     "hydrostatic_balance": ["all"],
     "correlation": ["all"],
-    "correlation_map": ["all"]
+    "correlation_map": ["all"],
+    "potential_vorticity": ["all"],
+    "humidity_temperature": ["all"]
   },
   "spatial": {
-    "pressure_levels": 3,
-    "lat_range": [49, 50],
-    "lon_range": [49, 50]
+    "pressure_levels": 37,
+    "lat_range": [30, 50],
+    "lon_range": [0, 60]
   },
   "time": {
     "start": "20210401",
-    "end": "20210412",
+    "end": "20210420",
     "stride_hours": 6,
     "lead_times": 40, 
-    "sample_percent": 10
+    "sample_percent": 20
   },
   "visualization": {
     "enabled": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "plot_metrics": ["geostrophic_balance"],
-    "plots_dir": "plots"
+    "plots_dir": "${PLOTS_DIR_PATH}"
   }
 }

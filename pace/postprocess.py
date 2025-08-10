@@ -1,144 +1,234 @@
 import os
-import re
+import json
 import numpy as np
-import xarray as xr
+from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib import colors, ticker
-import seaborn as sns
-sns.set(style="whitegrid")
+import time
+import zarr
+from typing import List, Dict, Tuple
 
-# CONFIGURATION
-MODEL = "graphcast"
-REFERENCE = "era5"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
-PLOTS_DIR = os.path.join(BASE_DIR, "plots")
-METRICS = ["geostrophic_balance"]
 
-FULLFIELDS_DIR = os.path.join(OUTPUT_DIR, "fullfields")
-SUMMARY_DIR = os.path.join(OUTPUT_DIR, "summary")
+def unpack_custom_zarr_vars(zarr_root):
+    """
+    Return a dictionary:
+    { (var_name, base_time, lead_time): zarr_array }
+    """
+    zarr_root = Path(zarr_root)
+    store = {}
 
-FULLFIELDS_PLOT_DIR = os.path.join(PLOTS_DIR, "fullfields")
-SUMMARY_PLOT_DIR = os.path.join(PLOTS_DIR, "summary")
-os.makedirs(FULLFIELDS_PLOT_DIR, exist_ok=True)
-os.makedirs(SUMMARY_PLOT_DIR, exist_ok=True)
+    for base_dir in zarr_root.iterdir():
+        if not base_dir.is_dir():
+            continue
+        try:
+            base_time = np.datetime64(base_dir.name)
+        except Exception:
+            continue
 
-def load_summary_outputs():
-    model_dir = os.path.join(SUMMARY_DIR, MODEL)
-    ref_dir = os.path.join(SUMMARY_DIR, REFERENCE)
+        for lead_dir in base_dir.iterdir():
+            if not lead_dir.is_dir():
+                continue
+            try:
+                lead_time = int(lead_dir.name.replace("h", ""))
+            except ValueError:
+                continue
 
-    summary_model = None
-    summary_ref = None
+            for var_dir in lead_dir.iterdir():
+                if not var_dir.is_dir() or var_dir.name.startswith('.'):
+                    continue
 
-    model_files = sorted([f for f in os.listdir(model_dir) if f.endswith(".nc")])
-    if model_files:
-        summary_model = xr.open_dataset(os.path.join(model_dir, model_files[0]))
+                arr = zarr.open_array(str(var_dir), mode='r')
+                store[(var_dir.name, base_time, lead_time)] = arr
 
-    ref_files = sorted([f for f in os.listdir(ref_dir) if f.endswith(".nc")])
-    if ref_files:
-        summary_ref = xr.open_dataset(os.path.join(ref_dir, ref_files[0]))
+    return store
 
-    print("\n[SUMMARY MODEL DATASET]\n", summary_model)
-    if summary_ref:
-        print("\n[SUMMARY REF DATASET]\n", summary_ref)
 
-    return summary_model, summary_ref
+def select_sample_leadtimes(zarr_path: Path, total_expected: int, max_leadtimes: int = 5) -> List[int]:
+    """
+    Select up to max_leadtimes evenly spaced lead times for the model dataset.
+    Reads across base_time directories but stops once total_expected unique lead times are found.
+    """
+    zarr_path = Path(zarr_path)
+    found_leadtimes = set()
 
-def load_fullfields_outputs():
-    model_dir = os.path.join(FULLFIELDS_DIR, MODEL)
-    ref_dir = os.path.join(FULLFIELDS_DIR, REFERENCE)
+    for base_dir in zarr_path.iterdir():
+        if not base_dir.is_dir():
+            continue
+        for lead_dir in base_dir.iterdir():
+            if not lead_dir.is_dir():
+                continue
+            try:
+                lead_time = int(lead_dir.name.replace("h", ""))
+                found_leadtimes.add(lead_time)
+            except ValueError:
+                continue
 
-    def parse_files(directory):
-        data = []
-        files = sorted([f for f in os.listdir(directory) if f.endswith(".nc")])
-        for f in files:
-            match = re.search(r"lead(\d+)", f)
-            if match:
-                lead_time = int(match.group(1))
-                path = os.path.join(directory, f)
-                ds = xr.open_dataset(path)
-                data.append((lead_time, ds))
-        return sorted(data, key=lambda x: x[0])
+            if len(found_leadtimes) >= total_expected:
+                break
 
-    model_data = parse_files(model_dir)
-    ref_data = parse_files(ref_dir)
+        if len(found_leadtimes) >= total_expected:
+            break
 
-    if model_data:
-        print("\n[FULLFIELDS MODEL FIRST DATASET]\n", model_data[0][1])
-    if ref_data:
-        print("\n[FULLFIELDS REF FIRST DATASET]\n", ref_data[0][1])
+    found_leadtimes = sorted(found_leadtimes)
+    if len(found_leadtimes) <= max_leadtimes:
+        return found_leadtimes
 
-    return model_data, ref_data
+    idxs = np.linspace(0, len(found_leadtimes) - 1, max_leadtimes, dtype=int)
+    return [found_leadtimes[i] for i in idxs]
 
-def plot_spatial_slice(ds, metric, lead_time, level, title_prefix, plot_path):
-    if metric not in ds:
-        print(f"{metric} not found in dataset.")
-        return
 
-    data = ds[metric].sel(lead_time=lead_time, level=level, method="nearest")
-    lon = ds['lon']
-    lat = ds['lat'] 
-    Lon, Lat = np.meshgrid(lon, lat)
+def get_bins_for_variable(var_name: str, vmin: float, vmax: float, bins: int, scale: str):
+    """Return bin edges array based on scale type."""
+    if scale == "log":
+        epsilon = 1e-10  # small offset to avoid log(0)
+        if vmin <= 0:
+            vmin = epsilon  # force positive min for log scale
+        bins_edges = np.logspace(np.log10(vmin), np.log10(vmax), bins + 1)
+    else:
+        bins_edges = np.linspace(vmin, vmax, bins + 1)
+    return bins_edges
 
-    fig, ax = plt.subplots(figsize=(12, 5))
-    pcm = ax.pcolormesh(Lon, Lat, data, cmap='viridis', norm=colors.LogNorm(vmin=1e-3, vmax=np.max(data)))
-    cbar = fig.colorbar(pcm, ax=ax, pad=0.02)
-    cbar.set_label(f"{metric.replace('_', ' ').capitalize()}", fontsize=14)
 
-    ax.set_title(f"{title_prefix}: {metric} | Level: {level} hPa | Lead: {lead_time}h", fontsize=16)
-    ax.set_xlabel('Longitude')
-    ax.set_ylabel('Latitude')
-    plt.tight_layout()
-    plt.savefig(plot_path, dpi=300)
-    plt.close()
+def compute_histograms(
+    zarr_path: Path,
+    selected_leadtimes: List[int] = None,
+    bins: int = 100,
+    bin_config: Dict[str, Dict] = None,
+):
+    """
+    Compute histograms only for variables defined in bin_config,
+    using their predefined vmin, vmax, and scale.
+    Variables not in bin_config are ignored.
+    """
+    if bin_config is None:
+        raise ValueError("bin_config must be provided with variable bin specifications")
 
-def plot_vertical_leadtime_profile(ds_model, ds_ref, metric):
-    if metric not in ds_model:
-        print(f"{metric} not found in model dataset.")
-        return
+    store = unpack_custom_zarr_vars(zarr_path)
 
-    mean_profile = ds_model[metric]
-    total_leads = ds_model.dims["lead_time"]
-    lead_indices = np.linspace(0, total_leads - 1, 5, dtype=int)
-    profiles_to_plot = mean_profile.isel(lead_time=lead_indices)
+    # Prepare histogram storage
+    hist_data: Dict[str, Dict[int, np.ndarray]] = {
+        var: {} for var in bin_config.keys()
+    }
 
-    plt.figure(figsize=(6, 8))
-    ax = plt.gca()
+    # Precompute bin edges for each variable
+    bin_edges_map = {}
+    for var_name, cfg in bin_config.items():
+        vmin = cfg.get("vmin")
+        vmax = cfg.get("vmax")
+        scale = cfg.get("scale", "linear")
+        bin_edges_map[var_name] = get_bins_for_variable(var_name, vmin, vmax, bins, scale)
 
-    for idx in lead_indices:
-        lead = ds_model["lead_time"].isel(lead_time=idx).item()
-        ax.plot(mean_profile.isel(lead_time=idx), ds_model["level"], label=f"Model: Lead {lead}h", linewidth=2)
+    # Accumulate counts
+    for (var_name, _, lead_time), arr in store.items():
+        if selected_leadtimes is not None and lead_time not in selected_leadtimes:
+            continue
 
-    if ds_ref is not None and metric in ds_ref:
-        ref_profile = ds_ref[metric].mean(dim="lead_time")
-        ax.plot(ref_profile, ds_ref["level"], label="Reference Mean", linewidth=2, linestyle='--')
+        if var_name not in bin_config:
+            # Skip vars not in config
+            continue
 
-    ax.invert_yaxis()
-    ax.set_yticks([1000, 850, 700, 500, 300, 100, 1])
-    ax.set_ylim(bottom=1000)
-    ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.4)
-    ax.set_title(f"{metric.replace('_', ' ').capitalize()}\nMean over lat/lon", fontsize=16)
-    ax.set_xlabel(f"{metric} mean")
-    ax.set_ylabel("Pressure Level (hPa)")
-    ax.set_xscale("log")
-    ax.legend()
-    plt.tight_layout()
-    plot_path = os.path.join(SUMMARY_PLOT_DIR, f"{metric}_vertical_leadtime_profile.png")
-    plt.savefig(plot_path, dpi=300)
-    plt.close()
+        bin_edges = bin_edges_map[var_name]
 
-def process_all():
-    summary_model, summary_ref = load_summary_outputs()
-    full_model_data, full_ref_data = load_fullfields_outputs()
+        data = arr[:]
 
-    for metric in METRICS:
-        plot_vertical_leadtime_profile(summary_model, summary_ref, metric)
+        mask = ~np.isnan(data)
+        if not np.any(mask):
+            continue
+        values = data[mask]
 
-        for (lead_time, ds_model), (_, ds_ref) in zip(full_model_data, full_ref_data):
-            plot_path_model = os.path.join(FULLFIELDS_PLOT_DIR, f"{metric}_lead{lead_time}_model.png")
-            plot_path_ref = os.path.join(FULLFIELDS_PLOT_DIR, f"{metric}_lead{lead_time}_ref.png")
-            plot_spatial_slice(ds_model, metric, lead_time, level=500, title_prefix="Model", plot_path=plot_path_model)
-            plot_spatial_slice(ds_ref, metric, lead_time, level=500, title_prefix="Reference", plot_path=plot_path_ref)
+        counts, _ = np.histogram(values, bins=bin_edges)
+        if lead_time in hist_data[var_name]:
+            hist_data[var_name][lead_time] += counts
+        else:
+            hist_data[var_name][lead_time] = counts
+
+    # Normalize & store bin centers
+    hist_result: Dict[str, Dict[int, Tuple[np.ndarray, np.ndarray]]] = {}
+    for var_name in hist_data:
+        bin_edges = bin_edges_map[var_name]
+        centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+        hist_result[var_name] = {}
+        for lt, counts in hist_data[var_name].items():
+            total = counts.sum()
+            hist_result[var_name][lt] = (
+                centers,
+                counts / total if total > 0 else counts,
+            )
+
+    return bin_config, hist_result
+
+
+def plot_hist(model_hist, ref_hist, output_dir: Path, bin_config: Dict[str, Dict] = None):
+    out_dir = Path(output_dir) / "histograms"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    for metric in model_hist.keys():
+        plt.figure()
+        for lt, (centers, counts) in sorted(model_hist[metric].items(), key=lambda x: x[0]):
+            plt.plot(centers, counts, label=f"Model {lt}h")
+
+        if metric in ref_hist:
+            total_counts = None
+            centers = None
+            for _, (c, counts) in ref_hist[metric].items():
+                centers = c
+                total_counts = counts if total_counts is None else total_counts + counts
+            if total_counts is not None and total_counts.sum() > 0:
+                total_counts = total_counts / total_counts.sum()
+            plt.plot(centers, total_counts, label="Reference", linewidth=2, linestyle="--")
+
+        plt.title(f"Histogram - {metric}")
+        plt.xlabel(metric)
+        plt.ylabel("Probability")
+        plt.legend()
+        plt.grid(True)
+
+        # Use log scale x axis if requested
+        if bin_config and metric in bin_config:
+            if bin_config[metric].get("scale", "linear") == "log":
+                plt.xscale("log")
+
+        plt.savefig(out_dir / f"{metric}.png")
+        print(f"Saved: {out_dir}/{metric}.png")
+        plt.close()
+
+
+def main():
+    time_start = time.perf_counter()
+    config_path = Path(__file__).resolve().parent / "configs" / "config.json"
+    with open(config_path, "r") as f:
+        config = json.load(f)
+
+    bin_config = {
+        "geostrophic_wind_ratio": {"vmin": 0, "vmax": 2, "scale": "linear"},
+        "hydrostatic_abs_error": {"vmin": 1e-3, "vmax": 1e4, "scale": "log"},
+        "hydrostatic_rel_error": {"vmin": 1e-3, "vmax": 1e0, "scale": "log"},
+        "hydrostatic_rmse": {"vmin": 1e-3, "vmax": 1e4, "scale": "log"},
+        "relative_humidity": {"vmin": 2, "vmax": 100, "scale": "linear"},
+        "potential_vorticity": {"vmin": 1e-1, "vmax": 1e1, "scale": "log"},
+        # Add more variables here as needed
+    }
+
+    outputs_dir = Path(os.path.expandvars(config["outputs_dir"]))
+    plots_dir = Path(os.path.expandvars(config["visualization"]["plots_dir"]))
+    total_leadtimes = config["time"]["lead_times"]
+
+    model_path = outputs_dir / f"{config['datasets']['model']['name']}.zarr"
+    model_leadtimes = select_sample_leadtimes(model_path, total_expected=total_leadtimes)
+
+    _, model_hist = compute_histograms(
+        model_path, selected_leadtimes=model_leadtimes, bin_config=bin_config
+    )
+
+    ref_hist = {}
+    if "reference" in config["datasets"] and config["datasets"]["reference"].get("name"):
+        ref_path = outputs_dir / f"{config['datasets']['reference']['name']}.zarr"
+        _, ref_hist = compute_histograms(ref_path, bin_config=bin_config)
+
+    plot_hist(model_hist, ref_hist, plots_dir, bin_config=bin_config)
+
+    time_end = time.perf_counter()
+    print(f"Elapsed time: {time_end - time_start:.2f} s")
+
 
 if __name__ == "__main__":
-    process_all()
+    main()
