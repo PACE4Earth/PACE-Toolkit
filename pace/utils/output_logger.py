@@ -1,6 +1,8 @@
 import os
 from mpi4py import MPI
 import shutil
+import warnings
+from json import JSONDecodeError
 
 import zarr
 import numpy as np
@@ -8,6 +10,7 @@ import numcodecs
 
 import torch
 import torch.nn as nn
+from torch.utils.data import Dataset
 
 class MPIZarrSaver:
     def __init__(self, path: str, comm):
@@ -24,14 +27,14 @@ class MPIZarrSaver:
             
             # Open the store briefly to create the index array structure.
             # No lock is needed here since only rank 0 is running this block.
-            with zarr.open_group(self.path, mode='w') as root:
-                root.create_dataset(
-                    '_index',
-                    shape=(0, 2),
-                    chunks=(1024, 2),
-                    dtype=object,
-                    object_codec=numcodecs.JSON()
-                )
+            # with zarr.open_group(self.path, mode='w') as root:
+            #     root.create_dataset(
+            #         '_index',
+            #         shape=(0, 3),
+            #         chunks=(1024, 2),
+            #         dtype=object,``
+            #         object_codec=numcodecs.JSON()
+            #     )
         
         # Step 2: All processes must wait for rank 0 to finish.
         self.comm.Barrier()
@@ -75,27 +78,6 @@ class ZarrHandler(nn.Module):
 
         self.root = zarr.open_group(self.path, mode=mode, synchronizer=synchronizer)
 
-        self.index_array = self.root['_index']
-
-    def __len__(self) -> int:
-        return len(self.index_array)
-
-    def __getitem__(self, idx: int) -> dict:
-        if idx >= len(self):
-            raise IndexError("Index out of range")
-
-        base_time_key, lead_time_key = self.index_array[idx]
-        group = self.root[base_time_key][lead_time_key]
-
-        outputs = {name: arr[:] for name, arr in group.arrays()}
-
-        return {
-            "base_time": base_time_key,
-            "lead_time": lead_time_key,
-            "outputs": outputs,
-            "attrs": dict(group.attrs)
-        }
-
     def format_lead_time(self, lt):
         # Convert timedelta to hours string like "240h"
         if isinstance(lt, torch.Tensor):
@@ -108,7 +90,6 @@ class ZarrHandler(nn.Module):
         lead_times = sample.pop('lead_time')
 
         is_batch = isinstance(base_times, (list, tuple))
-        new_indices = []
 
         if is_batch:
             paths_to_append = []
@@ -126,7 +107,6 @@ class ZarrHandler(nn.Module):
 
                 print(f"Saved: {self.path}/{base_t_key}/{lead_t_key}")
 
-            self.index_array.append(paths_to_append)
         else:
             base_t_key = str(base_times)
             lead_t_key = self.format_lead_time(lead_times)
@@ -140,6 +120,102 @@ class ZarrHandler(nn.Module):
 
             print(f"Saved: {self.path}/{base_t_key}/{lead_t_key}")
 
-            self.index_array.append([[base_t_key, lead_t_key]])
-
         return sample
+
+class ZarrDataset(Dataset):
+    """
+    A PyTorch Dataset for accessing a Zarr store with a specific hierarchical
+    structure: `root/{base_time}/{lead_time}/{variable}`.
+
+    Each item in the dataset corresponds to a unique (base_time, lead_time)
+    combination.
+    """
+    def __init__(self, path, variables=None):
+        """
+        Args:
+            zarr_path (str): Path to the root Zarr directory (e.g., 'era5.zarr').
+            variables (list of str, optional): A specific list of variables to load.
+                                               If None, all variables found in the
+                                               first sample are loaded.
+        """
+        self.zarr_path = path
+        self.root = zarr.open_group(self.zarr_path, mode='r')
+        self.samples = self._create_sample_map()
+        
+        if not self.samples:
+            raise ValueError("No samples found in the Zarr store. Check the path and structure.")
+
+        if variables:
+            self.variables = variables
+        else:
+            # Auto-discover variables from the first sample if not provided
+            first_base, first_lead = self.samples[0]
+            self.variables = list(self.root[first_base][first_lead].keys())
+
+
+    def _create_sample_map(self):
+        """
+        Scans the Zarr store to find all (base_time, lead_time) pairs,
+        ignoring hidden directories like .zarrlock.
+        """
+        samples = []
+        for base_time in self.root.keys():
+            # --> ADD THIS CHECK <--
+            if base_time.startswith('.'):
+                continue  # Skip hidden files/directories like .zarrlock
+
+            try:
+                base_time_group = self.root[base_time]
+                for lead_time in base_time_group.keys():
+                    samples.append((base_time, lead_time))
+            except (JSONDecodeError, KeyError) as e:
+                warnings.warn(
+                    f"Skipping corrupted or invalid entry in Zarr store: '{base_time}'. "
+                    f"Error: {e}"
+                )
+                continue
+        return samples
+
+    def __len__(self):
+        """Returns the total number of (base_time, lead_time) samples."""
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        """
+        Retrieves a single sample from the dataset.
+
+        Args:
+            idx (int): The index of the sample to retrieve.
+
+        Returns:
+            dict: A dictionary containing the 'base_time', 'lead_time',
+                  and a 'data' dictionary where keys are variable names
+                  and values are the corresponding PyTorch tensors.
+        """
+        if not 0 <= idx < len(self.samples):
+            raise IndexError("Index out of range")
+
+        base_time, lead_time = self.samples[idx]
+        data_group = self.root[base_time][lead_time]
+
+        data_tensors = {}
+        for var_name in self.variables:
+            # Your structure has an extra nesting level for the array itself.
+            # e.g., 'correlation' is a group containing the actual data array.
+            # We assume the array is the first item inside this group.
+            variable_group = data_group[var_name]
+            array_key = list(variable_group.keys())[0]
+            zarr_array = variable_group[array_key]
+            
+            # zarr_array[:] reads the data into a NumPy array
+            numpy_array = zarr_array[:]
+            
+            # Convert NumPy array to PyTorch tensor
+            data_tensors[var_name] = torch.from_numpy(numpy_array)
+            
+        return {
+            'base_time': base_time,
+            'lead_time': lead_time,
+            'data': data_tensors
+        }
+

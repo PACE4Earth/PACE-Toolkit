@@ -13,7 +13,7 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
-from utils.output_logger import MPIZarrSaver, ZarrHandler
+from utils.output_logger import MPIZarrSaver, ZarrDataset
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -154,6 +154,8 @@ def main(distributed=False):
     if reference_dataset:
         evaluate_and_log(reference_dataset, reference_output_logger, dataset_name=reference_name)
 
+    time.sleep(0.1)
+
     comm.Barrier()
 
     if distributed:
@@ -165,21 +167,17 @@ def main(distributed=False):
 
     if comm.Get_rank() == 0:
         print("\n--- All ranks finished writing. Now performing final check. ---")
-        try:
-            print("Consolidating Zarr metadata...")
-            zarr.consolidate_metadata(os.path.join(outputs_dir, f"{model_name}.zarr"))
-            if reference_name:
-                zarr.consolidate_metadata(os.path.join(outputs_dir, f"{reference_name}.zarr"))
-            print("Metadata consolidated.")
-        except Exception as e:
-            print(f"Could not consolidate metadata: {e}")
-
-        print("Initializing a fresh reader object for final verification...")
-        model_dataset = ZarrHandler(path=os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
+        
+        model_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
         print(f"Model dataset size: {len(model_dataset)}")
+        # for k,v in model_dataset[0]:
+        #     if isinstance(v, torch.Tensor):
+        #         print(k, v.shape)
+        #     else:
+        #         print(k, v)
 
         if reference_name:
-            ref_dataset = ZarrHandler(path=os.path.join(outputs_dir, f"{reference_name}.zarr"), mode='r')
+            ref_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{reference_name}.zarr"))
             print(f"Reference dataset size: {len(ref_dataset)}")
     
         time_end = time.perf_counter()
