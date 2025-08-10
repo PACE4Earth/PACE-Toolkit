@@ -202,8 +202,8 @@ def main():
         "geostrophic_wind_ratio": {"vmin": 0, "vmax": 2, "scale": "linear"},
         "hydrostatic_abs_error": {"vmin": 1e-3, "vmax": 1e4, "scale": "log"},
         "hydrostatic_rel_error": {"vmin": 1e-3, "vmax": 1e0, "scale": "log"},
-        "hydrostatic_rmse": {"vmin": 1e-3, "vmax": 1e4, "scale": "log"},
-        "relative_humidity": {"vmin": 2, "vmax": 100, "scale": "linear"},
+        "hydrostatic_rmse": {"vmin": 1e1, "vmax": 1e4, "scale": "log"},
+        "relative_humidity": {"vmin": 5, "vmax": 105, "scale": "linear"},
         "potential_vorticity": {"vmin": 1e-1, "vmax": 1e1, "scale": "log"},
         # Add more variables here as needed
     }

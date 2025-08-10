@@ -79,18 +79,25 @@ class HydrostaticBalance(nn.Module):
         # Actual geopotential difference between levels
         dphi_actual = phi[:, 1:] - phi[:, :-1]  # [B, L-1, H, W]
 
-        # Absolute, relative error and rmse
+        # Absolute and relative error (per level, height, width)
         abs_error = torch.abs(dphi_actual - dphi_hydro)  # [B, L-1, H, W]
         rel_error = abs_error / (torch.abs(dphi_hydro) + self.epsilon)  # [B, L-1, H, W]
-        rmse = torch.sqrt((dphi_actual - dphi_hydro) ** 2)  # [B, L-1, H, W]
 
-        # Pad with NaN at the top level to match original level count
+        # RMSE aggregated over levels only, keep H and W
+        mse = ((dphi_actual - dphi_hydro) ** 2).mean(dim=1)  # mean over L-1, shape [B, H, W]
+        rmse = torch.sqrt(mse)  # [B, H, W]
+
+        # Add a singleton dimension for levels to get [B, 1, H, W]
+        rmse = rmse.unsqueeze(1)  # [B, 1, H, W]
+
+        # Pad abs_error and rel_error to match original level count (L)
         nan_pad = torch.full_like(abs_error[:, :1], float('nan'))  # [B, 1, H, W]
         abs_error_padded = torch.cat([nan_pad, abs_error], dim=1)  # [B, L, H, W]
         rel_error_padded = torch.cat([nan_pad, rel_error], dim=1)  # [B, L, H, W]
-        rmse_padded = torch.cat([nan_pad, rmse], dim=1)            # [B, L, H, W]
 
-        return abs_error_padded, rel_error_padded, rmse_padded
+        # Return errors and rmse map
+        return abs_error_padded, rel_error_padded, rmse
+
     
     def output_keys(self):
         return ['hydrostatic_abs_error', 'hydrostatic_rel_error', 'hydrostatic_rmse']
