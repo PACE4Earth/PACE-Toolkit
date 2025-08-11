@@ -115,7 +115,7 @@ def plot_hist(
     for metric in model_hist.keys():
         plt.figure(figsize=(8, 6))
 
-        # Plot model histograms with colors and markers
+        # Plot model histograms with colors
         for i, (lt, (centers, counts)) in enumerate(sorted(model_hist[metric].items(), key=lambda x: x[0])):
             plt.plot(
                 centers, counts,
@@ -141,8 +141,8 @@ def plot_hist(
                 color='black'
             )
 
-        plt.title(f"Histogram - {metric}", fontsize=16, weight='bold')
-        plt.xlabel(metric, fontsize=14)
+        plt.title(f"Histogram - {metric.replace('_', ' ').capitalize()}", fontsize=16, weight='bold')
+        plt.xlabel(f"{metric.replace('_', ' ').capitalize()}", fontsize=14)
         plt.ylabel("Probability Density", fontsize=14)
 
         # Improve axes aesthetics
@@ -161,7 +161,7 @@ def plot_hist(
                 plt.xscale("log")
 
         # Legend styling
-        leg = plt.legend(frameon=True, fontsize=12, loc='best', edgecolor='gray', fancybox=True)
+        leg = plt.legend(frameon=True, fontsize=12, loc='best', edgecolor='black', fancybox=True)
         leg.get_frame().set_alpha(0.9)
 
         plt.tight_layout()
