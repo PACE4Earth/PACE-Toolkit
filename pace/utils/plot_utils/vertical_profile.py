@@ -7,14 +7,17 @@ import seaborn as sns
 
 def compute_summary_stats(
     store: Dict[Tuple[str, np.datetime64, int], np.ndarray],
+    latitudes: np.ndarray,
     selected_leadtimes: Optional[List[int]] = None,
     summary_stats: List[str] = ["mean", "stdev", "min", "max"],
 ) -> Dict[str, Dict[str, np.ndarray]]:
     """
-    Compute summary statistics over lat/lon per vertical level, sample-wise then averaged.
+    Compute weighted summary statistics over lat/lon per vertical level, sample-wise then averaged.
+    Latitude weighting uses w = cos(lat) in radians.
 
     Parameters:
     - store: dict of {(var_name, base_time, lead_time): np.ndarray}, shape [1, level, lat, lon]
+    - latitudes: 1D array of latitudes corresponding to lat dimension, in degrees
     - selected_leadtimes: list of lead times for model, None for reference (all leadtimes)
     - summary_stats: list of stats to compute: mean, stdev, min, max
 
@@ -23,17 +26,43 @@ def compute_summary_stats(
       shape [num_leadtimes, num_levels] for model.
     """
 
-    # Use nan-safe numpy funcs
+    # Convert latitudes to radians and compute weights shape [lat]
+    lat_radians = np.deg2rad(latitudes)
+    weights_1d = np.cos(lat_radians)
+    # Ensure weights non-negative
+    weights_1d = np.clip(weights_1d, 0, None)
+    # Normalize weights to sum to 1 for stable weighted mean
+    weights_1d = weights_1d / np.sum(weights_1d)
+
+    def weighted_mean(data: np.ndarray) -> np.ndarray:
+        # data shape: [level, lat, lon]
+        w2d = weights_1d[None, :, None]  # [1, lat, 1]
+        weighted_sum = np.nansum(data * w2d, axis=(-2, -1))
+        total_weight = np.sum(weights_1d) * data.shape[-1]  # sum over lat * num_lon
+        return weighted_sum / total_weight
+
+    def weighted_stdev(data: np.ndarray, mean: np.ndarray) -> np.ndarray:
+        w2d = weights_1d[None, :, None]  # [1, lat, 1]
+        diff_sq = (data - mean[:, None, None]) ** 2
+        weighted_var = np.nansum(diff_sq * w2d, axis=(-2, -1)) / (np.sum(weights_1d) * data.shape[-1])
+        return np.sqrt(weighted_var)
+
+
+    # fallback to unweighted stats for min/max
+    def nan_min(data: np.ndarray) -> np.ndarray:
+        return np.nanmin(data, axis=(-2, -1))
+
+    def nan_max(data: np.ndarray) -> np.ndarray:
+        return np.nanmax(data, axis=(-2, -1))
+
+    # Map stat name to function (weighted mean and stdev, unweighted min/max)
     stat_funcs = {
-        "mean": np.nanmean,
-        "stdev": np.nanstd,
-        "min": np.nanmin,
-        "max": np.nanmax,
+        "mean": weighted_mean,
+        "stdev": weighted_stdev,
+        "min": nan_min,
+        "max": nan_max,
     }
 
-    # Accumulate per sample statistics in lists:
-    # For model: var_name -> lead_time -> stat -> list of arrays shape [levels]
-    # For reference: var_name -> stat -> list of arrays shape [levels]
     if selected_leadtimes is not None:
         # MODEL
         data_accum = {}
@@ -45,58 +74,59 @@ def compute_summary_stats(
             if lead_time not in data_accum[var_name]:
                 data_accum[var_name][lead_time] = {stat: [] for stat in summary_stats}
 
-            data = np.array(arr)  # shape [1, level, lat, lon]
-            data = data.squeeze()  # [level, lat, lon]
+            data = np.array(arr).squeeze()  # shape [level, lat, lon]
             if data.ndim != 3:
-                # print(f"Skipping sample {var_name} {base_time} {lead_time}, unexpected shape {data.shape}")
                 continue
 
             for stat in summary_stats:
-                val = stat_funcs[stat](data, axis=(-2, -1))  # nan-aware over lat/lon
+                if stat == "stdev":
+                    # stdev needs mean first
+                    mean_val = weighted_mean(data)
+                    val = weighted_stdev(data, mean_val)
+                else:
+                    val = stat_funcs[stat](data)
                 data_accum[var_name][lead_time][stat].append(val)
 
-        # Now average all per-sample stats for each var, lead_time, stat
         results = {}
         for var_name, lt_dict in data_accum.items():
             results[var_name] = {}
             for stat in summary_stats:
-                # collect all lead_time arrays for this stat: shape [num_leadtimes, levels]
                 stat_per_lt = []
                 leadtimes_sorted = sorted(lt_dict.keys())
                 for lt in leadtimes_sorted:
-                    arrs = lt_dict[lt][stat]  # list of arrays shape [levels]
-                    # mean over all samples for this leadtime
+                    arrs = lt_dict[lt][stat]
                     mean_arr = np.nanmean(arrs, axis=0)
                     stat_per_lt.append(mean_arr)
-                results[var_name][stat] = np.stack(stat_per_lt, axis=0)  # shape [num_leadtimes, levels]
-    
+                results[var_name][stat] = np.stack(stat_per_lt, axis=0)
+
     else:
-        # REFERENCE: accumulate stats over all samples (all base_time and lead_time)
+        # REFERENCE
         data_accum = {}
         for (var_name, base_time, lead_time), arr in store.items():
             if var_name not in data_accum:
                 data_accum[var_name] = {stat: [] for stat in summary_stats}
 
-            data = np.array(arr)  # [1, level, lat, lon]
-            data = data.squeeze()  # [level, lat, lon]
+            data = np.array(arr).squeeze()  # shape [level, lat, lon]
             if data.ndim != 3:
-                # print(f"Skipping sample {var_name} {base_time} {lead_time}, unexpected shape {data.shape}")
                 continue
 
             for stat in summary_stats:
-                val = stat_funcs[stat](data, axis=(-2, -1))
+                if stat == "stdev":
+                    mean_val = weighted_mean(data)
+                    val = weighted_stdev(data, mean_val)
+                else:
+                    val = stat_funcs[stat](data)
                 data_accum[var_name][stat].append(val)
 
         results = {}
         for var_name, stat_dict in data_accum.items():
             results[var_name] = {}
             for stat in summary_stats:
-                arrs = stat_dict[stat]  # list of arrays shape [levels,]
+                arrs = stat_dict[stat]
                 if len(arrs) == 0:
                     print(f"No valid samples for {var_name} stat {stat}")
                     continue
-                stacked = np.stack(arrs, axis=0)  # shape [num_samples, levels]
-                # Average over all samples (axis=0) -> result shape [levels,]
+                stacked = np.stack(arrs, axis=0)
                 results[var_name][stat] = np.nanmean(stacked, axis=0)
 
     return results
@@ -105,6 +135,7 @@ def compute_summary_stats(
 def plot_profiles(
     results_model: Dict[str, Dict[str, np.ndarray]],
     results_ref: Optional[Dict[str, Dict[str, np.ndarray]]],
+    pressure_levels: np.ndarray,
     output_dir: Path,
     summary_stats: List[str],
     model_name: str = "Model",
@@ -137,8 +168,6 @@ def plot_profiles(
             else:  
                 continue
 
-            vertical_levels = np.arange(n_levels)
-
             # Plot model lead times
             num_leadtimes = data_model.shape[0]
 
@@ -147,7 +176,7 @@ def plot_profiles(
 
             for i in range(num_leadtimes):
                 plt.plot(
-                    data_model[i], vertical_levels,
+                    data_model[i], pressure_levels,
                     label=f"{model_name} Lt {i+1}",
                     color=palette[i % len(palette)],
                     linewidth=1.8,
@@ -158,7 +187,7 @@ def plot_profiles(
                 data_ref = results_ref[var_name][stat]
                 if data_ref.shape[0] == n_levels:
                     plt.plot(
-                        data_ref, vertical_levels,
+                        data_ref, pressure_levels,
                         label=f"{ref_name}",
                         color='black',
                         linewidth=2.5,
@@ -170,7 +199,8 @@ def plot_profiles(
             ax = plt.gca()
             ax.invert_yaxis()  # pressure or height: usually top-down
             plt.xlabel(f"{var_name.replace('_', ' ').capitalize()} ({stat})", fontsize=14)
-            plt.ylabel("Vertical Level", fontsize=14)
+            plt.ylim(bottom=1000)
+            plt.ylabel("Pressure Level", fontsize=14)
             plt.title(f"Vertical Profile of {var_name.replace('_', ' ').capitalize()} ({stat})", fontsize=14, weight='bold')
 
             # Styling from histograms:

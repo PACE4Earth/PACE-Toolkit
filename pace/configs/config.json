@@ -32,7 +32,7 @@
   },
   "visualization": {
     "plots_dir": null,
-    "histogram": false,
+    "histogram": true,
     "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"]
   }

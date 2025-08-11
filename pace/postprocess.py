@@ -48,7 +48,6 @@ def unpack_custom_zarr_vars(zarr_root):
 
 def load_coords_from_zarr(zarr_root_path):
     zarr_root_path = Path(zarr_root_path)
-    # Try opening latitude, longitude, and level arrays from the root
     coords = {}
     for coord_name in ['lat', 'lon', 'pressure_levels']:
         coord_path = zarr_root_path / coord_name
@@ -110,10 +109,9 @@ def main():
 
     coords = load_coords_from_zarr(model_path)
 
-    print("Latitude values:", coords.get("lat"))
-    print("Longitude values:", coords.get("lon"))
-    print("Level values:", coords.get("pressure_levels"))
-
+    lats = coords.get("lat")
+    lons = coords.get("lon")
+    pressure_levels = coords.get("pressure_levels")
 
     ref_name = None
     ref_store = {}
@@ -150,11 +148,13 @@ def main():
 
         profiles = vertical_profile.compute_summary_stats(
             model_store,
+            lats,
             selected_leadtimes=model_leadtimes,
             summary_stats=summary_stats,
         )
         ref_profiles = vertical_profile.compute_summary_stats(
             ref_store,
+            lats,
             selected_leadtimes=None,
             summary_stats=summary_stats,
         ) if ref_store else {}
@@ -162,6 +162,7 @@ def main():
         vertical_profile.plot_profiles(
             profiles,
             ref_profiles,
+            pressure_levels,
             plots_dir,
             summary_stats,
             model_name,

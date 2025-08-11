@@ -168,3 +168,4 @@ def plot_hist(
         plt.savefig(out_dir / f"{metric}.png", dpi=300)
         print(f"Saved: {out_dir}/{metric}.png")
         plt.close()
+        
