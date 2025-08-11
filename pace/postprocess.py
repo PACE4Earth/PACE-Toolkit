@@ -123,7 +123,7 @@ def main():
     # --- HISTOGRAM visualization ---
     if is_viz_enabled(config, "histogram"):
         print("Running histogram visualization...")
-        from utils.plot_utils import histogram  # only import if needed
+        from utils.plot_utils import histogram  
 
         bin_config = histogram.BIN_CONFIG
 
@@ -167,6 +167,7 @@ def main():
             summary_stats,
             model_name,
             ref_name,
+            model_leadtimes
         )
     else:
         print("Vertical profile visualization disabled in config.\n")

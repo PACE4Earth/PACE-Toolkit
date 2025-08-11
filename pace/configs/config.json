@@ -21,19 +21,19 @@
   "spatial": {
     "pressure_levels": 37,
     "lat_range": [30, 50],
-    "lon_range": [0, 60]
+    "lon_range": [0, 30]
   },
   "time": {
     "start": "20210401",
     "end": "20210420",
     "stride_hours": 6,
     "lead_times": 40, 
-    "sample_percent": 20
+    "sample_percent": 40
   },
   "visualization": {
     "plots_dir": null,
-    "histogram": true,
-    "vertical_profile": false,
+    "histogram": false,
+    "vertical_profile": true,
     "summary_stats": ["mean", "stdev", "min", "max"]
   }
 }

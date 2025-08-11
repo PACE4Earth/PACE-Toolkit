@@ -36,65 +36,68 @@ def compute_histograms(
     bin_config: Dict[str, Dict] = None,
 ) -> Tuple[Dict[str, Dict], Dict[str, Dict[int, Tuple[np.ndarray, np.ndarray]]]]:
     """
-    Compute histograms only for variables defined in bin_config,
-    using their predefined vmin, vmax, and scale.
-    Variables not in bin_config are ignored.
-
-    Returns: bin_config, hist_result
+    Compute histograms only for variables defined in bin_config and present in store.
+    Skips variables that have no data.
     """
     if bin_config is None:
         raise ValueError("bin_config must be provided with variable bin specifications")
 
-    # Prepare histogram storage
-    hist_data: Dict[str, Dict[int, np.ndarray]] = {
-        var: {} for var in bin_config.keys()
+    # Precompute bin edges for variables in config
+    bin_edges_map = {
+        var_name: get_bins_for_variable(
+            var_name,
+            cfg.get("vmin"),
+            cfg.get("vmax"),
+            bins,
+            cfg.get("scale", "linear"),
+        )
+        for var_name, cfg in bin_config.items()
     }
 
-    # Precompute bin edges for each variable
-    bin_edges_map = {}
-    for var_name, cfg in bin_config.items():
-        vmin = cfg.get("vmin")
-        vmax = cfg.get("vmax")
-        scale = cfg.get("scale", "linear")
-        bin_edges_map[var_name] = get_bins_for_variable(var_name, vmin, vmax, bins, scale)
+    # Accumulate counts only for variables actually present in store
+    hist_data: Dict[str, Dict[int, np.ndarray]] = {}
 
-    # Accumulate counts
     for (var_name, _, lead_time), arr in store.items():
         if selected_leadtimes is not None and lead_time not in selected_leadtimes:
             continue
-
         if var_name not in bin_config:
             continue
 
         bin_edges = bin_edges_map[var_name]
-
         data = arr[:]
 
         mask = ~np.isnan(data)
         if not np.any(mask):
             continue
-        values = data[mask]
 
+        values = data[mask]
         counts, _ = np.histogram(values, bins=bin_edges)
+
+        if var_name not in hist_data:
+            hist_data[var_name] = {}
         if lead_time in hist_data[var_name]:
             hist_data[var_name][lead_time] += counts
         else:
             hist_data[var_name][lead_time] = counts
 
-    # Normalize & store bin centers
+    # Convert to normalized histograms with bin centers
     hist_result: Dict[str, Dict[int, Tuple[np.ndarray, np.ndarray]]] = {}
-    for var_name in hist_data:
+    filtered_bin_config: Dict[str, Dict] = {}
+
+    for var_name, lt_dict in hist_data.items():
         bin_edges = bin_edges_map[var_name]
         centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
         hist_result[var_name] = {}
-        for lt, counts in hist_data[var_name].items():
+        for lt, counts in lt_dict.items():
             total = counts.sum()
             hist_result[var_name][lt] = (
                 centers,
                 counts / total if total > 0 else counts,
             )
+        # Keep only variables that had data
+        filtered_bin_config[var_name] = bin_config[var_name]
 
-    return bin_config, hist_result
+    return filtered_bin_config, hist_result
 
 
 def plot_hist(
@@ -125,7 +128,7 @@ def plot_hist(
             )
 
         # Plot reference histogram aggregated over lead times
-        if metric in ref_hist:
+        if metric in ref_hist and ref_hist[metric]:
             total_counts = None
             centers = None
             for _, (c, counts) in ref_hist[metric].items():
@@ -133,13 +136,13 @@ def plot_hist(
                 total_counts = counts if total_counts is None else total_counts + counts
             if total_counts is not None and total_counts.sum() > 0:
                 total_counts = total_counts / total_counts.sum()
-            plt.plot(
-                centers, total_counts,
-                label=f"{ref_name}",
-                linewidth=2.5,
-                linestyle="--",
-                color='black'
-            )
+                plt.plot(
+                    centers, total_counts,
+                    label=f"{ref_name}",
+                    linewidth=2.5,
+                    linestyle="--",
+                    color='black'
+                )
 
         plt.title(f"Histogram - {metric.replace('_', ' ').capitalize()}", fontsize=16, weight='bold')
         plt.xlabel(f"{metric.replace('_', ' ').capitalize()}", fontsize=14)
@@ -168,4 +171,3 @@ def plot_hist(
         plt.savefig(out_dir / f"{metric}.png", dpi=300)
         print(f"Saved: {out_dir}/{metric}.png")
         plt.close()
-        
