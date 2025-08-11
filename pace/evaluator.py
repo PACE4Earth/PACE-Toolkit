@@ -127,10 +127,35 @@ def main(distributed=False):
         path=os.path.join(outputs_dir, f"{model_name}.zarr"), 
         comm=comm,
     )
-    reference_output_logger = MPIZarrSaver(
-        path=os.path.join(outputs_dir, f"{reference_name}.zarr"),
-        comm=comm,
-    ) if reference_dataset else None
+
+    # Save static coordinates once (only rank 0)
+    if rank == 0:
+        coords_to_save = {}
+        for coord_name in ["lat", "lon", "pressure_levels"]:
+            if coord_name in model_info["grid"]:
+                coords_to_save[coord_name] = np.array(model_info["grid"][coord_name])
+        # Save to Zarr root group
+        zarr_path = os.path.join(outputs_dir, f"{model_name}.zarr")
+        root = zarr.open(zarr_path, mode="a")
+        for k, v in coords_to_save.items():
+            if k not in root:
+                root.create_dataset(k, data=v, overwrite=True)
+    if reference_dataset:
+        reference_output_logger = MPIZarrSaver(
+            path=os.path.join(outputs_dir, f"{reference_name}.zarr"),
+            comm=comm,
+        )
+
+        if rank == 0:
+            coords_to_save = {}
+            for coord_name in ["lat", "lon", "pressure_levels"]:
+                if coord_name in ref_info["grid"]:
+                    coords_to_save[coord_name] = np.array(ref_info["grid"][coord_name])
+            zarr_path = os.path.join(outputs_dir, f"{reference_name}.zarr")
+            root = zarr.open(zarr_path, mode="a")
+            for k, v in coords_to_save.items():
+                if k not in root:
+                    root.create_dataset(k, data=v, overwrite=True)
 
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),
@@ -168,17 +193,17 @@ def main(distributed=False):
     if comm.Get_rank() == 0:
         print("\n--- All ranks finished writing. Now performing final check. ---")
         
-        model_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
-        print(f"Model dataset size: {len(model_dataset)}")
-        for k,v in model_dataset[0].items():
-            if isinstance(v, torch.Tensor):
-                print(k, v.shape)
-            else:
-                print(k, v)
+        # model_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
+        # print(f"Model dataset size: {len(model_dataset)}")
+        # for k,v in model_dataset[0].items():
+        #     if isinstance(v, torch.Tensor):
+        #         print(k, v.shape)
+        #     else:
+        #         print(k, v)
 
-        if reference_name:
-            ref_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{reference_name}.zarr"))
-            print(f"Reference dataset size: {len(ref_dataset)}")
+        # if reference_name:
+        #     ref_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{reference_name}.zarr"))
+        #     print(f"Reference dataset size: {len(ref_dataset)}")
     
         time_end = time.perf_counter()
         print(f"Elapsed time: {time_end - time_start:.2f} s")

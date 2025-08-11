@@ -46,6 +46,18 @@ def unpack_custom_zarr_vars(zarr_root):
 
     return store
 
+def load_coords_from_zarr(zarr_root_path):
+    zarr_root_path = Path(zarr_root_path)
+    # Try opening latitude, longitude, and level arrays from the root
+    coords = {}
+    for coord_name in ['lat', 'lon', 'pressure_levels']:
+        coord_path = zarr_root_path / coord_name
+        if coord_path.exists():
+            coords[coord_name] = zarr.open_array(str(coord_path), mode='r')[:]
+        else:
+            print(f"Coordinate {coord_name} not found at {coord_path}")
+
+    return coords
 
 def select_sample_leadtimes(zarr_path: Path, total_expected: int, max_leadtimes: int = 5) -> list[int]:
     """
@@ -95,6 +107,13 @@ def main():
     model_path = outputs_dir / f"{model_name}.zarr"
     model_leadtimes = select_sample_leadtimes(model_path, total_expected=total_leadtimes)
     model_store = unpack_custom_zarr_vars(model_path)
+
+    coords = load_coords_from_zarr(model_path)
+
+    print("Latitude values:", coords.get("lat"))
+    print("Longitude values:", coords.get("lon"))
+    print("Level values:", coords.get("pressure_levels"))
+
 
     ref_name = None
     ref_store = {}
