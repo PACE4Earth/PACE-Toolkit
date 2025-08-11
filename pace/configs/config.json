@@ -31,8 +31,8 @@
     "sample_percent": 20
   },
   "visualization": {
-    "enabled": true,
-    "summary_stats": ["mean", "stdev", "min", "max"],
-    "plots_dir": "${PLOTS_DIR_PATH}"
+    "plots_dir": null,
+    "histogram": true,
+    "summary_stats": ["mean", "stdev", "min", "max"]
   }
 }

@@ -3,8 +3,15 @@ import json
 import numpy as np
 from pathlib import Path
 import time
-from utils.plot_utils import histogram  # import histogram module you will create
-import zarr  # for zarr.open_array
+import zarr  
+
+
+def is_viz_enabled(config: dict, key: str) -> bool:
+    """
+    Check if a visualization type is enabled in config.
+    Example: is_viz_enabled(config, "histogram")
+    """
+    return bool(config.get("visualization", {}).get(key, False))
 
 
 def unpack_custom_zarr_vars(zarr_root):
@@ -81,32 +88,46 @@ def main():
     with open(config_path, "r") as f:
         config = json.load(f)
 
-    model_name = config['datasets']['model']['name']
-
-    bin_config = histogram.BIN_CONFIG
-
     outputs_dir = Path(os.path.expandvars(config["outputs_dir"]))
-    plots_dir = Path(os.path.expandvars(config["visualization"]["plots_dir"]))
-    total_leadtimes = config["time"]["lead_times"]
+    plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir") or Path(os.path.abspath(os.path.dirname(__file__))) / "plots")))
 
-    model_path = outputs_dir / f"{model_name}.zarr"
-    model_leadtimes = select_sample_leadtimes(model_path, total_expected=total_leadtimes)
+    # --- HISTOGRAM visualization ---
+    if is_viz_enabled(config, "histogram"):
+        print("Running histogram visualization...")
+        from utils.plot_utils import histogram  # only import if needed
 
-    model_store = unpack_custom_zarr_vars(model_path)
-    _, model_hist = histogram.compute_histograms(
-        model_store, selected_leadtimes=model_leadtimes, bin_config=bin_config
-    )
+        model_name = config['datasets']['model']['name']
+        bin_config = histogram.BIN_CONFIG
+        total_leadtimes = config["time"]["lead_times"]
 
-    ref_hist = {}
-    if "reference" in config["datasets"] and config["datasets"]["reference"].get("name"):
-        ref_name = config['datasets']['reference']['name']
-        ref_path = outputs_dir / f"{ref_name}.zarr"
-        ref_store = unpack_custom_zarr_vars(ref_path)
-        _, ref_hist = histogram.compute_histograms(
-            ref_store, selected_leadtimes=None, bin_config=bin_config
+        model_path = outputs_dir / f"{model_name}.zarr"
+        model_leadtimes = select_sample_leadtimes(model_path, total_expected=total_leadtimes)
+        model_store = unpack_custom_zarr_vars(model_path)
+
+        _, model_hist = histogram.compute_histograms(
+            model_store, selected_leadtimes=model_leadtimes, bin_config=bin_config
         )
 
-    histogram.plot_hist(model_hist, ref_hist, plots_dir, bin_config, model_name, ref_name)
+        ref_hist = {}
+        ref_name = None
+        if "reference" in config["datasets"] and config["datasets"]["reference"].get("name"):
+            ref_name = config['datasets']['reference']['name']
+            ref_path = outputs_dir / f"{ref_name}.zarr"
+            ref_store = unpack_custom_zarr_vars(ref_path)
+            _, ref_hist = histogram.compute_histograms(
+                ref_store, selected_leadtimes=None, bin_config=bin_config
+            )
+
+        histogram.plot_hist(model_hist, ref_hist, plots_dir, bin_config, model_name, ref_name)
+
+    else:
+        print("Histogram visualization disabled in config.")
+
+    # --- OTHER visualizations can follow here ---
+    # Example:
+    # if is_viz_enabled(config, "scatter"):
+    #     from utils.plot_utils import scatter
+    #     scatter.plot_something(...)
 
     time_end = time.perf_counter()
     print(f"Elapsed time: {time_end - time_start:.2f} s")

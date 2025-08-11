@@ -106,7 +106,7 @@ def plot_hist(
     ref_name: str = "Reference"
 ):
     sns.set_style("whitegrid")
-    out_dir = Path(output_dir) / "histograms"
+    out_dir = output_dir / "histograms"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Define a nice color palette for model lines
@@ -143,7 +143,7 @@ def plot_hist(
 
         plt.title(f"Histogram - {metric}", fontsize=16, weight='bold')
         plt.xlabel(metric, fontsize=14)
-        plt.ylabel("Probability", fontsize=14)
+        plt.ylabel("Probability Density", fontsize=14)
 
         # Improve axes aesthetics
         ax = plt.gca()
@@ -153,7 +153,7 @@ def plot_hist(
             spine.set_linewidth(1.2)
             spine.set_color('black')
 
-        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=1)
 
         # Set x scale if specified
         if bin_config and metric in bin_config:
