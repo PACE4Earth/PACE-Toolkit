@@ -8,6 +8,9 @@ import numpy as np
 import xarray as xr
 import zarr
 
+import xarray.backends.zarr
+from xarray.core.utils import is_dict_like
+
 import torch
 import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
@@ -17,7 +20,7 @@ from utils.output_logger import MPIZarrSaver, ZarrDataset
 from metrics.metric_handler import MetricHandler
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_devel.json')
 
 def setup(distributed=False):
     if distributed:
@@ -32,7 +35,7 @@ def setup(distributed=False):
             world_size=world_size,
             rank=rank
         )
-        print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
+        # print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
     else:
         rank = 0
         world_size = 1
@@ -75,7 +78,7 @@ def main(distributed=False):
     outputs_dir = os.path.expandvars(config.get("outputs_dir", os.path.join(BASE_DIR, "outputs")))
     os.makedirs(outputs_dir, exist_ok=True)
 
-    print('output dir:', outputs_dir)
+    # print('output dir:', outputs_dir)
 
     # RANK 0 builds the full dataset and sample list
     if rank == 0:
@@ -126,43 +129,54 @@ def main(distributed=False):
     model_output_logger = MPIZarrSaver(
         path=os.path.join(outputs_dir, f"{model_name}.zarr"), 
         comm=comm,
+        lat=model_dataset.grid['lat'],
+        lon=model_dataset.grid['lon'],
     )
 
     # Save static coordinates once (only rank 0)
-    if rank == 0:
-        coords_to_save = {}
-        for coord_name in ["lat", "lon", "pressure_levels"]:
-            if coord_name in model_info["grid"]:
-                coords_to_save[coord_name] = np.array(model_info["grid"][coord_name])
-        # Save to Zarr root group
-        zarr_path = os.path.join(outputs_dir, f"{model_name}.zarr")
-        root = zarr.open(zarr_path, mode="a")
-        for k, v in coords_to_save.items():
-            if k not in root:
-                root.create_dataset(k, data=v, overwrite=True)
+    # if rank == 0:
+    #     coords_to_save = {}
+    #     for coord_name in ["lat", "lon", "pressure_levels"]:
+    #         if coord_name in model_info["grid"]:
+    #             coords_to_save[coord_name] = np.array(model_info["grid"][coord_name])
+    #     # Save to Zarr root group
+    #     zarr_path = os.path.join(outputs_dir, f"{model_name}.zarr")
+    #     root = zarr.open(zarr_path, mode="a")
+    #     for k, v in coords_to_save.items():
+    #         if k not in root:
+    #             root.create_dataset(k, data=v, overwrite=True)
     if reference_dataset:
         reference_output_logger = MPIZarrSaver(
             path=os.path.join(outputs_dir, f"{reference_name}.zarr"),
             comm=comm,
         )
 
-        if rank == 0:
-            coords_to_save = {}
-            for coord_name in ["lat", "lon", "pressure_levels"]:
-                if coord_name in ref_info["grid"]:
-                    coords_to_save[coord_name] = np.array(ref_info["grid"][coord_name])
-            zarr_path = os.path.join(outputs_dir, f"{reference_name}.zarr")
-            root = zarr.open(zarr_path, mode="a")
-            for k, v in coords_to_save.items():
-                if k not in root:
-                    root.create_dataset(k, data=v, overwrite=True)
+        # if rank == 0:
+        #     coords_to_save = {}
+        #     for coord_name in ["lat", "lon", "pressure_levels"]:
+        #         if coord_name in ref_info["grid"]:
+        #             coords_to_save[coord_name] = np.array(ref_info["grid"][coord_name])
+        #     zarr_path = os.path.join(outputs_dir, f"{reference_name}.zarr")
+        #     root = zarr.open(zarr_path, mode="a")
+        #     for k, v in coords_to_save.items():
+        #         if k not in root:
+        #             root.create_dataset(k, data=v, overwrite=True)
 
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),
         grid=model_dataset.grid
     )
+    
+    
 
     def evaluate_and_log(dataset, logger, dataset_name):
+        
+        if rank==0:
+            metrics = metric_handler(dataset[0])
+            sample_out = {**metrics, "base_time": dataset[0]["base_time"], "lead_time": dataset[0]["lead_time"]}
+            logger.initialize_store(sample_out)
+        comm.Barrier()
+        
         dataloader, sampler = get_dataloader(dataset, distributed=distributed)
         count = 0
         with torch.no_grad():
@@ -177,6 +191,12 @@ def main(distributed=False):
     evaluate_and_log(model_dataset, model_output_logger, dataset_name=model_name)
 
     if reference_dataset:
+        
+        if rank==0:
+            reference_output_logger.initialize_store(reference_dataset[0])
+
+        comm.Barrier()
+
         evaluate_and_log(reference_dataset, reference_output_logger, dataset_name=reference_name)
 
     time.sleep(0.1)
@@ -193,17 +213,12 @@ def main(distributed=False):
     if comm.Get_rank() == 0:
         print("\n--- All ranks finished writing. Now performing final check. ---")
         
-        # model_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{model_name}.zarr"))
-        # print(f"Model dataset size: {len(model_dataset)}")
-        # for k,v in model_dataset[0].items():
-        #     if isinstance(v, torch.Tensor):
-        #         print(k, v.shape)
-        #     else:
-        #         print(k, v)
-
-        # if reference_name:
-        #     ref_dataset = ZarrDataset(path=os.path.join(outputs_dir, f"{reference_name}.zarr"))
-        #     print(f"Reference dataset size: {len(ref_dataset)}")
+        
+        try:
+            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
+            print(final_dataset)
+        except Exception as e:
+            print(e)
     
         time_end = time.perf_counter()
         print(f"Elapsed time: {time_end - time_start:.2f} s")

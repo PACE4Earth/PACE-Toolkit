@@ -74,6 +74,8 @@ class MetricHandler(nn.Module):
             self.metrics_config[metric_name] = keys
             self.metrics[metric_name] = module
             self.available_keys_map[metric_name] = available_keys
+            
+        print(self.metrics.keys())
 
     def forward(self, sample: dict) -> dict:
         outputs = {}

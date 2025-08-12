@@ -1,0 +1,89 @@
+Preparing files for graphcast...
+Done. Found 20 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 164 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 20 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 16 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+correlation_map <class 'NoneType'>
+base_time <class 'pandas._libs.tslibs.timestamps.Timestamp'>
+lead_time <class 'datetime.timedelta'>
+Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+Rank 3 processed 21 samples.
+Rank 4 processed 20 samples.
+Rank 2 processed 21 samples.
+Rank 1 processed 21 samples.
+Rank 6 processed 20 samples.
+Rank 0 processed 21 samples.
+base_time <class 'pandas._libs.tslibs.timestamps.Timestamp'>
+lead_time <class 'datetime.timedelta'>
+Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+correlation_map <class 'NoneType'>
+base_time <class 'pandas._libs.tslibs.timestamps.Timestamp'>
+lead_time <class 'datetime.timedelta'>
+Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+Rank 7 processed 20 samples.
+Rank 5 processed 20 samples.
+Rank 2 processed 2 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+Rank 3 processed 2 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+Rank 1 processed 2 samples.
+Rank 1 waiting at barrier.
+Rank 1 passed barrier.
+Rank 7 processed 2 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Rank 5 processed 2 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+Rank 6 processed 2 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+Rank 4 processed 2 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+Rank 0 processed 2 samples.
+Rank 0 waiting at barrier.
+Rank 0 passed barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+conflicting sizes for dimension 'dim_0': length 164 on 'hydrostatic_abs_error' and length 163 on {'idx': 'base_time', 'level': 'correlation', 'lat': 'correlation', 'lon': 'correlation', 'dim_0': 'geostrophic_wind_ratio', 'dim_1': 'geostrophic_wind_ratio', 'dim_2': 'geostrophic_wind_ratio', 'dim_3': 'geostrophic_wind_ratio'}
+Elapsed time: 15.54 s

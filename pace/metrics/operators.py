@@ -42,9 +42,6 @@ def get_gaussian_kernel(kernel_size: int, sigma: float = 1.0):
     
     return kernel / kernel.sum()
 
-import torch
-import torch.nn.functional as F
-
 def pad_finite_difference(phi: torch.Tensor, pad_width: tuple) -> torch.Tensor:
     """
     Pads a 4D tensor using iterative first-order finite difference extrapolation.

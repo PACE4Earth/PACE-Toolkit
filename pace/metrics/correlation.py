@@ -230,7 +230,7 @@ class SampleWiseCorrelation(nn.Module):
             sample['mean_sea_level_pressure'].flatten(),
         )
         
-        corr = torch.cov(data)   
-        self.corr = torch.cat([self.corr, corr.unsqueeze(0)], dim=0)     
+        corr = torch.cov(data).unsqueeze(0)   
+        self.corr = torch.cat([self.corr, corr], dim=0)     
                 
         return corr
