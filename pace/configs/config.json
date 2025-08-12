@@ -26,8 +26,8 @@
   "time": {
     "start": "20210401",
     "end": "20210412",
-    "stride_hours": 6,
     "lead_times": 5, 
+    "stride_hours": 6,
     "sample_percent": 5,
     "custom_times": {"enabled": false, "times": ["20210405_12", "20210406_03", "20210103_12"]}
   },

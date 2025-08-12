@@ -38,8 +38,15 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
             lons = ds['lon'].values
 
         level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
-        if level_dim and pressure_levels is not None:
-            levels = [lvl for lvl in ds[level_dim].values if lvl in pressure_levels]
+
+        if pressure_levels == "all":
+            levels = ds[level_dim].values if level_dim else None
+        elif isinstance(pressure_levels, list) and level_dim: # Select levels by exact matching pressure values (e.g., [500, 850])
+            available_levels = ds[level_dim].values
+            indices = [i for i, lvl in enumerate(available_levels) if lvl in pressure_levels]
+            levels = available_levels[indices]
+        elif pressure_levels is not None and level_dim:  # Assume integer count of levels
+            levels = ds[level_dim].values[:pressure_levels]
         elif level_dim:
             levels = ds[level_dim].values
         else:
@@ -48,10 +55,11 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
     if lats[0] > lats[-1]:
         lats = lats[::-1]
 
-    if lat_range is not None:
+    if lat_range is not None and lat_range != "all":
         lat_min, lat_max = sorted(lat_range)
         lats = lats[(lats >= lat_min) & (lats <= lat_max)]
-    if lon_range is not None:
+
+    if lon_range is not None and lon_range != "all":
         lon_min, lon_max = sorted(lon_range)
         lons = lons[(lons >= lon_min) & (lons <= lon_max)]
 
@@ -81,6 +89,7 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
         'pressure_levels': torch.tensor(levels) if levels is not None else None
     }
 
+
 class UnifiedDataset(torch.utils.data.Dataset):
     def __init__(self, config_path=None, dataset_key='model', shared_valid_times=None):
         aliases_path = Path(__file__).resolve().parent.parent / "configs" / "aliases.json"
@@ -108,29 +117,9 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.path = dataset_config.get("path", "")
 
         self.spatial_config = self.config.get("spatial", {})
-        self.lat_min, self.lat_max = sorted(self.spatial_config.get("lat_range", [-90, 90]))
-        self.lon_min, self.lon_max = sorted(self.spatial_config.get("lon_range", [0, 360]))
-
-        # Select pressure_levels
-        raw_pl = self.spatial_config.get("pressure_levels", None)
-        if raw_pl is None:
-            self.pressure_levels = None
-        else:
-            with xr.open_dataset(next(Path(self.path).rglob("*.nc")), engine='netcdf4') as ds:
-                level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
-                if level_dim:
-                    all_levels = ds[level_dim].values
-                    if isinstance(raw_pl, str) and raw_pl.lower() == "all":
-                        self.pressure_levels = list(all_levels)
-                    elif isinstance(raw_pl, int):
-                        self.pressure_levels = list(all_levels[:raw_pl])
-                    elif isinstance(raw_pl, (list, tuple, np.ndarray)):
-                        # preserve order from config, but only keep ones that exist
-                        self.pressure_levels = [lvl for lvl in raw_pl if lvl in all_levels]
-                    else:
-                        raise ValueError(f"Unsupported pressure_levels type: {type(raw_pl)}")
-                else:
-                    self.pressure_levels = None
+        self.lat_min, self.lat_max = (None, None) if self.spatial_config.get("lat_range") == "all" else sorted(self.spatial_config.get("lat_range", [-90, 90]))
+        self.lon_min, self.lon_max = (None, None) if self.spatial_config.get("lon_range") == "all" else sorted(self.spatial_config.get("lon_range", [0, 360]))
+        self.pressure_levels = self.spatial_config.get("pressure_levels", None)
 
         self.time_config = self.config.get("time", {})
         self.start = self.time_config.get("start")
@@ -220,8 +209,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
         print('Static fields setup...', end=' ')
         self.grid = get_grid(
             self.files[0][0],
-            lat_range=[self.lat_min, self.lat_max],
-            lon_range=[self.lon_min, self.lon_max],
+            lat_range=None if self.lat_min is None else [self.lat_min, self.lat_max],
+            lon_range=None if self.lon_min is None else [self.lon_min, self.lon_max],
             pressure_levels=self.pressure_levels
         )
         print('Done')
@@ -313,8 +302,15 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 ds = ds.sel(lon=slice(self.lon_min, self.lon_max))
 
             level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
-            if self.pressure_levels is not None and level_dim:
-                ds = ds.sel({level_dim: self.pressure_levels})
+            if level_dim and self.pressure_levels is not None:
+                if self.pressure_levels == "all":
+                    pass  # No slicing, select all levels
+                elif isinstance(self.pressure_levels, list):
+                    available_levels = ds[level_dim].values
+                    indices = [i for i, lvl in enumerate(available_levels) if lvl in self.pressure_levels]
+                    ds = ds.isel({level_dim: indices})
+                else:
+                    ds = ds.isel({level_dim: slice(0, self.pressure_levels)})  # assume integer count slicing
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
