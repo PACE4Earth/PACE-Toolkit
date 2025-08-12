@@ -172,6 +172,46 @@ def main():
     else:
         print("Vertical profile visualization disabled in config.\n")
 
+    if is_viz_enabled(config, "spatial_slice"):
+        from utils.plot_utils import spatial_slice
+        print("\nRunning spatial slice visualization...")
+
+        spatial_cfg = config["visualization"]["spatial_slice"]
+        variable = spatial_cfg.get("variable", "temperature")
+        level = spatial_cfg.get("level", 850)  # hPa
+        samples = spatial_cfg.get("samples", 1)
+        geopotential_level = spatial_cfg.get("geopotential_level", None)
+
+        # Plot model slices
+        spatial_slice.plot_spatial_slice(
+            model_store,
+            coords,
+            variable=variable,
+            level=level,
+            samples=samples,
+            geopotential=model_store if "geopotential" in [k[0] for k in model_store.keys()] else None,
+            geopotential_level=geopotential_level,
+            save_dir=str(plots_dir),
+            dataset_name=model_name,
+        )
+
+        # Plot reference slices if available
+        if ref_store:
+            spatial_slice.plot_spatial_slice(
+                ref_store,
+                coords,
+                variable=variable,
+                level=level,
+                samples=samples,
+                geopotential=ref_store if "geopotential" in [k[0] for k in ref_store.keys()] else None,
+                geopotential_level=geopotential_level,
+                save_dir=str(plots_dir),
+                dataset_name=ref_name,
+            )
+    else:
+        print("Spatial slice visualization disabled in config.\n")
+
+
     time_end = time.perf_counter()
     print(f"\nElapsed time: {time_end - time_start:.2f} s")
 
