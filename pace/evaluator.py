@@ -65,6 +65,78 @@ def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None
         "chosen_valid_times": dataset.chosen_valid_times
     }
 
+def harmonize_zarr_to_xarray(
+    zarr_group: zarr.hierarchy.Group,
+    main_coord_name: str = 'base_time'
+) -> xr.Dataset:
+    """
+    Builds a consistent xarray.Dataset from an open but inconsistent Zarr group.
+
+    It harmonizes variables by slicing or padding them along their first
+    dimension to match the length of a specified main coordinate.
+
+    Args:
+        zarr_group: An open Zarr group object (from zarr.open).
+        main_coord_name: The name of the 1D array to use as the primary
+                         coordinate and reference for sizing.
+
+    Returns:
+        A new, internally consistent xarray.Dataset object.
+    """
+    print(f"Robustly harmonizing Zarr group based on '{main_coord_name}'...")
+
+    try:
+        main_coord_data = zarr_group[main_coord_name][:]
+        target_size = len(main_coord_data)
+        main_dim_name = 'sample'
+    except KeyError:
+        raise KeyError(f"Main coordinate '{main_coord_name}' not found.")
+
+    coords = {
+        main_dim_name: (main_dim_name, main_coord_data),
+        'y': ('y', zarr_group['lat'][:]),
+        'x': ('x', zarr_group['lon'][:]),
+    }
+    if 'lead_time' in zarr_group:
+         coords['lead_time'] = (main_dim_name, zarr_group['lead_time'][0:target_size])
+
+
+    data_vars = {}
+    vars_to_process = zarr_group.keys() - coords.keys() - {main_coord_name}
+
+    for key in vars_to_process:
+        source_array = zarr_group[key]
+        data = source_array[:]
+        
+        dims = None
+        if data.ndim == 4:
+            dims = (main_dim_name, 'level', 'y', 'x')
+        elif data.ndim >= 1: # Handle other dimensionalities
+            # Use generic dim names for simplicity
+            dims = [main_dim_name] + [f'dim_{i}' for i in range(1, data.ndim)]
+        else:
+            continue
+
+        # --- Improved Harmonization Logic ---
+        if data.shape[0] != target_size:
+            # Case 1: Array is too large, slice it down.
+            if data.shape[0] > target_size:
+                print(f"  -> Slicing '{key}': {data.shape[0]} -> {target_size}")
+                data = data[0:target_size]
+            # Case 2: Array is too small, pad it with NaNs.
+            else:
+                print(f"  -> Padding '{key}': {data.shape[0]} -> {target_size}")
+                pad_width = target_size - data.shape[0]
+                # Create a tuple of pad widths for each dimension ((before, after), ...)
+                padding = [(0, pad_width)] + [(0, 0)] * (data.ndim - 1)
+                data = np.pad(data, padding, mode='constant', constant_values=np.nan)
+
+        data_vars[key] = xr.DataArray(data=data, dims=dims, name=key)
+
+    ds_cleaned = xr.Dataset(data_vars, coords=coords)
+    print("Harmonization complete.")
+    return ds_cleaned
+
 def main(distributed=False):
     time_start = time.perf_counter()
     rank, world_size = setup(distributed=distributed)
@@ -215,8 +287,15 @@ def main(distributed=False):
         
         
         try:
-            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
-            print(final_dataset)
+            # final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
+            tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
+            print(tmp_dataset.tree())
+            final_dataset = harmonize_zarr_to_xarray(tmp_dataset)
+            try:
+                print(final_dataset.tree())
+            except:
+                print(final_dataset)
+            # print(final_dataset)
         except Exception as e:
             print(e)
     
