@@ -38,8 +38,8 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
             lons = ds['lon'].values
 
         level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
-        if pressure_levels is not None and level_dim:
-            levels = ds[level_dim].values[:pressure_levels]
+        if level_dim and pressure_levels is not None:
+            levels = [lvl for lvl in ds[level_dim].values if lvl in pressure_levels]
         elif level_dim:
             levels = ds[level_dim].values
         else:
@@ -110,7 +110,27 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.spatial_config = self.config.get("spatial", {})
         self.lat_min, self.lat_max = sorted(self.spatial_config.get("lat_range", [-90, 90]))
         self.lon_min, self.lon_max = sorted(self.spatial_config.get("lon_range", [0, 360]))
-        self.pressure_levels = self.spatial_config.get("pressure_levels", None)
+
+        # Select pressure_levels
+        raw_pl = self.spatial_config.get("pressure_levels", None)
+        if raw_pl is None:
+            self.pressure_levels = None
+        else:
+            with xr.open_dataset(next(Path(self.path).rglob("*.nc")), engine='netcdf4') as ds:
+                level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
+                if level_dim:
+                    all_levels = ds[level_dim].values
+                    if isinstance(raw_pl, str) and raw_pl.lower() == "all":
+                        self.pressure_levels = list(all_levels)
+                    elif isinstance(raw_pl, int):
+                        self.pressure_levels = list(all_levels[:raw_pl])
+                    elif isinstance(raw_pl, (list, tuple, np.ndarray)):
+                        # preserve order from config, but only keep ones that exist
+                        self.pressure_levels = [lvl for lvl in raw_pl if lvl in all_levels]
+                    else:
+                        raise ValueError(f"Unsupported pressure_levels type: {type(raw_pl)}")
+                else:
+                    self.pressure_levels = None
 
         self.time_config = self.config.get("time", {})
         self.start = self.time_config.get("start")
@@ -294,7 +314,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
             if self.pressure_levels is not None and level_dim:
-                ds = ds.isel({level_dim: slice(0, self.pressure_levels)})
+                ds = ds.sel({level_dim: self.pressure_levels})
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
@@ -338,26 +358,32 @@ def main():
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
+    print(model_dataset.grid["pressure_levels"])
+    print(model_dataset.grid["lat"])
+    print(model_dataset.grid["lon"])
 
     if reference_dataset:
         print(f"len ref: {reference_dataset.__len__()}")
+        print(model_dataset.grid["pressure_levels"])
+        print(model_dataset.grid["lat"])
+        print(model_dataset.grid["lon"])
 
-    print("\nModel valid times:", model_dataset.valid_times)
-    for i, (file_path, base_dt, lead_idx) in enumerate(model_dataset.samples):
-        valid_time = model_dataset.valid_time_map[(base_dt, lead_idx)]
-        print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-        sample = model_dataset[i]
-        print("  base_time:", sample['base_time'])
-        print("  lead_time:", sample['lead_time'])
+    # print("\nModel valid times:", model_dataset.valid_times)
+    # for i, (file_path, base_dt, lead_idx) in enumerate(model_dataset.samples):
+    #     valid_time = model_dataset.valid_time_map[(base_dt, lead_idx)]
+    #     print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+    #     sample = model_dataset[i]
+    #     print("  base_time:", sample['base_time'])
+    #     print("  lead_time:", sample['lead_time'])
 
-    if reference_dataset:
-        print("\nReference valid times:", reference_dataset.valid_times)
-        for i, (file_path, base_dt, lead_idx) in enumerate(reference_dataset.samples):
-            valid_time = reference_dataset.valid_time_map[(base_dt, lead_idx)]
-            print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-            sample = reference_dataset[i]
-            print("  base_time:", sample['base_time'])
-            print("  lead_time:", sample['lead_time'])
+    # if reference_dataset:
+    #     print("\nReference valid times:", reference_dataset.valid_times)
+    #     for i, (file_path, base_dt, lead_idx) in enumerate(reference_dataset.samples):
+    #         valid_time = reference_dataset.valid_time_map[(base_dt, lead_idx)]
+    #         print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+    #         sample = reference_dataset[i]
+    #         print("  base_time:", sample['base_time'])
+    #         print("  lead_time:", sample['lead_time'])
 
 if __name__ == "__main__":
     main()
