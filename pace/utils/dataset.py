@@ -119,6 +119,17 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.sample_percent = self.time_config.get("sample_percent", 1)
         self.max_lead = self.time_config.get("lead_times", 1)
 
+        # Custom times config
+        self.custom_times_enabled = self.time_config.get("custom_times", {}).get("enabled", False)
+        self.custom_times_list = []
+        if self.custom_times_enabled:
+            custom_list_raw = self.time_config.get("custom_times", {}).get("times", [])
+            for ct in custom_list_raw:
+                try:
+                    self.custom_times_list.append(datetime.strptime(ct, "%Y%m%d_%H"))
+                except ValueError:
+                    raise ValueError(f"Invalid custom time format: {ct}, expected YYYYMMDD_HH")
+
         self.start_dt = datetime.strptime(self.start, "%Y%m%d")
         self.end_dt = datetime.strptime(self.end, "%Y%m%d") + timedelta(days=1) - timedelta(minutes=1)
         lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
@@ -234,12 +245,18 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.valid_times = sorted(set(self.valid_time_map.values()))
 
-        rng = np.random.default_rng(42)
-        if shared_valid_times is not None:
-            chosen_valid_times = shared_valid_times
+        if self.custom_times_enabled:
+            chosen_valid_times = set()
+            for target_time in self.custom_times_list:
+                closest_time = min(self.valid_times, key=lambda t: abs(t - target_time))
+                chosen_valid_times.add(closest_time)
         else:
-            num_samples = max(1, round(len(self.valid_times) * (self.sample_percent / 100.0)))
-            chosen_valid_times = set(rng.choice(self.valid_times, size=num_samples, replace=False))
+            rng = np.random.default_rng(42)
+            if shared_valid_times is not None:
+                chosen_valid_times = shared_valid_times
+            else:
+                num_samples = max(1, round(len(self.valid_times) * (self.sample_percent / 100.0)))
+                chosen_valid_times = set(rng.choice(self.valid_times, size=num_samples, replace=False))
 
         self.samples = [(fp, bd, li) for (fp, bd, li) in self.samples if self.valid_time_map[(bd, li)] in chosen_valid_times]
         self.chosen_valid_times = chosen_valid_times 
@@ -277,7 +294,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             level_dim = 'level' if 'level' in ds.dims else 'pressure' if 'pressure' in ds.dims else None
             if self.pressure_levels is not None and level_dim:
-                ds = ds.isel({level_dim: slice(0, len(self.pressure_levels))})
+                ds = ds.isel({level_dim: slice(0, self.pressure_levels)})
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
@@ -291,7 +308,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         return fields
     
-    # NEW: Construct from a precomputed sample list and minimal metadata
+    # Construct from a precomputed sample list and minimal metadata
     @classmethod
     def from_sample_list(cls, sample_list, grid, metrics, requested_names, canonical_names, config_path=None, dataset_key='model'):
         obj = cls.__new__(cls)
@@ -316,9 +333,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         return obj
 
-
 def main():
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/dataset_config.json"
+    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config.json"
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
