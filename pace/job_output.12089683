@@ -1,7 +1,3 @@
-dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
-dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
-dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
-dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
 Preparing files for graphcast...
 Done. Found 20 usable files.
 
@@ -35,30 +31,26 @@ Selected 16 samples for era5.
 Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
 All 8 ranks have opened the synchronized Zarr archive.
 dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
 Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/era5.zarr
 All 8 ranks have opened the synchronized Zarr archive.
 dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
-correlation_map <class 'NoneType'>
-base_time <class 'pandas._libs.tslibs.timestamps.Timestamp'>
-lead_time <class 'datetime.timedelta'>
 Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
 dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
 dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
 Rank 3 processed 21 samples.
-Rank 7 processed 20 samples.
-Rank 1 processed 21 samples.
-Rank 6 processed 20 samples.
-Rank 2 processed 21 samples.
 Rank 5 processed 20 samples.
-Rank 4 processed 20 samples.
+Rank 1 processed 21 samples.
+Rank 2 processed 21 samples.
 Rank 0 processed 21 samples.
-base_time <class 'pandas._libs.tslibs.timestamps.Timestamp'>
-lead_time <class 'datetime.timedelta'>
 Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/era5.zarr
-correlation_map <class 'NoneType'>
-base_time <class 'pandas._libs.tslibs.timestamps.Timestamp'>
-lead_time <class 'datetime.timedelta'>
 Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+Rank 7 processed 20 samples.
+Rank 4 processed 20 samples.
+Rank 6 processed 20 samples.
 Rank 3 processed 2 samples.
 Rank 3 waiting at barrier.
 Rank 3 passed barrier.
@@ -68,44 +60,60 @@ Rank 1 passed barrier.
 Rank 2 processed 2 samples.
 Rank 2 waiting at barrier.
 Rank 2 passed barrier.
+Rank 7 processed 2 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Rank 5 processed 2 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
 Rank 4 processed 2 samples.
 Rank 4 waiting at barrier.
 Rank 4 passed barrier.
 Rank 6 processed 2 samples.
 Rank 6 waiting at barrier.
 Rank 6 passed barrier.
-Rank 5 processed 2 samples.
-Rank 5 waiting at barrier.
-Rank 5 passed barrier.
-Rank 7 processed 2 samples.
-Rank 7 waiting at barrier.
-Rank 7 passed barrier.
 Rank 0 processed 2 samples.
 Rank 0 waiting at barrier.
 Rank 0 passed barrier.
 
 --- All ranks finished writing. Now performing final check. ---
 /
- ├── base_time (158,) datetime64[ns]
+ ├── base_time (162,) datetime64[ns]
  ├── correlation (163, 4, 4) float32
- ├── geostrophic_wind_ratio (162, 3, 21, 21) float64
+ ├── geostrophic_wind_ratio (164, 3, 21, 21) float64
  ├── hydrostatic_abs_error (163, 3, 21, 21) float32
- ├── hydrostatic_rel_error (153, 3, 21, 21) float32
- ├── hydrostatic_rmse (164, 1, 21, 21) float32
+ ├── hydrostatic_rel_error (163, 3, 21, 21) float32
+ ├── hydrostatic_rmse (162, 1, 21, 21) float32
  ├── lat (21,) float32
- ├── lead_time (161,) timedelta64[h]
+ ├── lead_time (160,) timedelta64[h]
  ├── lon (21,) float32
  ├── potential_vorticity (165, 3, 21, 21) float32
  └── relative_humidity (164, 3, 21, 21) float32
-Robustly harmonizing Zarr group based on 'base_time'...
-  -> Padding 'lat': 21 -> 158
-  -> Padding 'lon': 21 -> 158
-  -> Slicing 'correlation': 163 -> 158
-  -> Slicing 'geostrophic_wind_ratio': 162 -> 158
-  -> Padding 'hydrostatic_rel_error': 153 -> 158
-  -> Slicing 'hydrostatic_abs_error': 163 -> 158
-  -> Slicing 'potential_vorticity': 165 -> 158
-  -> Slicing 'hydrostatic_rmse': 164 -> 158
-  -> Slicing 'relative_humidity': 164 -> 158
-cannot reindex or align along dimension 'level' because of conflicting dimension sizes: {1, 3}
-Elapsed time: 30.07 s
+Starting robust harmonization based on 'base_time'...
+  -> Slicing 'geostrophic_wind_ratio' on 'idx': 164 -> 162
+  -> Padding 'lead_time' on 'idx': 160 -> 162
+  -> Slicing 'hydrostatic_abs_error' on 'idx': 163 -> 162
+  -> Slicing 'correlation' on 'idx': 163 -> 162
+  -> Slicing 'relative_humidity' on 'idx': 164 -> 162
+  -> Slicing 'potential_vorticity' on 'idx': 165 -> 162
+  -> Slicing 'hydrostatic_rel_error' on 'idx': 163 -> 162
+  -> Broadcasting 'hydrostatic_rmse' on 'level' dim: 1 -> 3
+Harmonization complete.
+<xarray.Dataset>
+Dimensions:                 (idx: 162, lat: 21, lon: 21, level: 3, dim_1: 4,
+                             dim_2: 4)
+Coordinates:
+  * idx                     (idx) datetime64[ns] 2021-04-01 ... 2021-04-10T12...
+  * lat                     (lat) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
+  * lon                     (lon) float32 55.0 55.25 55.5 ... 59.5 59.75 60.0
+Dimensions without coordinates: level, dim_1, dim_2
+Data variables:
+    geostrophic_wind_ratio  (idx, level, lat, lon) float64 0.0 0.0 ... 0.9852
+    lead_time               (idx) timedelta64[ns] 1 days 12:00:00 ... NaT
+    hydrostatic_abs_error   (idx, level, lat, lon) float32 0.0 0.0 ... 39.24
+    correlation             (idx, dim_1, dim_2) float32 0.0 0.0 ... 0.9998
+    relative_humidity       (idx, level, lat, lon) float32 0.0 0.0 ... 0.001336
+    potential_vorticity     (idx, level, lat, lon) float32 0.0 0.0 ... nan nan
+    hydrostatic_rel_error   (idx, level, lat, lon) float32 0.0 0.0 ... 0.0013
+    hydrostatic_rmse        (idx, level, lat, lon) float32 0.0 0.0 ... 2.266e+03
+Elapsed time: 28.97 s

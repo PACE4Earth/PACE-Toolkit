@@ -105,10 +105,10 @@ class MPIZarrSaver:
 
         # index coordinates
         arr = self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True)
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['base_time']
 
         arr = self.root.create_dataset('lead_time', shape=(0,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True)
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['lead_time']
 
         # Create an appendable data array for each variable
         for name, tensor in sample.items():
@@ -136,8 +136,9 @@ class MPIZarrSaver:
                 # This metadata is essential for xarray
                 arr.attrs['_ARRAY_DIMENSIONS'] = dims
                 # print(name, '\t', tensor.shape, '\t', dims)
-            else:
-                print(name, type(tensor))
+            # else:
+            #     print('\nNon-Tensor entries:')
+            #     print(name, type(tensor))
         
         self._initialized = True
         print(f"Zarr store initialized for xarray at: {self.path}")

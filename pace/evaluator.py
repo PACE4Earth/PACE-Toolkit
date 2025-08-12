@@ -18,132 +18,147 @@ from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 from utils.dataset import UnifiedDataset
 from utils.output_logger import MPIZarrSaver, ZarrDataset
 from metrics.metric_handler import MetricHandler
+from utils.functions import (
+    setup,
+    get_dataloader,
+    build_dataset_info,
+    harmonize_zarr_to_xarray,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_devel.json')
 
-def setup(distributed=False):
-    if distributed:
-        rank = int(os.environ['SLURM_PROCID'])
-        world_size = int(os.environ['SLURM_NTASKS'])
-        master_addr = os.environ['MASTER_ADDR']
-        master_port = os.environ['MASTER_PORT']
 
-        dist.init_process_group(
-            backend="gloo",
-            init_method=f"tcp://{master_addr}:{master_port}",
-            world_size=world_size,
-            rank=rank
-        )
-        # print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
-    else:
-        rank = 0
-        world_size = 1
+# def setup(distributed=False):
+#     if distributed:
+#         rank = int(os.environ['SLURM_PROCID'])
+#         world_size = int(os.environ['SLURM_NTASKS'])
+#         master_addr = os.environ['MASTER_ADDR']
+#         master_port = os.environ['MASTER_PORT']
 
-    return rank, world_size
+#         dist.init_process_group(
+#             backend="gloo",
+#             init_method=f"tcp://{master_addr}:{master_port}",
+#             world_size=world_size,
+#             rank=rank
+#         )
+#         # print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
+#     else:
+#         rank = 0
+#         world_size = 1
 
-def get_dataloader(dataset, distributed=False):
-    num_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 0))
-    dataloader = DataLoader(
-        dataset,
-        batch_size=None,
-        shuffle=False,
-        num_workers=num_workers,
-    )
-    return dataloader, None
+#     return rank, world_size
 
-
-# NEW: Utility for constructing and extracting dataset metadata (used only on rank 0)
-def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None):
-    dataset = UnifiedDataset(config_path, dataset_key, shared_valid_times=shared_valid_times)
-    return {
-        "samples": dataset.samples,
-        "grid": dataset.grid,
-        "metrics": dataset.metrics,
-        "requested_names": dataset.requested_names,
-        "canonical_names": dataset.canonical_names,
-        "chosen_valid_times": dataset.chosen_valid_times
-    }
-
-def harmonize_zarr_to_xarray(
-    zarr_group: zarr.hierarchy.Group,
-    main_coord_name: str = 'base_time'
-) -> xr.Dataset:
-    """
-    Builds a consistent xarray.Dataset from an open but inconsistent Zarr group.
-
-    It harmonizes variables by slicing or padding them along their first
-    dimension to match the length of a specified main coordinate.
-
-    Args:
-        zarr_group: An open Zarr group object (from zarr.open).
-        main_coord_name: The name of the 1D array to use as the primary
-                         coordinate and reference for sizing.
-
-    Returns:
-        A new, internally consistent xarray.Dataset object.
-    """
-    print(f"Robustly harmonizing Zarr group based on '{main_coord_name}'...")
-
-    try:
-        main_coord_data = zarr_group[main_coord_name][:]
-        target_size = len(main_coord_data)
-        main_dim_name = 'sample'
-    except KeyError:
-        raise KeyError(f"Main coordinate '{main_coord_name}' not found.")
-
-    coords = {
-        main_dim_name: (main_dim_name, main_coord_data),
-        'y': ('y', zarr_group['lat'][:]),
-        'x': ('x', zarr_group['lon'][:]),
-    }
-    if 'lead_time' in zarr_group:
-         coords['lead_time'] = (main_dim_name, zarr_group['lead_time'][0:target_size])
+# def get_dataloader(dataset, distributed=False):
+#     num_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 0))
+#     dataloader = DataLoader(
+#         dataset,
+#         batch_size=None,
+#         shuffle=False,
+#         num_workers=num_workers,
+#     )
+#     return dataloader, None
 
 
-    data_vars = {}
-    vars_to_process = zarr_group.keys() - coords.keys() - {main_coord_name}
+# # NEW: Utility for constructing and extracting dataset metadata (used only on rank 0)
+# def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None):
+#     dataset = UnifiedDataset(config_path, dataset_key, shared_valid_times=shared_valid_times)
+#     return {
+#         "samples": dataset.samples,
+#         "grid": dataset.grid,
+#         "metrics": dataset.metrics,
+#         "requested_names": dataset.requested_names,
+#         "canonical_names": dataset.canonical_names,
+#         "chosen_valid_times": dataset.chosen_valid_times
+#     }
 
-    for key in vars_to_process:
-        source_array = zarr_group[key]
-        data = source_array[:]
+# def harmonize_zarr_to_xarray(
+#     zarr_group: zarr.hierarchy.Group,
+#     main_coord_name: str = 'base_time'
+# ) -> xr.Dataset:
+#     """
+#     Builds a consistent xarray.Dataset from a Zarr group with known
+#     inconsistencies on both the 'sample' and 'level' dimensions.
+
+#     Args:
+#         zarr_group: An open Zarr group object (from zarr.open).
+#         main_coord_name: The name of the 1D array to use as the primary
+#                          coordinate and reference for sizing the 'sample' dimension.
+
+#     Returns:
+#         A new, internally consistent xarray.Dataset object.
+#     """
+#     print(f"Final harmonization based on '{main_coord_name}'...")
+
+#     try:
+#         main_coord_data = zarr_group[main_coord_name][:]
+#         target_sample_size = len(main_coord_data)
+#         sample_dim_name = 'sample'
+#     except KeyError:
+#         raise KeyError(f"Main coordinate '{main_coord_name}' not found.")
+
+#     coords = {
+#         sample_dim_name: (sample_dim_name, main_coord_data),
+#         'lat': ('lat', zarr_group['lat'][:]),
+#         'lon': ('lon', zarr_group['lon'][:]),
+#     }
+#     if 'lead_time' in zarr_group:
+#         coords['lead_time'] = (sample_dim_name, zarr_group['lead_time'][:target_sample_size])
+
+#     data_vars = {}
+#     vars_to_process = zarr_group.keys() - coords.keys() - {main_coord_name}
+
+#     for key in vars_to_process:
+#         source_array = zarr_group[key]
+#         data = source_array[:]
         
-        dims = None
-        if data.ndim == 4:
-            dims = (main_dim_name, 'level', 'y', 'x')
-        elif data.ndim >= 1: # Handle other dimensionalities
-            # Use generic dim names for simplicity
-            dims = [main_dim_name] + [f'dim_{i}' for i in range(1, data.ndim)]
-        else:
-            continue
+#         dims = None
+#         if data.ndim == 4:
+#             dims = (sample_dim_name, 'level', 'lat', 'lon')
+#         elif data.ndim >= 1:
+#             dims = [sample_dim_name] + [f'dim_{i}' for i in range(1, data.ndim)]
+#         else:
+#             continue
 
-        # --- Improved Harmonization Logic ---
-        if data.shape[0] != target_size:
-            # Case 1: Array is too large, slice it down.
-            if data.shape[0] > target_size:
-                print(f"  -> Slicing '{key}': {data.shape[0]} -> {target_size}")
-                data = data[0:target_size]
-            # Case 2: Array is too small, pad it with NaNs.
-            else:
-                print(f"  -> Padding '{key}': {data.shape[0]} -> {target_size}")
-                pad_width = target_size - data.shape[0]
-                # Create a tuple of pad widths for each dimension ((before, after), ...)
-                padding = [(0, pad_width)] + [(0, 0)] * (data.ndim - 1)
-                data = np.pad(data, padding, mode='constant', constant_values=np.nan)
+#         # --- Step 1: Harmonize the 'sample' dimension (axis 0) ---
+#         if data.shape[0] != target_sample_size:
+#             if data.shape[0] > target_sample_size:
+#                 print(f"  -> Slicing '{key}' on '{sample_dim_name}': {data.shape[0]} -> {target_sample_size}")
+#                 data = data[0:target_sample_size]
+#             else:
+#                 print(f"  -> Padding '{key}' on '{sample_dim_name}': {data.shape[0]} -> {target_sample_size}")
+#                 padding = [(0, target_sample_size - data.shape[0])] + [(0, 0)] * (data.ndim - 1)
+#                 data = np.pad(data, padding, mode='constant', constant_values=np.nan)
+        
+# ##############################################################################################################
+#         # --- Step 2: Harmonize the 'level' dimension (axis 1) for the specific problem variable ---
+#         if key == 'hydrostatic_rmse' and data.ndim == 4 and data.shape[1] == 1:
+#             print(f"  -> Broadcasting '{key}' on 'level' dim: 1 -> 3")
+#             # Repeat the data along the 'level' axis (axis=1) 3 times
+#             data = np.repeat(data, 3, axis=1)
 
-        data_vars[key] = xr.DataArray(data=data, dims=dims, name=key)
+# ##############################################################################################################
 
-    ds_cleaned = xr.Dataset(data_vars, coords=coords)
-    print("Harmonization complete.")
-    return ds_cleaned
+#         data_vars[key] = xr.DataArray(data=data, dims=dims, name=key)
+
+#     ds_cleaned = xr.Dataset(data_vars, coords=coords)
+#     print("Final harmonization complete.")
+#     return ds_cleaned
 
 def main(distributed=False):
+    
+    
+    
     time_start = time.perf_counter()
     rank, world_size = setup(distributed=distributed)
     comm = MPI.COMM_WORLD
     assert world_size == comm.Get_size()
     assert rank == comm.Get_rank()
 
+    if comm.Get_rank() == 0:
+        ...
+    comm.Barrier()
+    
     with open(DATASET_CONFIG_PATH, 'r') as f:
         config = json.load(f)
 
