@@ -2,3 +2,78 @@
   [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
 or newer)[0m
 
+[W socket.cpp:436] [c10d] The server socket cannot be initialized on [::]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb1060.juwels]:18560 (errno: 97 - Address family not supported by protocol).
+/p/software/default/stages/2024/software/zarr/2.18.3-GCCcore-12.3.0/lib/python3.11/site-packages/zarr/storage.py:455: UserWarning: an object_codec is only needed for object arrays
+  _init_array_metadata(
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 221, in <module>
+    main(distributed=True)
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 150, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 35, in evaluate_and_log
+    for sample in dataloader:
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 630, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1345, in _next_data
+    return self._process_data(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1371, in _process_data
+    data.reraise()
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/_utils.py", line 694, in reraise
+    raise exception
+RuntimeError: Caught RuntimeError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/_utils/worker.py", line 308, in _worker_loop
+    data = fetcher.fetch(index)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 53, in fetch
+    data = self.dataset[possibly_batched_index]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/dataset.py", line 360, in __getitem__
+    tau = torch.tensor(ds[rq].values).to(os.getenv('DEVICE'))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/cuda/__init__.py", line 284, in _lazy_init
+    raise RuntimeError(
+RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing, you must use the 'spawn' start method
+
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 221, in <module>
+    main(distributed=True)
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 150, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 35, in evaluate_and_log
+    for sample in dataloader:
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 630, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1345, in _next_data
+    return self._process_data(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1371, in _process_data
+    data.reraise()
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/_utils.py", line 694, in reraise
+    raise exception
+RuntimeError: Caught RuntimeError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/_utils/worker.py", line 308, in _worker_loop
+    data = fetcher.fetch(index)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 53, in fetch
+    data = self.dataset[possibly_batched_index]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/dataset.py", line 360, in __getitem__
+    tau = torch.tensor(ds[rq].values).to(os.getenv('DEVICE'))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/cuda/__init__.py", line 284, in _lazy_init
+    raise RuntimeError(
+RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing, you must use the 'spawn' start method
+

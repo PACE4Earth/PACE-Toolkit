@@ -1,0 +1,61 @@
+partition:	 booster
+backend:	 nccl
+Preparing files for graphcast...
+Done. Found 6 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 2 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 2 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+0: Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+Rank 6 processed 0 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+Rank 6 waiting at barrier.
+Rank 7 processed 0 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Rank 7 waiting at barrier.
+Rank 4 processed 0 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+Rank 4 waiting at barrier.
+Rank 5 processed 0 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+Rank 5 waiting at barrier.
+Rank 3 processed 0 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+Rank 3 waiting at barrier.
+Rank 2 processed 0 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+Rank 2 waiting at barrier.
