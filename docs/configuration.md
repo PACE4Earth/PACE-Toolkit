@@ -121,8 +121,8 @@ Defines the spatial subset of data to be loaded.
 | Key               | Type                 | Description                                                                                                                               | Default             |
 | ----------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | `pressure_levels` | int \| list \| "all" | If integer: number of pressure levels from the top of the file. If list: exact pressure levels to select. If `"all"`: include all levels. | `"all"` |
-| `lat_range`       | list \| "all"        | Latitude range `[min, max]` to select, or `"all"` for all available latitudes.                                                            | `"all"`             |
-| `lon_range`       | list \| "all"        | Longitude range `[min, max]` to select, or `"all"` for all available longitudes.                                                          | `"all"`             |
+| `lat_range`       | list \| "all"        | Latitude range `[min, max]` to select (expected from range [-90, 90]), or `"all"` for all available latitudes.                                                            | `"all"`             |
+| `lon_range`       | list \| "all"        | Longitude range `[min, max]` to select (expected from range [0, 360]), or `"all"` for all available longitudes.                                                          | `"all"`             |
 
 ---
 
