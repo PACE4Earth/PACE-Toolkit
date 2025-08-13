@@ -213,7 +213,7 @@ class XarrayZarrHandler(nn.Module):
         if local_success:
             self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
             self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
-            print(f"Rank {self.rank}: {base_times} {lead_times} {self.path}")
+            print(f"Rank {self.rank}: {sample['idx'].detach().cpu().numpy()} {base_times} {lead_times} {self.path}")
         else:
             print(f"XXX\tRank {self.rank}: {base_times, } {self.path}")
         
