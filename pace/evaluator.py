@@ -24,6 +24,7 @@ from utils.functions import (
     get_dataloader,
     build_dataset_info,
     harmonize_zarr_to_xarray,
+    evaluate_and_log,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +38,7 @@ def main(distributed=False):
     time_start = time.perf_counter()
     rank, world_size = setup(distributed=distributed)
     comm = MPI.COMM_WORLD
+    
     assert world_size == comm.Get_size()
     assert rank == comm.Get_rank()
 
@@ -143,27 +145,16 @@ def main(distributed=False):
         grid=model_dataset.grid
     )
 
-    def evaluate_and_log(dataset, logger, dataset_name):
-        
-        if rank==0:
-            metrics = metric_handler(dataset[0])
-            sample_out = {**metrics, "base_time": dataset[0]["base_time"], "lead_time": dataset[0]["lead_time"]}
-            logger.initialize_store(sample_out)
-        comm.Barrier()
-        
-        dataloader, sampler = get_dataloader(dataset, distributed=distributed)
-        count = 0
-        with torch.no_grad():
-            for sample in dataloader:
-                metrics = metric_handler(sample)
-                sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"]}
-                logger.save(sample_out)
-                count += 1
-        print(f"Rank {rank} processed {count} samples.")
-
     comm.Barrier()
 
-    evaluate_and_log(model_dataset, model_output_logger, dataset_name=model_name)
+    evaluate_and_log(
+        dataset=model_dataset, 
+        logger=model_output_logger, 
+        dataset_name=model_name, 
+        metric_handler=metric_handler, 
+        distributed=distributed,
+        comm=comm,
+    )
 
     print(f"Rank {comm.Get_rank()} waiting at barrier.")
     comm.Barrier()
@@ -175,8 +166,17 @@ def main(distributed=False):
     time.sleep(0.1)
 
     if reference_dataset:
-        evaluate_and_log(reference_dataset, reference_output_logger, dataset_name=reference_name)
+        evaluate_and_log(
+            dataset=reference_dataset, 
+            logger=reference_output_logger, 
+            dataset_name=reference_name,
+            metric_handler=metric_handler, 
+            distributed=distributed,
+            comm=comm,
+        )
 
+
+    print(f"Rank {comm.Get_rank()} waiting at barrier.")
     comm.Barrier()
     if rank==0:
         print(f'Passed barrier after {reference_dataset}.')    
@@ -190,9 +190,12 @@ def main(distributed=False):
         
         try:
             # final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
+            
             tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
             print(tmp_dataset.tree())
+            # dirty bit
             final_dataset = harmonize_zarr_to_xarray(tmp_dataset)
+            
             try:
                 print(final_dataset.tree())
             except:

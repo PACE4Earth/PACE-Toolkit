@@ -2,8 +2,8 @@
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=00:15:00
-#SBATCH --output=job_output.%j
-#SBATCH --error=job_error.%j
+#SBATCH --output=booster.%j.out
+#SBATCH --error=booster.%j.err
 #SBATCH --account=weatherai
 
 # 🚀 Specify the Booster partition and request GPU resources

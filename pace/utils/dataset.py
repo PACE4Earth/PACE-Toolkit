@@ -357,7 +357,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
-                tau = torch.tensor(ds[rq].values, device=os.getenv('DEVICE'))
+                tau = torch.tensor(ds[rq].values).to(os.getenv('DEVICE'))
                 if tau.ndim == 3:
                     tau = tau.unsqueeze(0)
                 fields[cn] = tau

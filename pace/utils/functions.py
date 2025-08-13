@@ -21,6 +21,24 @@ from utils.output_logger import MPIZarrSaver, ZarrDataset
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_devel.json')
 
+def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=False, comm=None):
+    
+    if comm.Get_rank() == 0:
+        metrics = metric_handler(dataset[0])
+        sample_out = {**metrics, "base_time": dataset[0]["base_time"], "lead_time": dataset[0]["lead_time"]}
+        logger.initialize_store(sample_out)
+    comm.Barrier()
+    
+    dataloader, sampler = get_dataloader(dataset, distributed=distributed)
+    count = 0
+    with torch.no_grad():
+        for sample in dataloader:
+            metrics = metric_handler(sample)
+            sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"]}
+            logger.save(sample_out)
+            count += 1
+    print(f"Rank {comm.Get_rank()} processed {count} samples.")
+
 def setup(distributed=False):
     if distributed:
         rank = int(os.environ['SLURM_PROCID'])

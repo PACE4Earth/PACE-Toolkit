@@ -2,8 +2,8 @@
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=00:15:00
-#SBATCH --output=job_output.%j
-#SBATCH --error=job_error.%j
+#SBATCH --output=cluster.%j.out
+#SBATCH --error=cluster.%j.err
 #SBATCH --account=weatherai
 
 # backup modules, in case something goes wrong
@@ -19,7 +19,7 @@ ml ParaStationMPI/5.9.2-1 mpi4py/3.1.4
 export GRAPHCAST_EXTENDED_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
 export ERA5_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_download/2021"
 # export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/shared/pace/outputs"
-export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/vozar2/outputs"
+export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/shared/pace/vozar2"
 
 # Set the master address and port
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
