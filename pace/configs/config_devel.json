@@ -20,20 +20,22 @@
   },
   "spatial": {
     "pressure_levels": 3,
-    "lat_range": [45, 50],
-    "lon_range": [55, 60]
+    "lat_range": [30, 50],
+    "lon_range": [0, 30]
   },
   "time": {
     "start": "20210401",
     "end": "20210420",
+    "num_lead_times": 40, 
     "stride_hours": 6,
-    "lead_times": 40, 
-    "sample_percent": 20
+    "sample_percent": 20,
+    "custom_times": {"enabled": false, "times": ["20210405_12", "20210406_03", "20210103_12"]}
   },
   "visualization": {
     "plots_dir": null,
     "histogram": false,
     "vertical_profile": false,
-    "summary_stats": ["mean", "stdev", "min", "max"]
+    "summary_stats": ["mean", "stdev", "min", "max"],
+    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
   }
 }

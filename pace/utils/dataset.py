@@ -89,6 +89,81 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
         'pressure_levels': torch.tensor(levels) if levels is not None else None
     }
 
+def parse_base_lead_times_from_file(path):
+    """
+    Returns (base_time: datetime, lead_times: list of timedelta) for the given file path,
+    or (None, None) if base_time can't be determined.
+    """
+    try:
+        with xr.open_dataset(path, engine='netcdf4') as ds:
+            # Support explicit base_time and lead_time variables if present
+            if 'base_time' in ds.variables and 'lead_time' in ds.variables:
+                base_time_val = ds['base_time'].values
+                lead_time_vals = ds['lead_time'].values
+                
+                if np.issubdtype(base_time_val.dtype, np.datetime64):
+                    base_time = pd.to_datetime(base_time_val).to_pydatetime()
+                elif isinstance(base_time_val, (str, bytes)):
+                    base_time = pd.to_datetime(base_time_val).to_pydatetime()
+                else:
+                    base_time = None
+                
+                # Convert lead_times to timedelta objects
+                if np.issubdtype(lead_time_vals.dtype, np.timedelta64):
+                    lead_times = [pd.to_timedelta(lt).to_pytimedelta() for lt in lead_time_vals]
+                elif np.issubdtype(lead_time_vals.dtype, np.integer):
+                    # Assuming lead times in hours
+                    lead_times = [timedelta(hours=int(lt)) for lt in lead_time_vals]
+                else:
+                    lead_times = None
+
+                if base_time is not None and lead_times is not None:
+                    return base_time, lead_times
+
+            # Fallback: use 'time' variable
+            time_var = ds['time'].values
+            if np.issubdtype(time_var.dtype, np.datetime64):
+                # time var is absolute datetime, base time = first time, lead times = time - base_time
+                base_time = pd.to_datetime(time_var[0]).to_pydatetime()
+                lead_times = [pd.to_datetime(t).to_pydatetime() - base_time for t in time_var]
+                return base_time, lead_times
+            
+            elif np.issubdtype(time_var.dtype, (np.timedelta64, np.integer)):
+                # time var is relative lead times, parse base_time from filename and dirs
+                candidates = [path.stem, path.parent.name, path.parent.parent.name]
+                best_dt, best_score = None, 0
+                for candidate in candidates:
+                    dt, score = try_parse_datetime_from_str(candidate)
+                    if dt is not None and score > best_score:
+                        best_dt, best_score = dt, score
+                base_time = best_dt
+                if base_time is None:
+                    return None, None
+                # Convert lead times to timedelta list
+                if np.issubdtype(time_var.dtype, np.timedelta64):
+                    lead_times = [pd.to_timedelta(t).to_pytimedelta() for t in time_var]
+                else:
+                    lead_times = [timedelta(hours=int(t)) for t in time_var]
+                return base_time, lead_times
+            
+            else:
+                # Unsupported time dtype
+                return None, None
+
+    except Exception as e:
+        print(f"Error reading {path}: {e}")
+        return None, None
+
+def try_parse_datetime_from_str(s):
+    formats = [("%Y%m%d_%H", 3), ("%Y%m%d%H", 3), ("%Y%m%d", 2), ("%Y", 1)]
+    for fmt, score in formats:
+        try:
+            dt = pd.to_datetime(s, format=fmt)
+            return dt, score
+        except Exception:
+            continue
+    return None, 0
+
 
 class UnifiedDataset(torch.utils.data.Dataset):
     def __init__(self, config_path=None, dataset_key='model', shared_valid_times=None):
@@ -126,7 +201,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.end = self.time_config.get("end")
         self.stride_hours = self.time_config.get("stride_hours", 6)
         self.sample_percent = self.time_config.get("sample_percent", 1)
-        self.max_lead = self.time_config.get("lead_times", 1)
+        self.max_lead = self.time_config.get("num_lead_times", 1)
 
         # Custom times config
         self.custom_times_enabled = self.time_config.get("custom_times", {}).get("enabled", False)
@@ -157,50 +232,18 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         candidate_files.sort()
 
-        def try_parse_datetime_from_str(s):
-            formats = [("%Y%m%d_%H", 3), ("%Y%m%d%H", 3), ("%Y%m%d", 2), ("%Y", 1)]
-            for fmt, score in formats:
-                try:
-                    dt = pd.to_datetime(s, format=fmt)
-                    return dt, score
-                except Exception:
-                    continue
-            return None, 0
-
         self.files = []
         for file in candidate_files:
-            path = Path(file)
-            try:
-                with xr.open_dataset(path, engine='netcdf4') as ds:
-                    time_var = ds['time'].values
-                    if np.issubdtype(time_var.dtype, np.datetime64):
-                        fallback_base_dt = pd.to_datetime(time_var[0])
-                        time_is_absolute = True
-                    elif np.issubdtype(time_var.dtype, (np.timedelta64, np.integer)):
-                        fallback_base_dt = None
-                        time_is_absolute = False
-                    else:
-                        print(f"Warning: Unsupported time dtype in {file}, skipping.")
-                        continue
-            except Exception as e:
-                print(f"Error reading {file}: {e}")
+            base_dt, lead_times = parse_base_lead_times_from_file(file)
+            if base_dt is None or lead_times is None:
+                print(f"Warning: Could not determine base or lead times for {file}, skipping.")
+                continue
+            
+            lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
+            if not (self.start_dt <= base_dt <= lead_end_dt):
                 continue
 
-            best_dt, best_score = None, 0
-            if not time_is_absolute:
-                candidates = [path.stem, path.parent.name, path.parent.parent.name]
-                for candidate in candidates:
-                    dt, score = try_parse_datetime_from_str(candidate)
-                    if dt is not None and score > best_score:
-                        best_dt, best_score = dt, score
-
-            base_dt = best_dt if best_dt is not None else fallback_base_dt
-            if base_dt is None:
-                print(f"Warning: Could not determine base_time for {file}, skipping.")
-                continue
-
-            if self.start_dt <= base_dt <= lead_end_dt:
-                self.files.append((file, base_dt))
+            self.files.append((file, base_dt, lead_times))
 
         print(f"Done. Found {len(self.files)} usable files.\n")
         if not self.files:
@@ -235,24 +278,15 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.samples = []
         self.valid_time_map = {}
-        for file_path, base_dt in self.files:
-            with xr.open_dataset(file_path, engine='netcdf4') as ds:
-                time_var = ds['time'].values
-                if np.issubdtype(time_var.dtype, np.timedelta64):
-                    valid_times = base_dt + pd.to_timedelta(time_var)
-                elif np.issubdtype(time_var.dtype, np.datetime64):
-                    valid_times = pd.to_datetime(time_var)
-                elif np.issubdtype(time_var.dtype, np.integer):
-                    valid_times = base_dt + pd.to_timedelta(time_var, unit='h')
-                else:
-                    raise TypeError(f"Unsupported time dtype: {time_var.dtype}")
+        for file_path, base_dt, lead_times in self.files:
+            valid_times = [base_dt + lt for lt in lead_times]
+            valid_times = [vt for vt in valid_times if self.start_dt <= vt <= self.end_dt]
 
-                valid_times = valid_times[(valid_times >= self.start_dt) & (valid_times <= self.end_dt)]
-                max_lead_idx = min(self.max_lead, len(valid_times))
-                for lead_idx in range(max_lead_idx):
-                    valid_time = valid_times[lead_idx]
-                    self.samples.append((file_path, base_dt, lead_idx))
-                    self.valid_time_map[(base_dt, lead_idx)] = valid_time
+            max_lead_idx = min(self.max_lead, len(valid_times))
+            for lead_idx in range(max_lead_idx):
+                valid_time = valid_times[lead_idx]
+                self.samples.append((file_path, base_dt, lead_idx))
+                self.valid_time_map[(base_dt, lead_idx)] = valid_time
 
         self.valid_times = sorted(set(self.valid_time_map.values()))
 
@@ -281,15 +315,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         file_path, base_dt, lead_idx = self.samples[idx]
         with xr.open_dataset(file_path, engine='netcdf4') as ds:
-            lead_time_val = ds['time'].isel(time=lead_idx).values
-            if np.issubdtype(type(lead_time_val), np.timedelta64):
-                lead_time = pd.to_timedelta(lead_time_val).to_pytimedelta()
-            elif np.issubdtype(type(lead_time_val), np.datetime64):
-                lead_time = pd.to_datetime(lead_time_val) - base_dt
-            elif np.issubdtype(type(lead_time_val), np.integer):
-                lead_time = timedelta(hours=int(lead_time_val))
+            for f, bd, lead_times in self.files:
+                if f == file_path and bd == base_dt:
+                    lead_time = lead_times[lead_idx]
+                    break
             else:
-                raise TypeError(f"Unsupported lead_time dtype: {type(lead_time_val)}")
+                raise RuntimeError("Lead time not found for sample.")
 
             ds = ds.isel(time=lead_idx)
 
