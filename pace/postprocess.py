@@ -98,8 +98,14 @@ def main():
     with open(config_path, "r") as f:
         config = json.load(f)
 
-    outputs_dir = Path(os.path.expandvars(config["outputs_dir"]))
-    plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir") or Path(os.path.abspath(os.path.dirname(__file__))) / "plots")))
+    outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
+    if not outputs_dir.exists():
+        outputs_dir = Path(__file__).resolve().parent / "outputs"
+    
+    plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir"))))
+    if not outputs_dir.exists():
+        plots_dir = Path(__file__).resolve().parent / "plots"
+    # plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir") or Path(os.path.abspath(os.path.dirname(__file__))) / "plots")))
 
     model_name = config['datasets']['model']['name']
     total_leadtimes = config["time"]["lead_times"]

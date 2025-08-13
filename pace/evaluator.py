@@ -3,6 +3,7 @@ import json
 from mpi4py import MPI
 from collections import defaultdict
 import time
+from pathlib import Path
 
 import numpy as np
 import xarray as xr
@@ -26,7 +27,7 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_devel.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config.json')
 
 
 # def setup(distributed=False):
@@ -162,7 +163,9 @@ def main(distributed=False):
     with open(DATASET_CONFIG_PATH, 'r') as f:
         config = json.load(f)
 
-    outputs_dir = os.path.expandvars(config.get("outputs_dir", os.path.join(BASE_DIR, "outputs")))
+    outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
+    if not outputs_dir.exists():
+        outputs_dir = Path(__file__).resolve().parent / "outputs"
     os.makedirs(outputs_dir, exist_ok=True)
 
     # print('output dir:', outputs_dir)

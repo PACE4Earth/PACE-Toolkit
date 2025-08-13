@@ -192,8 +192,10 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.path = dataset_config.get("path", "")
 
         self.spatial_config = self.config.get("spatial", {})
-        self.lat_min, self.lat_max = (None, None) if self.spatial_config.get("lat_range") == "all" else sorted(self.spatial_config.get("lat_range", [-90, 90]))
-        self.lon_min, self.lon_max = (None, None) if self.spatial_config.get("lon_range") == "all" else sorted(self.spatial_config.get("lon_range", [0, 360]))
+        lat_range = self.spatial_config.get("lat_range", "all")
+        lon_range = self.spatial_config.get("lon_range", "all")
+        self.lat_min, self.lat_max = (None, None) if lat_range == "all" else sorted(lat_range)
+        self.lon_min, self.lon_max = (None, None) if lon_range == "all" else sorted(lon_range)
         self.pressure_levels = self.spatial_config.get("pressure_levels", None)
 
         self.time_config = self.config.get("time", {})
@@ -285,11 +287,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
             max_lead_idx = min(self.max_lead, len(valid_times))
             for lead_idx in range(max_lead_idx):
                 valid_time = valid_times[lead_idx]
-                self.samples.append((file_path, base_dt, lead_idx))
+                self.samples.append((file_path, base_dt, lead_idx, lead_times)) # Store lead_times array in the sample
                 self.valid_time_map[(base_dt, lead_idx)] = valid_time
 
         self.valid_times = sorted(set(self.valid_time_map.values()))
 
+        # Select custom or random valid times
         if self.custom_times_enabled:
             chosen_valid_times = set()
             for target_time in self.custom_times_list:
@@ -303,7 +306,13 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 num_samples = max(1, round(len(self.valid_times) * (self.sample_percent / 100.0)))
                 chosen_valid_times = set(rng.choice(self.valid_times, size=num_samples, replace=False))
 
-        self.samples = [(fp, bd, li) for (fp, bd, li) in self.samples if self.valid_time_map[(bd, li)] in chosen_valid_times]
+        # Filter samples
+        self.samples = [
+            (fp, bd, li, lts)
+            for (fp, bd, li, lts) in self.samples
+            if self.valid_time_map[(bd, li)] in chosen_valid_times
+        ]
+
         self.chosen_valid_times = chosen_valid_times 
 
         print(f"\nSelected {len(self.samples)} samples for {self.name}.")
@@ -313,15 +322,9 @@ class UnifiedDataset(torch.utils.data.Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        file_path, base_dt, lead_idx = self.samples[idx]
+        file_path, base_dt, lead_idx, lead_times = self.samples[idx]
+        lead_time = lead_times[lead_idx]
         with xr.open_dataset(file_path, engine='netcdf4') as ds:
-            for f, bd, lead_times in self.files:
-                if f == file_path and bd == base_dt:
-                    lead_time = lead_times[lead_idx]
-                    break
-            else:
-                raise RuntimeError("Lead time not found for sample.")
-
             ds = ds.isel(time=lead_idx)
 
             if 'latitude' in ds:
@@ -376,8 +379,11 @@ class UnifiedDataset(torch.utils.data.Dataset):
         obj.lat_max = float(grid['lat'].max())
         obj.lon_min = float(grid['lon'].min())
         obj.lon_max = float(grid['lon'].max())
-        obj.pressure_levels = grid['pressure_levels']
-        
+        obj.pressure_levels = None if grid['pressure_levels'] is None else (
+            int(grid['pressure_levels'].item()) if grid['pressure_levels'].ndim == 0 
+            else grid['pressure_levels'].tolist()
+        )   
+
         obj.is_model_dataset = dataset_key == 'model'
 
         return obj
@@ -387,6 +393,7 @@ def main():
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
+    print(model_dataset.samples)
     # print(model_dataset.grid["pressure_levels"])
     # print(model_dataset.grid["lat"])
     # print(model_dataset.grid["lon"])
@@ -398,7 +405,7 @@ def main():
         # print(model_dataset.grid["lon"])
 
     print("\nModel valid times:", model_dataset.valid_times)
-    for i, (file_path, base_dt, lead_idx) in enumerate(model_dataset.samples):
+    for i, (file_path, base_dt, lead_idx, leadtimes) in enumerate(model_dataset.samples):
         valid_time = model_dataset.valid_time_map[(base_dt, lead_idx)]
         print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
         sample = model_dataset[i]
@@ -407,7 +414,7 @@ def main():
 
     if reference_dataset:
         print("\nReference valid times:", reference_dataset.valid_times)
-        for i, (file_path, base_dt, lead_idx) in enumerate(reference_dataset.samples):
+        for i, (file_path, base_dt, lead_idx, leadtimes) in enumerate(reference_dataset.samples):
             valid_time = reference_dataset.valid_time_map[(base_dt, lead_idx)]
             print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
             sample = reference_dataset[i]
