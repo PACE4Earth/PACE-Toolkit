@@ -107,6 +107,8 @@ class MetricHandler(nn.Module):
         
         sample = move_dict_to_device(sample, os.getenv('DEVICE'))
 
+        outputs['idx'] = sample.get('idx', torch.tensor(0, device=os.getenv('DEVICE')))
+
         for metric_name, module in self.metrics.items():
             result = module(sample)
             available_keys = self.available_keys_map[metric_name]

@@ -72,24 +72,7 @@ class MPIZarrSaver:
     
     def initialize_store(self, sample: dict):
         """Initializes the Zarr arrays and coordinates based on the first data sample."""
-        # Create static coordinate arrays for latitude and longitude
-        # self.root.create_dataset(
-        #     'lat', 
-        #     data=np.array(self.lat), 
-        #     object_codec=numcodecs.Pickle(), 
-        #     overwrite=True,
-        # )
-        # self.root.create_dataset(
-        #     'lon', 
-        #     data=np.array(self.lon),
-        #     object_codec=numcodecs.Pickle(),  
-        #     overwrite=True,
-        # )
         
-        # # Create appendable coordinate arrays for the index dimension
-        # self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True)
-        # self.root.create_dataset('lead_time', shape=(0,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True)
-
         if self._initialized:
             print(f"{self.rank}: Attempted re-initialization for xarray at: {self.path}")
             return
@@ -109,6 +92,11 @@ class MPIZarrSaver:
             overwrite=True,
         )
         arr.attrs['_ARRAY_DIMENSIONS'] = ['lon']
+
+
+        # index coordinates
+        arr = self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='float', overwrite=True)
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['base_time']
 
         # index coordinates
         arr = self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True)
@@ -196,54 +184,16 @@ class XarrayZarrHandler(nn.Module):
 
     def forward(self, sample: dict) -> dict:
         
-        # print(sample.keys())
-        
-        # """Saves a batch of forecasts to the Zarr store."""
-        # # On the first call, set up the entire Zarr store structure
-        # if not self._initialized:
-        #     tensor_sample = {k: v for k, v in sample.items() if isinstance(v, torch.Tensor)}
-        #     if not tensor_sample:
-        #         raise ValueError("Sample contains no tensors to initialize the Zarr store.")
-        #     self._initialize_store(tensor_sample)
-
-        # for name, data in sample.items():
-            
-        #     if isinstance(data, torch.Tensor):
-        #         data = data.squeeze(0)
-            
-        #     data_np = np.array(data)
-            
-        #     # Add this debugging block!
-        #     try: 
-        #         if self.root[name].shape[1:] != data_np.shape[1:]:
-        #             print(f"!! SHAPE MISMATCH DETECTED FOR '{name}' !!")
-        #             print(f"  Expected shape (from init): {self.root[name].shape}")
-        #             print(f"  Received shape to append:   {data_np.shape}") # Show what append expects
-        #             print(f"  Actual data shape:          {data_np.shape}")
-        #     except Exception as e:
-        #         print(e)
-
         base_times = sample.pop('base_time')
         lead_times = sample.pop('lead_time')
         
-        # Standardize input to be a batch
         is_single_item = not isinstance(base_times, (list, tuple))
         if is_single_item:
             base_times = [base_times]
             lead_times = [lead_times]
-
-        # Append time coordinates
-
-        # # Append variable data
-        # for name, tensor in sample.items():
-        #     if tensor != None:
-        #         data_np = tensor.detach().cpu().numpy()
-        #         # Add a batch dimension if the input was a single item
-        #         if is_single_item:
-        #             data_np = data_np[np.newaxis, ...]
-        #         self.root[name].append(data_np)
         
         for name, tensor in sample.items():
+            local_success = False
             if isinstance(tensor, torch.Tensor):
                 try:
                     
@@ -253,15 +203,20 @@ class XarrayZarrHandler(nn.Module):
                     # print(name, data_np.shape)
                     
                     self.root[name].append(data_np)
-                    self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
-                    self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
-                    print(f"Rank {self.rank}: {name} {base_times} {lead_times} {self.path}")
+                    local_success = True
                     
                 except ValueError:
                     # If a shape mismatch occurs, catch it, log it, and continue
                     print(f"Rank {self.rank}: {name} expected {self.root[name].shape} but got {data_np.shape}")
                     continue # Explicitly move to the next item in the loop
             
+        if local_success:
+            self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
+            self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
+            print(f"Rank {self.rank}: {base_times} {lead_times} {self.path}")
+        else:
+            print(f"XXX\tRank {self.rank}: {base_times, } {self.path}")
+        
         return sample
 
 class ZarrDataset(Dataset):

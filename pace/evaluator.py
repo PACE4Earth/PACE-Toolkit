@@ -192,14 +192,25 @@ def main(distributed=False):
             # final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
             
             tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
+            
+            print()
+            print(tmp_dataset['idx'])
+            try:
+                print(tmp_dataset['idx'][:])
+            except:
+                print('hell naw')
+            
             print(tmp_dataset.tree())
             # dirty bit
             final_dataset = harmonize_zarr_to_xarray(tmp_dataset)
+            
+            print()
             
             try:
                 print(final_dataset.tree())
             except:
                 print(final_dataset)
+                
         except Exception as e:
             print(e)
     

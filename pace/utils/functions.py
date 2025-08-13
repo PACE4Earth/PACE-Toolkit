@@ -49,8 +49,8 @@ def setup(distributed=False):
         backend = "nccl" if torch.cuda.is_available() else "gloo"
 
         if rank==0:
-            print(os.getenv('SLURM_JOB_PARTITION'))
-            print(backend)
+            print('partition:\t', os.getenv('SLURM_JOB_PARTITION'))
+            print('backend:\t', backend)
 
         dist.init_process_group(
             backend=backend,

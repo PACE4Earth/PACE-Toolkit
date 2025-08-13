@@ -364,6 +364,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields['base_time'] = base_dt
             fields['lead_time'] = lead_time
+            fields['idx'] = torch.ones(1, device=os.getenv('DEVICE')) # just because you are
 
         return fields
     
