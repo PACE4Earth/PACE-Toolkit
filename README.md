@@ -75,7 +75,7 @@ Example:
 }
 ```
 
-See full configuration documentation in [`config.md`](https://github.com/PACE4Earth/PACE-Toolkit/blob/main/docs/config/configuration.md).
+See full configuration documentation in [`config.md`](https://github.com/PACE4Earth/PACE-Toolkit/blob/main/docs/configuration.md).
 
 ---
 

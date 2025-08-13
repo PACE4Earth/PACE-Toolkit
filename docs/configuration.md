@@ -142,6 +142,9 @@ Defines the temporal subset of data to be used.
 | `custom_times.times`   | list   | Specific times to include, in `YYYYMMDD_HH` format.               | `[]`                |
 
 ---
+
+Note: `valid_times` are selected from time range `start : end - num_lead_times * stride_hours`, so that each `lead_time` has equal number of samples (in total).
+
 Note: When in `custom_times` mode, adjust number of leadtimes per valid time with `num_lead_times` and `sample_percent`.
 
 ### 6. `visualization`
