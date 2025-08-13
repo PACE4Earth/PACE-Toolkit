@@ -16,6 +16,9 @@ from torch.utils.data import Dataset
 
 class MPIZarrSaver:
     def __init__(self, path: str, comm, lat=None, lon=None):
+        
+        self._initialized = False
+        
         self.comm = comm
         self.rank = self.comm.Get_rank()
         self.size = self.comm.Get_size()
@@ -53,7 +56,7 @@ class MPIZarrSaver:
         lock = zarr.ProcessSynchronizer(lock_path)
         
         # self.saver = ZarrHandler(self.path, synchronizer=lock, lat=lat, lon=lon)
-        self.saver = XarrayZarrHandler(self.path, synchronizer=lock, lat=lat, lon=lon)
+        self.saver = XarrayZarrHandler(self.path, synchronizer=lock, lat=lat, lon=lon, rank=self.rank)
         if self.rank == 0:
             print(f"All {self.size} ranks have opened the synchronized Zarr archive.")
 
@@ -86,6 +89,10 @@ class MPIZarrSaver:
         # # Create appendable coordinate arrays for the index dimension
         # self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True)
         # self.root.create_dataset('lead_time', shape=(0,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True)
+
+        if self._initialized:
+            print(f"{self.rank}: Attempted re-initialization for xarray at: {self.path}")
+            return
 
         arr = self.root.create_dataset(
             'lat', 
@@ -141,7 +148,7 @@ class MPIZarrSaver:
             #     print(name, type(tensor))
         
         self._initialized = True
-        print(f"Zarr store initialized for xarray at: {self.path}")
+        print(f"{self.rank}: Zarr store initialized for xarray at: {self.path}")
         try:
             zarr.consolidate_metadata(self.path)
             # print('Did we win?')
@@ -161,7 +168,7 @@ class XarrayZarrHandler(nn.Module):
     in a nested format, with the added requirement of latitude and longitude coordinates
     at initialization.
     """
-    def __init__(self, path: str, lat: np.ndarray, lon: np.ndarray, mode='a', synchronizer=None):
+    def __init__(self, path: str, lat: np.ndarray, lon: np.ndarray, mode='a', synchronizer=None, rank=-1):
         """
         Initializes the handler.
 
@@ -174,6 +181,7 @@ class XarrayZarrHandler(nn.Module):
         """
         super().__init__()
         self.path = path
+        self.rank = rank
         self.lat = lat
         self.lon = lon
         self.root = zarr.open_group(self.path, mode=mode, synchronizer=synchronizer)
@@ -256,7 +264,7 @@ class XarrayZarrHandler(nn.Module):
                     print("   - The program will continue running.")
                     continue # Explicitly move to the next item in the loop
             
-        # print(f"Saved {len(base_times)} item(s) to {self.path}")
+        print(f"Rank {self.rank}: Saved {len(base_times)} item(s) to {self.path}")
         return sample
 
 class ZarrDataset(Dataset):

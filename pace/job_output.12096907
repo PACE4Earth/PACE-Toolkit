@@ -1,0 +1,119 @@
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+gloo
+Preparing files for graphcast...
+Done. Found 6 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 2 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 2 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+0: Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+dict_keys(['geostrophic_balance', 'hydrostatic_balance', 'correlation', 'correlation_map', 'potential_vorticity', 'humidity_temperature'])
+Rank 3 processed 0 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+Rank 5 processed 0 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+Rank 2 processed 0 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+Rank 7 processed 0 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Rank 6 processed 0 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+Rank 4 processed 0 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+Rank 0: Saved 1 item(s) to /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+Rank 0 processed 1 samples.
+Rank 0 waiting at barrier.
+Rank 0 passed barrier.
+Passed barrier after graphcast.
+0: Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+Rank 1: Saved 1 item(s) to /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
+Rank 1 processed 1 samples.
+Rank 1 waiting at barrier.
+Rank 1 passed barrier.
+Rank 1: Saved 1 item(s) to /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+Rank 1 processed 1 samples.
+Rank 0: Saved 1 item(s) to /p/scratch/hclimrep/vozar2/outputs/era5.zarr
+Rank 0 processed 1 samples.
+Passed barrier after <utils.dataset.UnifiedDataset object at 0x1513ad525a50>.
+
+--- All ranks finished writing. Now performing final check. ---
+/
+ ├── base_time (2,) datetime64[ns]
+ ├── correlation (3, 4, 4) float32
+ ├── geostrophic_wind_ratio (3, 3, 21, 21) float64
+ ├── hydrostatic_abs_error (3, 3, 21, 21) float32
+ ├── hydrostatic_rel_error (3, 3, 21, 21) float32
+ ├── hydrostatic_rmse (3, 1, 21, 21) float32
+ ├── lat (21,) float32
+ ├── lead_time (2,) timedelta64[h]
+ ├── lon (21,) float32
+ ├── potential_vorticity (3, 3, 21, 21) float32
+ └── relative_humidity (3, 3, 21, 21) float32
+Starting robust harmonization based on 'base_time'...
+  -> Slicing 'relative_humidity' on 'idx': 3 -> 2
+  -> Slicing 'geostrophic_wind_ratio' on 'idx': 3 -> 2
+  -> Slicing 'hydrostatic_rel_error' on 'idx': 3 -> 2
+  -> Slicing 'hydrostatic_abs_error' on 'idx': 3 -> 2
+  -> Slicing 'potential_vorticity' on 'idx': 3 -> 2
+  -> Slicing 'correlation' on 'idx': 3 -> 2
+  -> Slicing 'hydrostatic_rmse' on 'idx': 3 -> 2
+  -> Broadcasting 'hydrostatic_rmse' on 'level' dim: 1 -> 3
+Harmonization complete.
+<xarray.Dataset>
+Dimensions:                 (idx: 2, lat: 21, lon: 21, level: 3, dim_1: 4,
+                             dim_2: 4)
+Coordinates:
+  * idx                     (idx) datetime64[ns] 2021-04-01 2021-04-03T12:00:00
+  * lat                     (lat) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
+  * lon                     (lon) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
+Dimensions without coordinates: level, dim_1, dim_2
+Data variables:
+    relative_humidity       (idx, level, lat, lon) float32 0.0 0.0 ... 0.002132
+    geostrophic_wind_ratio  (idx, level, lat, lon) float64 0.0 0.0 ... 0.1792
+    lead_time               (idx) timedelta64[ns] 06:00:00 1 days 06:00:00
+    hydrostatic_rel_error   (idx, level, lat, lon) float32 0.0 0.0 ... 0.0065
+    hydrostatic_abs_error   (idx, level, lat, lon) float32 0.0 0.0 ... 190.1
+    potential_vorticity     (idx, level, lat, lon) float32 0.0 0.0 ... nan nan
+    correlation             (idx, dim_1, dim_2) float32 0.0 0.0 ... 0.9999
+    hydrostatic_rmse        (idx, level, lat, lon) float32 0.0 0.0 ... 137.3
+Elapsed time: 7.93 s

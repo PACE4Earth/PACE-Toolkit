@@ -25,7 +25,7 @@
   },
   "time": {
     "start": "20210401",
-    "end": "20210412",
+    "end": "20210404",
     "num_lead_times": 5, 
     "stride_hours": 6,
     "sample_percent": 20,
