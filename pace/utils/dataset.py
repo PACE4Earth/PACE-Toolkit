@@ -167,6 +167,9 @@ def try_parse_datetime_from_str(s):
 
 class UnifiedDataset(torch.utils.data.Dataset):
     def __init__(self, config_path=None, dataset_key='model', shared_valid_times=None):
+                
+        # Config and slicing.        
+                
         aliases_path = Path(__file__).resolve().parent.parent / "configs" / "aliases.json"
         with open(aliases_path, "r") as f:
             self.aliases = json.load(f)
@@ -220,6 +223,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.end_dt = datetime.strptime(self.end, "%Y%m%d") + timedelta(days=1) - timedelta(minutes=1)
         lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
 
+        # Prepare files and samples
+
         print(f'Preparing files for {self.name}...')
         candidate_files = []
         for root, dirs, files in os.walk(self.path):
@@ -259,6 +264,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
             pressure_levels=self.pressure_levels
         )
         print('Done')
+
+        # Check required fields for metrics
 
         print('Checking required field for metrics...')
         metrics_path = Path(__file__).resolve().parent.parent / "configs" / "variables_for_metrics.json"
@@ -350,7 +357,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
-                tau = torch.tensor(ds[rq].values)
+                tau = torch.tensor(ds[rq].values, device=os.getenv('DEVICE'))
                 if tau.ndim == 3:
                     tau = tau.unsqueeze(0)
                 fields[cn] = tau

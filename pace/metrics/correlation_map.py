@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -9,13 +11,14 @@ class CorrelationMap(nn.Module):
     def __init__(self, grid):
         super().__init__()
         
+        self.device = os.getenv('DEVICE')  # Get device from environment variable or default to CPU
         c = 4
         h = grid['lat'].shape[0]
         w = grid['lon'].shape[0]
         
-        self.sum_c = torch.zeros(1, c, h, w, dtype=torch.float32)
-        self.sum_c_sq = torch.zeros(1, c, h, w, dtype=torch.float32)
-        self.sum_cc = torch.zeros(c, c, h, w, dtype=torch.float32)
+        self.sum_c = torch.zeros(1, c, h, w, device=self.device, dtype=torch.float32)
+        self.sum_c_sq = torch.zeros(1, c, h, w, device=self.device, dtype=torch.float32)
+        self.sum_cc = torch.zeros(c, c, h, w, device=self.device, dtype=torch.float32)
         self.count = 0
         
     def forward(self, sample):

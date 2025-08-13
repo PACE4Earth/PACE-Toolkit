@@ -1,7 +1,9 @@
-import torch
-from torch import nn
+import os
 import json
 from pathlib import Path
+
+import torch
+from torch import nn
 
 from .geostrophic import GeostrophicWind
 from .correlation import SampleWiseCorrelation
@@ -19,6 +21,25 @@ METRIC_MODULES = {
     'potential_vorticity': PotentialVorticity,
 }
 
+def move_dict_to_device(tensor_dict, device=None):
+    """
+    Moves all tensors in a dictionary to a specified device.
+
+    Args:
+        tensor_dict (dict): A dictionary where values can be torch.Tensors.
+        device (torch.device): The target device to move tensors to.
+
+    Returns:
+        dict: A new dictionary with all tensors moved to the target device.
+    """
+    
+    if device == None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    return {
+        key: value.to(device) if ((isinstance(value, torch.Tensor)) and value.device != device) else value
+        for key, value in tensor_dict.items()
+    }
 
 class MetricHandler(nn.Module):
     def __init__(self, grid, metrics: list[str]):
@@ -33,6 +54,9 @@ class MetricHandler(nn.Module):
         }
         """
         super().__init__()
+        
+        # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
         config_path = Path(__file__).resolve().parent.parent / "configs" / "config.json"
 
         with open(config_path, "r") as f:
@@ -50,6 +74,7 @@ class MetricHandler(nn.Module):
                 raise KeyError(f"Unknown metric '{metric_name}' in config")
 
             module = METRIC_MODULES[metric_name](grid)
+            module.to(os.getenv('DEVICE'))
 
             # Get authoritative key order from module, or fallback
             if hasattr(module, "output_keys"):
@@ -75,10 +100,12 @@ class MetricHandler(nn.Module):
             self.metrics[metric_name] = module
             self.available_keys_map[metric_name] = available_keys
             
-        print(self.metrics.keys())
+        # print(self.metrics.keys())
 
     def forward(self, sample: dict) -> dict:
         outputs = {}
+        
+        sample = move_dict_to_device(sample, os.getenv('DEVICE'))
 
         for metric_name, module in self.metrics.items():
             result = module(sample)

@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -58,8 +60,8 @@ class SampleWiseCorrelation(nn.Module):
         super().__init__()
         
         self.histograms = {}
-        self.device = 'cpu'
-
+        self.device = os.getenv('DEVICE')
+                                
         for key, settings in HISTOGRAM_CONFIG.items():
             bins = settings['bins']
             bins_y, bins_x = (bins, bins) if isinstance(bins, int) else (bins[1], bins[0])
@@ -70,7 +72,7 @@ class SampleWiseCorrelation(nn.Module):
                 'range': settings['range']
             }
             
-        self.corr = torch.zeros(1, 4, 4)
+        self.corr = torch.zeros(1, 4, 4, device=self.device)  # 4x4 correlation matrix for t2m, u10m, v10m, mslp
 
     def evaluate_corr(self):
         

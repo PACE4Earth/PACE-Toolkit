@@ -137,7 +137,7 @@ class MPIZarrSaver:
                     name, 
                     shape=shape, 
                     chunks=chunks, 
-                    dtype=np.array(tensor).dtype, 
+                    dtype=np.array(tensor.cpu()).dtype, 
                     overwrite=True,
                 )
                 # This metadata is essential for xarray
@@ -233,8 +233,6 @@ class XarrayZarrHandler(nn.Module):
             lead_times = [lead_times]
 
         # Append time coordinates
-        self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
-        self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
 
         # # Append variable data
         # for name, tensor in sample.items():
@@ -255,16 +253,15 @@ class XarrayZarrHandler(nn.Module):
                     # print(name, data_np.shape)
                     
                     self.root[name].append(data_np)
+                    self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
+                    self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
+                    print(f"Rank {self.rank}: {name} {base_times} {lead_times} {self.path}")
                     
                 except ValueError:
                     # If a shape mismatch occurs, catch it, log it, and continue
-                    print(f"⚠️  WARNING: Shape mismatch for variable '{name}'. Skipping this data point.")
-                    print(f"   - Expected shape (from existing array): {self.root[name].shape}")
-                    print(f"   - Received shape (from new data):     {data_np.shape}")
-                    print("   - The program will continue running.")
+                    print(f"Rank {self.rank}: {name} expected {self.root[name].shape} but got {data_np.shape}")
                     continue # Explicitly move to the next item in the loop
             
-        print(f"Rank {self.rank}: Saved {len(base_times)} item(s) to {self.path}")
         return sample
 
 class ZarrDataset(Dataset):

@@ -1,0 +1,33 @@
+booster
+nccl
+Preparing files for graphcast...
+Done. Found 6 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 2 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 4 usable files.
+
+Static fields setup... Done
+Checking required field for metrics...
+geostrophic_balance     is complete.
+hydrostatic_balance     is complete.
+correlation             is complete.
+correlation_map         is complete.
+potential_vorticity     is complete.
+humidity_temperature    is complete.
+
+Selected 2 samples for era5.
+---------------------------------------------
+
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs/graphcast.zarr
