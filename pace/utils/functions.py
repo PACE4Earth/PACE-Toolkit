@@ -28,8 +28,13 @@ def setup(distributed=False):
         master_addr = os.environ['MASTER_ADDR']
         master_port = os.environ['MASTER_PORT']
 
+        backend = "nccl" if torch.cuda.is_available() else "gloo"
+
+        if rank==0:
+            print(backend)
+
         dist.init_process_group(
-            backend="gloo",
+            backend=backend,
             init_method=f"tcp://{master_addr}:{master_port}",
             world_size=world_size,
             rank=rank
