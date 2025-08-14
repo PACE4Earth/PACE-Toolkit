@@ -6,6 +6,8 @@ import torch
 import xarray as xr
 from pathlib import Path
 from datetime import datetime, timedelta
+from .parsers.netcdf import parse_directory
+import time
 
 R_EARTH = 6371000.0
 OMEGA = 7.2921e-5
@@ -14,9 +16,9 @@ def inspect_nc(path):
     with xr.open_dataset(path) as ds:
         print(ds)
 
-def check_required_fields(path, metric_requirements, aliases):
+def check_required_fields(path, opener_kwargs, metric_requirements, aliases):
     ret = {}
-    with xr.open_dataset(path, engine='netcdf4') as ds:
+    with xr.open_dataset(path, **opener_kwargs) as ds:
         available_fields = list(ds.variables.keys())
     for metric in metric_requirements:
         ret[metric] = None
@@ -26,8 +28,8 @@ def check_required_fields(path, metric_requirements, aliases):
                 break
     return ret
 
-def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
-    with xr.open_dataset(path, engine='netcdf4') as ds:
+def get_grid(path, opener_kwargs, lat_range=None, lon_range=None, pressure_levels=None):
+    with xr.open_dataset(path, **opener_kwargs) as ds:
         try:
             lats = ds['latitude'].values
         except KeyError:
@@ -88,81 +90,6 @@ def get_grid(path, lat_range=None, lon_range=None, pressure_levels=None):
         'f': torch.tensor(f),
         'pressure_levels': torch.tensor(levels) if levels is not None else None
     }
-
-def parse_base_lead_times_from_file(path):
-    """
-    Returns (base_time: datetime, lead_times: list of timedelta) for the given file path,
-    or (None, None) if base_time can't be determined.
-    """
-    try:
-        with xr.open_dataset(path, engine='netcdf4') as ds:
-            # Support explicit base_time and lead_time variables if present
-            if 'base_time' in ds.variables and 'lead_time' in ds.variables:
-                base_time_val = ds['base_time'].values
-                lead_time_vals = ds['lead_time'].values
-                
-                if np.issubdtype(base_time_val.dtype, np.datetime64):
-                    base_time = pd.to_datetime(base_time_val).to_pydatetime()
-                elif isinstance(base_time_val, (str, bytes)):
-                    base_time = pd.to_datetime(base_time_val).to_pydatetime()
-                else:
-                    base_time = None
-                
-                # Convert lead_times to timedelta objects
-                if np.issubdtype(lead_time_vals.dtype, np.timedelta64):
-                    lead_times = [pd.to_timedelta(lt).to_pytimedelta() for lt in lead_time_vals]
-                elif np.issubdtype(lead_time_vals.dtype, np.integer):
-                    # Assuming lead times in hours
-                    lead_times = [timedelta(hours=int(lt)) for lt in lead_time_vals]
-                else:
-                    lead_times = None
-
-                if base_time is not None and lead_times is not None:
-                    return base_time, lead_times
-
-            # Fallback: use 'time' variable
-            time_var = ds['time'].values
-            if np.issubdtype(time_var.dtype, np.datetime64):
-                # time var is absolute datetime, base time = first time, lead times = time - base_time
-                base_time = pd.to_datetime(time_var[0]).to_pydatetime()
-                lead_times = [pd.to_datetime(t).to_pydatetime() - base_time for t in time_var]
-                return base_time, lead_times
-            
-            elif np.issubdtype(time_var.dtype, (np.timedelta64, np.integer)):
-                # time var is relative lead times, parse base_time from filename and dirs
-                candidates = [path.stem, path.parent.name, path.parent.parent.name]
-                best_dt, best_score = None, 0
-                for candidate in candidates:
-                    dt, score = try_parse_datetime_from_str(candidate)
-                    if dt is not None and score > best_score:
-                        best_dt, best_score = dt, score
-                base_time = best_dt
-                if base_time is None:
-                    return None, None
-                # Convert lead times to timedelta list
-                if np.issubdtype(time_var.dtype, np.timedelta64):
-                    lead_times = [pd.to_timedelta(t).to_pytimedelta() for t in time_var]
-                else:
-                    lead_times = [timedelta(hours=int(t)) for t in time_var]
-                return base_time, lead_times
-            
-            else:
-                # Unsupported time dtype
-                return None, None
-
-    except Exception as e:
-        print(f"Error reading {path}: {e}")
-        return None, None
-
-def try_parse_datetime_from_str(s):
-    formats = [("%Y%m%d_%H", 3), ("%Y%m%d%H", 3), ("%Y%m%d", 2), ("%Y", 1)]
-    for fmt, score in formats:
-        try:
-            dt = pd.to_datetime(s, format=fmt)
-            return dt, score
-        except Exception:
-            continue
-    return None, 0
 
 
 class UnifiedDataset(torch.utils.data.Dataset):
@@ -226,39 +153,23 @@ class UnifiedDataset(torch.utils.data.Dataset):
         # Prepare files and samples
 
         print(f'Preparing files for {self.name}...')
-        candidate_files = []
-        for root, dirs, files in os.walk(self.path):
-            for file in files:
-                if file.endswith(".nc"):
-                    path = Path(os.path.join(root, file))
-                    candidates = [path.stem, path.parent.name, path.parent.parent.name]
-                    for c in candidates:
-                        if len(c) >= 8 and c[:8].isdigit():
-                            if self.start[:8] <= c[:8] <= self.end[:8]:
-                                candidate_files.append(path)
-
-        candidate_files.sort()
+        candidate_files = parse_directory(self.path, self.start, self.end)
 
         self.files = []
-        for file in candidate_files:
-            base_dt, lead_times = parse_base_lead_times_from_file(file)
-            if base_dt is None or lead_times is None:
-                print(f"Warning: Could not determine base or lead times for {file}, skipping.")
-                continue
-            
+        for file_path, base_time, lead_times, opener_kwargs in candidate_files:
             lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
-            if not (self.start_dt <= base_dt <= lead_end_dt):
+            if not (self.start_dt <= base_time <= lead_end_dt):
                 continue
 
-            self.files.append((file, base_dt, lead_times))
-
+            self.files.append((file_path, base_time, lead_times, opener_kwargs))
+        
         print(f"Done. Found {len(self.files)} usable files.\n")
         if not self.files:
             raise RuntimeError(f"No input files found for dataset '{dataset_key}' in range {self.start} to {self.end}.")
 
         print('Static fields setup...', end=' ')
         self.grid = get_grid(
-            self.files[0][0],
+            self.files[0][0], self.files[0][3],
             lat_range=None if self.lat_min is None else [self.lat_min, self.lat_max],
             lon_range=None if self.lon_min is None else [self.lon_min, self.lon_max],
             pressure_levels=self.pressure_levels
@@ -275,7 +186,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.metrics = {}
         for metric in self.config['metrics']:
             req_for_this_metric = metrics_requirements[metric]
-            found = check_required_fields(self.files[0][0], req_for_this_metric, self.aliases)
+            found = check_required_fields(self.files[0][0], self.files[0][3], req_for_this_metric, self.aliases)
             if all(f is not None for f in found.values()):
                 print(f'{metric:<23} is complete.')
                 self.metrics[metric] = found
@@ -287,15 +198,15 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.samples = []
         self.valid_time_map = {}
-        for file_path, base_dt, lead_times in self.files:
-            valid_times = [base_dt + lt for lt in lead_times]
+        for file_path, base_time, lead_times, opener_kwargs in self.files:
+            valid_times = [base_time + lt for lt in lead_times]
             valid_times = [vt for vt in valid_times if self.start_dt <= vt <= self.end_dt]
 
             max_lead_idx = min(self.max_lead, len(valid_times))
             for lead_idx in range(max_lead_idx):
                 valid_time = valid_times[lead_idx]
-                self.samples.append((file_path, base_dt, lead_idx, lead_times)) # Store lead_times array in the sample
-                self.valid_time_map[(base_dt, lead_idx)] = valid_time
+                self.samples.append((file_path, base_time, lead_idx, lead_times, opener_kwargs)) # Store lead_times array in the sample
+                self.valid_time_map[(base_time, lead_idx)] = valid_time
 
         self.valid_times = sorted(set(self.valid_time_map.values()))
 
@@ -315,11 +226,11 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         # Filter samples
         self.samples = [
-            (fp, bd, li, lts)
-            for (fp, bd, li, lts) in self.samples
-            if self.valid_time_map[(bd, li)] in chosen_valid_times
+            (fp, bt, li, lts, o)
+            for (fp, bt, li, lts, o) in self.samples
+            if self.valid_time_map[(bt, li)] in chosen_valid_times
         ]
-
+        self.samples.sort()
         self.chosen_valid_times = chosen_valid_times 
 
         print(f"\nSelected {len(self.samples)} samples for {self.name}.")
@@ -329,9 +240,9 @@ class UnifiedDataset(torch.utils.data.Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        file_path, base_dt, lead_idx, lead_times = self.samples[idx]
+        file_path, base_time, lead_idx, lead_times, opener_kwargs = self.samples[idx]
         lead_time = lead_times[lead_idx]
-        with xr.open_dataset(file_path, engine='netcdf4') as ds: # open_group isel
+        with xr.open_dataset(file_path, **opener_kwargs) as ds: # open_group isel
             ds = ds.isel(time=lead_idx)
 
             if 'latitude' in ds:
@@ -362,7 +273,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
                     tau = tau.unsqueeze(0)
                 fields[cn] = tau.to(os.getenv('DEVICE'))
 
-            fields['base_time'] = base_dt
+            fields['base_time'] = base_time
             fields['lead_time'] = lead_time
             fields['idx'] = torch.ones(1, device=os.getenv('DEVICE')) # just because you are
 
@@ -396,38 +307,42 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         return obj
 
-def main():
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config.json"
-    model_dataset = UnifiedDataset(config_path, dataset_key="model")
-    reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
-    print(f"len model: {model_dataset.__len__()}")
-    print(model_dataset.samples)
-    # print(model_dataset.grid["pressure_levels"])
-    # print(model_dataset.grid["lat"])
-    # print(model_dataset.grid["lon"])
+# def main():
+#     start_time = time.perf_counter()
+#     config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config.json"
+#     model_dataset = UnifiedDataset(config_path, dataset_key="model")
+#     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
+#     print(f"len model: {model_dataset.__len__()}")
+#     print(model_dataset.samples)
+#     # print(model_dataset.grid["pressure_levels"])
+#     # print(model_dataset.grid["lat"])
+#     # print(model_dataset.grid["lon"])
 
-    if reference_dataset:
-        print(f"len ref: {reference_dataset.__len__()}")
-        # print(model_dataset.grid["pressure_levels"])
-        # print(model_dataset.grid["lat"])
-        # print(model_dataset.grid["lon"])
+#     if reference_dataset:
+#         print(f"len ref: {reference_dataset.__len__()}")
+#         # print(model_dataset.grid["pressure_levels"])
+#         # print(model_dataset.grid["lat"])
+#         # print(model_dataset.grid["lon"])
 
-    print("\nModel valid times:", model_dataset.valid_times)
-    for i, (file_path, base_dt, lead_idx, leadtimes) in enumerate(model_dataset.samples):
-        valid_time = model_dataset.valid_time_map[(base_dt, lead_idx)]
-        print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-        sample = model_dataset[i]
-        print("  base_time:", sample['base_time'])
-        print("  lead_time:", sample['lead_time'])
+#     print("\nModel valid times:", model_dataset.valid_times)
+#     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
+#         valid_time = model_dataset.valid_time_map[(base_time, lead_idx)]
+#         print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+#         sample = model_dataset[i]
+#         print("  base_time:", sample['base_time'])
+#         print("  lead_time:", sample['lead_time'])
 
-    if reference_dataset:
-        print("\nReference valid times:", reference_dataset.valid_times)
-        for i, (file_path, base_dt, lead_idx, leadtimes) in enumerate(reference_dataset.samples):
-            valid_time = reference_dataset.valid_time_map[(base_dt, lead_idx)]
-            print(f"Base: {base_dt}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-            sample = reference_dataset[i]
-            print("  base_time:", sample['base_time'])
-            print("  lead_time:", sample['lead_time'])
+#     if reference_dataset:
+#         print("\nReference valid times:", reference_dataset.valid_times)
+#         for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(reference_dataset.samples):
+#             valid_time = reference_dataset.valid_time_map[(base_time, lead_idx)]
+#             print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+#             sample = reference_dataset[i]
+#             print("  base_time:", sample['base_time'])
+#             print("  lead_time:", sample['lead_time'])
 
-if __name__ == "__main__":
-    main()
+#     end_time = time.perf_counter()
+#     print(f"Elapsed time: {end_time - start_time}")
+
+# if __name__ == "__main__":
+#     main()
