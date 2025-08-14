@@ -42,7 +42,10 @@ def main(distributed=False):
     assert world_size == comm.Get_size()
     assert rank == comm.Get_rank()
 
-    if comm.Get_rank() == 0:
+    try:
+        if rank==0:
+            torch.multiprocessing.set_start_method('spawn')
+    except:
         ...
     comm.Barrier()
     

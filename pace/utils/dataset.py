@@ -357,10 +357,10 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields = {}
             for rq, cn in zip(self.requested_names, self.canonical_names):
-                tau = torch.tensor(ds[rq].values).to(os.getenv('DEVICE'))
+                tau = torch.tensor(ds[rq].values)
                 if tau.ndim == 3:
                     tau = tau.unsqueeze(0)
-                fields[cn] = tau
+                fields[cn] = tau.to(os.getenv('DEVICE'))
 
             fields['base_time'] = base_dt
             fields['lead_time'] = lead_time

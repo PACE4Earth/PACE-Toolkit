@@ -71,7 +71,8 @@ def get_dataloader(dataset, distributed=False):
         dataset,
         batch_size=None,
         shuffle=False,
-        num_workers=num_workers,
+        num_workers=0 if torch.cuda.is_available() else num_workers,
+        # num_workers=0,  # Set to 0 for debugging or single-process mode
     )
     return dataloader, None
 
