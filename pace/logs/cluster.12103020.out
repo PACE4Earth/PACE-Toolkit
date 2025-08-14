@@ -1,5 +1,12 @@
+CUDA is not available. Running on CPU.
+CUDA is not available. Running on CPU.
+CUDA is not available. Running on CPU.
+CUDA is not available. Running on CPU.
+CUDA is not available. Running on CPU.
+CUDA is not available. Running on CPU.
 partition:	 batch
 backend:	 gloo
+CUDA is not available. Running on CPU.
 Preparing files for graphcast...
 Done. Found 6 usable files.
 
@@ -35,30 +42,7 @@ All 8 ranks have opened the synchronized Zarr archive.
 Rank 0: Initializing Zarr archive and index at /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr
 All 8 ranks have opened the synchronized Zarr archive.
 0: Zarr store initialized for xarray at: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr
-Rank 7 processed 0 samples.
-Rank 7 waiting at barrier.
-Rank 7 passed barrier.
-Rank 7 waiting at barrier.
-Rank 4 processed 0 samples.
-Rank 4 waiting at barrier.
-Rank 4 passed barrier.
-Rank 4 waiting at barrier.
-Rank 5 processed 0 samples.
-Rank 5 waiting at barrier.
-Rank 5 passed barrier.
-Rank 5 waiting at barrier.
-Rank 6 processed 0 samples.
-Rank 6 waiting at barrier.
-Rank 6 passed barrier.
-Rank 6 waiting at barrier.
-Rank 3 processed 0 samples.
-Rank 3 waiting at barrier.
-Rank 3 passed barrier.
-Rank 3 waiting at barrier.
-Rank 2 processed 0 samples.
-Rank 2 waiting at barrier.
-Rank 2 passed barrier.
-Rank 2 waiting at barrier.
+CUDA is not available. Running on CPU.
 Rank 1: [1.] [Timestamp('2021-04-03 12:00:00')] [datetime.timedelta(days=1, seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/graphcast.zarr
 Rank 1 processed 1 samples.
 Rank 1 waiting at barrier.
@@ -69,13 +53,58 @@ Rank 0 waiting at barrier.
 Rank 0 passed barrier.
 Passed barrier after graphcast.
 0: Zarr store initialized for xarray at: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr
+Rank 2 processed 0 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+Rank 2 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 8.35 s
+Rank 3 processed 0 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+Rank 3 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 8.35 s
+Rank 4 processed 0 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+Rank 4 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 8.36 s
+Rank 5 processed 0 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+Rank 5 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 8.37 s
+Rank 7 processed 0 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Rank 7 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 8.38 s
+Rank 6 processed 0 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+Rank 6 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 8.38 s
 Rank 1: [1.] [Timestamp('2021-04-04 00:00:00')] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr
 Rank 1 processed 1 samples.
 Rank 1 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 9.99 s
 Rank 0: [1.] [Timestamp('2021-04-01 00:00:00')] [datetime.timedelta(0)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/era5.zarr
 Rank 0 processed 1 samples.
 Rank 0 waiting at barrier.
-Passed barrier after <utils.dataset.UnifiedDataset object at 0x14a9524a6b50>.
+Passed barrier after <utils.dataset.UnifiedDataset object at 0x148504d40810>.
 
 --- All ranks finished writing. Now performing final check. ---
 
@@ -95,31 +124,31 @@ Passed barrier after <utils.dataset.UnifiedDataset object at 0x14a9524a6b50>.
  ├── potential_vorticity (3, 3, 21, 21) float32
  └── relative_humidity (3, 3, 21, 21) float32
 Starting robust harmonization based on 'base_time'...
+  -> Slicing 'correlation' on 'idx': 3 -> 2
   -> Slicing 'geostrophic_wind_ratio' on 'idx': 3 -> 2
-  -> Slicing 'hydrostatic_rel_error' on 'idx': 3 -> 2
-  -> Slicing 'hydrostatic_rmse' on 'idx': 3 -> 2
-  -> Broadcasting 'hydrostatic_rmse' on 'level' dim: 1 -> 3
   -> Slicing 'relative_humidity' on 'idx': 3 -> 2
   -> Slicing 'hydrostatic_abs_error' on 'idx': 3 -> 2
-  -> Slicing 'correlation' on 'idx': 3 -> 2
+  -> Slicing 'hydrostatic_rmse' on 'idx': 3 -> 2
+  -> Broadcasting 'hydrostatic_rmse' on 'level' dim: 1 -> 3
   -> Slicing 'potential_vorticity' on 'idx': 3 -> 2
+  -> Slicing 'hydrostatic_rel_error' on 'idx': 3 -> 2
 Harmonization complete.
 
 <xarray.Dataset>
-Dimensions:                 (idx: 2, lat: 21, lon: 21, level: 3, dim_1: 4,
-                             dim_2: 4)
+Dimensions:                 (idx: 2, dim_1: 4, dim_2: 4, lat: 21, lon: 21,
+                             level: 3)
 Coordinates:
   * idx                     (idx) datetime64[ns] 2021-04-01 2021-04-03T12:00:00
   * lat                     (lat) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
   * lon                     (lon) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
-Dimensions without coordinates: level, dim_1, dim_2
+Dimensions without coordinates: dim_1, dim_2, level
 Data variables:
-    geostrophic_wind_ratio  (idx, level, lat, lon) float64 0.0 0.0 ... 0.1792
-    hydrostatic_rel_error   (idx, level, lat, lon) float32 0.0 0.0 ... 0.0065
-    hydrostatic_rmse        (idx, level, lat, lon) float32 0.0 0.0 ... 137.3
+    correlation             (idx, dim_1, dim_2) float32 0.0 0.0 ... 0.9999
     lead_time               (idx) timedelta64[ns] 06:00:00 1 days 06:00:00
+    geostrophic_wind_ratio  (idx, level, lat, lon) float64 0.0 0.0 ... 0.1792
     relative_humidity       (idx, level, lat, lon) float32 0.0 0.0 ... 0.002132
     hydrostatic_abs_error   (idx, level, lat, lon) float32 0.0 0.0 ... 190.1
-    correlation             (idx, dim_1, dim_2) float32 0.0 0.0 ... 0.9999
+    hydrostatic_rmse        (idx, level, lat, lon) float32 0.0 0.0 ... 137.3
     potential_vorticity     (idx, level, lat, lon) float32 0.0 0.0 ... nan nan
-Elapsed time: 6.42 s
+    hydrostatic_rel_error   (idx, level, lat, lon) float32 0.0 0.0 ... 0.0065
+Elapsed time: 10.01 s

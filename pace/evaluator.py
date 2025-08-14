@@ -17,30 +17,36 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
-from utils.output_logger import MPIZarrSaver, ZarrDataset
+from utils.output_logger import MPIZarrSaver #, ZarrDataset
 from metrics.metric_handler import MetricHandler
 from utils.functions import (
     setup,
-    get_dataloader,
+    # get_dataloader,
     build_dataset_info,
-    harmonize_zarr_to_xarray,
+    # harmonize_zarr_to_xarray,
     evaluate_and_log,
+    get_final_dataset,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config.json')
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+if torch.cuda.is_available():
+    print(f"Number of GPUs available: {torch.cuda.device_count()}")
+    print(f"Current GPU index: {torch.cuda.current_device()}")
+    print(f"Current GPU name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+
 os.environ['DEVICE'] = DEVICE
 
 def main(distributed=False):
         
     time_start = time.perf_counter()
-    rank, world_size = setup(distributed=distributed)
     comm = MPI.COMM_WORLD
     
-    assert world_size == comm.Get_size()
-    assert rank == comm.Get_rank()
+    rank, world_size = setup(comm=comm, distributed=distributed)
+    # assert world_size == comm.Get_size()
+    # assert rank == comm.Get_rank()
 
     try:
         if rank==0:
@@ -185,40 +191,21 @@ def main(distributed=False):
         print(f'Passed barrier after {reference_dataset}.')    
     time.sleep(0.1)
 
+    comm.Barrier()
+
+    if distributed:
+        dist.destroy_process_group()
+    print("\n--- All ranks finished writing. Now performing final check. ---")
+    
 
     if comm.Get_rank() == 0:
-        if distributed:
-            dist.destroy_process_group()
-        print("\n--- All ranks finished writing. Now performing final check. ---")
+        final_dataset = get_final_dataset(outputs_dir, model_name)
         
-        try:
-            # final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
-            
-            tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
-            
-            print()
-            print(tmp_dataset['idx'])
-            try:
-                print(tmp_dataset['idx'][:])
-            except:
-                print('hell naw')
-            
-            print(tmp_dataset.tree())
-            # dirty bit
-            final_dataset = harmonize_zarr_to_xarray(tmp_dataset)
-            
-            print()
-            
-            try:
-                print(final_dataset.tree())
-            except:
-                print(final_dataset)
-                
-        except Exception as e:
-            print(e)
+
     
-        time_end = time.perf_counter()
-        print(f"Elapsed time: {time_end - time_start:.2f} s")
+    time_end = time.perf_counter()
+    print(f"Elapsed time: {time_end - time_start:.2f} s")
+
 
 if __name__ == "__main__":
     main(distributed=True)

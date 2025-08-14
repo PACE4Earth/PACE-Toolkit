@@ -2,8 +2,8 @@
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=00:15:00
-#SBATCH --output=cluster.%j.out
-#SBATCH --error=cluster.%j.err
+#SBATCH --output=logs/cluster.%j.out
+#SBATCH --error=logs/cluster.%j.err
 #SBATCH --account=weatherai
 
 # backup modules, in case something goes wrong

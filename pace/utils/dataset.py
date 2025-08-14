@@ -331,7 +331,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         file_path, base_dt, lead_idx, lead_times = self.samples[idx]
         lead_time = lead_times[lead_idx]
-        with xr.open_dataset(file_path, engine='netcdf4') as ds:
+        with xr.open_dataset(file_path, engine='netcdf4') as ds: # open_group isel
             ds = ds.isel(time=lead_idx)
 
             if 'latitude' in ds:
