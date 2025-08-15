@@ -1,0 +1,34 @@
+{
+  "distributed": false,
+  "datasets": {
+    "model": {
+      "name": "corrdiff",
+      "path": "/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/"
+    }
+  },
+  "outputs_dir": "${OUTPUTS_DIR_PATH}",
+   "metrics": {
+    "correlation": ["all"],
+    "correlation_map": ["all"]
+  },
+  "spatial": {
+    "pressure_levels": 3,
+    "lat_range": [45, 50],
+    "lon_range": [45, 50]
+  },
+  "time": {
+    "start": "20130401",
+    "end": "20130404",
+    "num_lead_times": 5, 
+    "stride_hours": 6,
+    "sample_percent": 20,
+    "custom_times": {"enabled": true, "times": ["20210405_12", "20210406_03", "20210103_12"]}
+  },
+  "visualization": {
+    "plots_dir": null,
+    "histogram": false,
+    "vertical_profile": false,
+    "summary_stats": ["mean", "stdev", "min", "max"],
+    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
+  }
+}

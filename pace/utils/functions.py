@@ -70,8 +70,10 @@ def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=
 
 def setup(comm, distributed=False):
     if distributed:
-        rank = int(os.environ['SLURM_PROCID'])
-        world_size = int(os.environ['SLURM_NTASKS'])
+        rank = comm.Get_rank()
+        world_size = comm.Get_size()
+        # rank = int(os.environ['SLURM_PROCID'])
+        # world_size = int(os.environ['SLURM_NTASKS'])
         master_addr = os.environ['MASTER_ADDR']
         master_port = os.environ['MASTER_PORT']
 

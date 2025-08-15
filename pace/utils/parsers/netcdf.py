@@ -52,7 +52,7 @@ def parse_file(file_path: Path):
                 if np.issubdtype(time_var.dtype, np.datetime64):
                     base_time = pd.to_datetime(time_var[0]).to_pydatetime()
                     lead_times = [pd.to_datetime(t).to_pydatetime() - base_time for t in time_var]
-                    return path, base_time, lead_times, opener_kwargs
+                    return file_path, base_time, lead_times, opener_kwargs
 
                 elif np.issubdtype(time_var.dtype, (np.timedelta64, np.integer)):
                     candidates = [file_path.stem, file_path.parent.name, file_path.parent.parent.name]

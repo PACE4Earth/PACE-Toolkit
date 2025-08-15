@@ -6,8 +6,10 @@ import torch
 import xarray as xr
 from pathlib import Path
 from datetime import datetime, timedelta
-from .parsers.netcdf import parse_directory
 import time
+
+from .parsers.netcdf import parse_directory
+from .parsers.netcdf_groups import parse_directory_groups
 
 R_EARTH = 6371000.0
 OMEGA = 7.2921e-5
@@ -153,17 +155,51 @@ class UnifiedDataset(torch.utils.data.Dataset):
         # Prepare files and samples
 
         print(f'Preparing files for {self.name}...')
-        candidate_files = parse_directory(self.path, self.start, self.end)
+        
+        if ("graphcast" in self.name) or ("era" in self.name):
+            candidate_files = parse_directory(self.path, self.start, self.end)
+        elif self.name == "corrdiff":
+            candidate_files = parse_directory_groups(self.path, self.start, self.end)
 
         self.files = []
         for file_path, base_time, lead_times, opener_kwargs in candidate_files:
             lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
-            if not (self.start_dt <= base_time <= lead_end_dt):
-                continue
-
-            self.files.append((file_path, base_time, lead_times, opener_kwargs))
+            
+            within_base_range =  self.start_dt <= base_time <= lead_end_dt
+            
+            valid_time = base_time + (max(lead_times) if isinstance(lead_times, list) else lead_times)
+            
+            within_valid_range = (valid_time >= self.start_dt) and (valid_time <= lead_end_dt)
+            
+            # graphcast for some reason does not work with within_valid_range
+            if within_base_range:
+                print(base_time, within_base_range, valid_time, within_valid_range)
+                self.files.append((file_path, base_time, lead_times, opener_kwargs))
         
-        print(f"Done. Found {len(self.files)} usable files.\n")
+
+        # self.files = []
+        # for file_path, base_time, lead_time, opener_kwargs in candidate_files:
+          
+        #     lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
+        #     if not (self.start_dt <= base_time <= lead_end_dt):
+        #         continue
+
+        #     self.files.append((file_path, base_time, lead_times, opener_kwargs))
+          
+            # valid_time = base_time + lead_time
+            # within_time_range = (valid_time >= self.start_dt) and (valid_time <= lead_end_dt)
+        
+            # if within_time_range:
+            #     self.files.append((file_path, base_time, lead_time, opener_kwargs))
+            #     print(valid_time, type(valid_time), self.start_dt, type(self.start_dt))
+                
+            # lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
+            # if not (self.start_dt <= base_time <= lead_end_dt):
+            #     continue
+
+
+        
+        print(f"Done. Found {len(self.files)} usable files ({self.start_dt} -- {self.end_dt}).\n")
         if not self.files:
             raise RuntimeError(f"No input files found for dataset '{dataset_key}' in range {self.start} to {self.end}.")
 

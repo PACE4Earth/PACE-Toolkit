@@ -42,6 +42,12 @@ os.environ['DEVICE'] = DEVICE
 def main(distributed=False):
         
     time_start = time.perf_counter()
+    
+    with open(DATASET_CONFIG_PATH, 'r') as f:
+        config = json.load(f)
+    
+    distributed = config.get("distributed", distributed)
+    
     comm = MPI.COMM_WORLD
     
     rank, world_size = setup(comm=comm, distributed=distributed)
@@ -55,8 +61,6 @@ def main(distributed=False):
         ...
     comm.Barrier()
     
-    with open(DATASET_CONFIG_PATH, 'r') as f:
-        config = json.load(f)
 
     outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
     if not outputs_dir.exists():
@@ -208,4 +212,4 @@ def main(distributed=False):
 
 
 if __name__ == "__main__":
-    main(distributed=True)
+    main()

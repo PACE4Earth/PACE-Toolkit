@@ -1,11 +1,14 @@
+import os
+import re
 from pathlib import Path
 import pandas as pd
 import xarray as xr
 from datetime import timedelta
 
-GROUP_NAMES = ["truth", "prediction", "input"]
+# GROUP_NAMES = ["truth", "prediction", "input"]
+GROUP_NAMES = ["prediction"]
 
-def parse_single_file(file_path: Path):
+def parse_file(file_path: Path):
     """
     Parses a single NetCDF file with groups.
     Returns a list of tuples:
@@ -35,15 +38,66 @@ def parse_single_file(file_path: Path):
                     continue
                 
                 for t in times:
+                    match = re.search(r'(\d+)h', str(file_path))
+                    lead_times = timedelta(hours=int(match.group(1))) if match else timedelta(hours=-1)
                     base_time = pd.to_datetime(t).to_pydatetime()
-                    lead_times = [timedelta(hours=18)]  # single lead time
                     results.append((file_path, base_time, lead_times, opener_kwargs))
-        except Exception:
+        except Exception as e:
+            print(e)
             # Skip missing groups
             continue
     
     return results
 
+def parse_directory_groups(base_dir, start=None, end=None):
+    """
+    Walks a directory tree and returns a list of all NetCDF files
+    successfully parsed. Each entry is (file_path, base_time, lead_times, opener_kwargs).
+
+    Optionally filter files based on start/end strings (YYYYMMDD).
+    """
+    results = []
+    for file in os.listdir(base_dir):
+        if not file.endswith(".nc"):
+            continue
+
+        path = Path(base_dir) / file
+
+        # Optional quick filtering by start/end date strings
+        # if start and end:
+        #     try:
+        #         candidates = [path.stem, path.parent.name, path.parent.parent.name]
+        #         keep = False
+        #         for c in candidates:
+        #             if len(c) >= 8 and c[:8].isdigit():
+        #                 if ((start is None or c[:8] >= start[:8]) and
+        #                     (end is None or c[:8] <= end[:8])):
+        #                     keep = True
+        #                     break
+        #         if not keep:
+        #             continue
+        #     except Exception:
+        #         pass  # ignore filtering errors
+
+        parsed = parse_file(path)
+        if parsed is not None:
+            results.extend(parsed)
+                
+        print(len(results), "files parsed from directory:", base_dir)
+    
+    # for it in range(len(results)):
+    #     print(len(results[it]), "entries in first file")
+
+    return results
+
 # results = parse_single_file("/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/corrdiff_output_ensemble_18h.nc")
 # for r in results:
 #     print(r)
+
+if __name__ == "__main__":
+    
+    path = Path("/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/corrdiff_output_ensemble_18h.nc")
+    results = parse_file(path)
+    
+    print(len(results))
+    print(results[0])
