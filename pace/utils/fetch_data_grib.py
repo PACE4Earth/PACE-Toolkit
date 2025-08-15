@@ -10,7 +10,8 @@ Bucket layout:
 import argparse
 import os
 from datetime import datetime
-from typing import List
+import eccodes
+from typing import List, Dict, Any
 
 import numpy as np
 import xarray as xr
@@ -55,25 +56,144 @@ def download_files(date: datetime, cycle: int, fhrs: List[int], outdir: str) -> 
     return paths
 
 
+# def open_and_select_vars(grib_path: str) -> xr.Dataset:
+#     """
+#     Open a GRIB with cfgrib across groups, keep:
+#       - surface vars: t2m, 10u, 10v, msl
+#       - level vars:   z (geopotential), gh (geopotential height)
+#     Merge what we find.
+#     """
+#     import cfgrib
+#     ds_list = cfgrib.open_datasets(grib_path, backend_kwargs={"indexpath": ""})
+#     keep = []
+#     for ds in ds_list:
+#         # pick surface vars present in this group
+#         keep_vars = [v for v in ds.data_vars if v in SURFACE_VARS or v in LEVEL_VARS]
+#         if keep_vars:
+#             keep.append(ds[keep_vars])
+#     if not keep:
+#         # fallback: at least return something
+#         keep = [ds_list[0]]
+#     return xr.merge(keep, compat="override")
+
+
+# Define the variables we want to extract
+SURFACE_VARS = ['t2m', '10u', '10v', 'msl']
+LEVEL_VARS = ['z', 'gh']
+TARGET_VARS = SURFACE_VARS + LEVEL_VARS
+
 def open_and_select_vars(grib_path: str) -> xr.Dataset:
     """
-    Open a GRIB with cfgrib across groups, keep:
+    Opens a GRIB file using the eccodes library, selecting and merging
+    specific surface and multi-level variables into a single xarray.Dataset.
+
+    This function manually replicates the variable grouping and building
+    process handled by cfgrib.open_datasets.
+    
+    It keeps:
       - surface vars: t2m, 10u, 10v, msl
       - level vars:   z (geopotential), gh (geopotential height)
-    Merge what we find.
     """
-    import cfgrib
-    ds_list = cfgrib.open_datasets(grib_path, backend_kwargs={"indexpath": ""})
-    keep = []
-    for ds in ds_list:
-        # pick surface vars present in this group
-        keep_vars = [v for v in ds.data_vars if v in SURFACE_VARS or v in LEVEL_VARS]
-        if keep_vars:
-            keep.append(ds[keep_vars])
-    if not keep:
-        # fallback: at least return something
-        keep = [ds_list[0]]
-    return xr.merge(keep, compat="override")
+    # Intermediate storage for data and metadata
+    # For 3D vars, we collect 2D slices and their level coordinates
+    # Format: { 'var_name': {'slices': [slice1, slice2], 'levels': [500, 700]} }
+    collected_data: Dict[str, Dict[str, Any]] = {}
+    
+    # Store coordinates once, assuming a consistent grid
+    lat_coords, lon_coords = None, None
+
+    with open(grib_path, 'rb') as f:
+        while True:
+            # Get one GRIB message from the file
+            gid = eccodes.codes_grib_new_from_file(f)
+            if gid is None:
+                break # End of file
+
+            try:
+                short_name = eccodes.codes_get(gid, 'shortName')
+
+                # Skip messages for variables we don't need
+                if short_name not in TARGET_VARS:
+                    continue
+
+                # Initialize storage for this variable if it's the first time we see it
+                if short_name not in collected_data:
+                    collected_data[short_name] = {
+                        'slices': [], 
+                        'levels': [], 
+                        'units': eccodes.codes_get(gid, 'units')
+                    }
+
+                # --- Extract data and coordinates ---
+                nj = eccodes.codes_get(gid, 'Nj')
+                ni = eccodes.codes_get(gid, 'Ni')
+                values = eccodes.codes_get_values(gid).reshape((nj, ni))
+                
+                # Store the data slice
+                collected_data[short_name]['slices'].append(values)
+
+                # --- Handle dimensions (2D vs 3D) ---
+                if short_name in LEVEL_VARS:
+                    # For 3D vars, get the vertical level coordinate
+                    # Note: You might need to try other keys like 'hybrid'
+                    level = eccodes.codes_get(gid, 'isobaricInhPa')
+                    collected_data[short_name]['levels'].append(level)
+                
+                # --- Store grid coordinates (only needed once) ---
+                if lat_coords is None:
+                    lats = eccodes.codes_get_array(gid, 'latitudes').reshape((nj, ni))
+                    lons = eccodes.codes_get_array(gid, 'longitudes').reshape((nj, ni))
+                    lat_coords = lats[:, 0]
+                    lon_coords = lons[0, :]
+
+            finally:
+                # IMPORTANT: Always release the message handle
+                if gid:
+                    eccodes.codes_release(gid)
+
+    if not collected_data:
+        # Return an empty dataset if no target variables were found
+        return xr.Dataset()
+
+    # --- Assemble the final xarray.Dataset ---
+    data_vars = {}
+    ds_coords = {'latitude': lat_coords, 'longitude': lon_coords}
+    level_coord_name = 'isobaricInhPa' # Define a standard name for the level coordinate
+
+    for name, data in collected_data.items():
+        if name in LEVEL_VARS:
+            # --- Process 3D variables ---
+            levels = data['levels']
+            slices = data['slices']
+            
+            # CRITICAL: Sort levels and reorder data slices accordingly
+            sorted_indices = np.argsort(levels)
+            sorted_levels = np.array(levels)[sorted_indices]
+            sorted_slices = [slices[i] for i in sorted_indices]
+            
+            # Stack 2D slices into a single 3D array
+            final_3d_data = np.stack(sorted_slices, axis=0)
+
+            # Define the DataArray for this variable
+            data_vars[name] = (
+                (level_coord_name, "latitude", "longitude"),
+                final_3d_data,
+                {"units": data['units']}
+            )
+            # Add the level coordinate to the dataset's coordinates
+            if level_coord_name not in ds_coords:
+                 ds_coords[level_coord_name] = sorted_levels
+        
+        elif name in SURFACE_VARS:
+            # --- Process 2D variables ---
+            # Surface variables have only one slice
+            data_vars[name] = (
+                ("latitude", "longitude"),
+                data['slices'][0],
+                {"units": data['units']}
+            )
+
+    return xr.Dataset(data_vars, coords=ds_coords)
 
 
 def clip_region(ds: xr.Dataset, lon_min=-15.0, lon_max=45.0, lat_min=30.0, lat_max=75.0) -> xr.Dataset:
