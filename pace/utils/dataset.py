@@ -31,7 +31,7 @@ def check_required_fields(path, opener_kwargs, metric_requirements, aliases):
     return ret
 
 def get_grid(path, opener_kwargs, lat_range=None, lon_range=None, pressure_levels=None):
-    with xr.open_dataset(path, **opener_kwargs) as ds:
+    with xr.open_dataset(path, **dict([next(iter(opener_kwargs.items()))])) as ds:
         try:
             lats = ds['latitude'].values
         except KeyError:
@@ -55,7 +55,10 @@ def get_grid(path, opener_kwargs, lat_range=None, lon_range=None, pressure_level
             levels = ds[level_dim].values
         else:
             levels = None
-
+            
+    if lats.ndim == 2:
+        lats = lats[:, 0]
+        lons = lons[0, :]
     if lats[0] > lats[-1]:
         lats = lats[::-1]
 
@@ -264,7 +267,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
             ds = ds.isel(time=lead_idx)
 
             if 'latitude' in ds:
-                ds = ds.sel(latitude=slice(self.lat_max, self.lat_min))
+                ds = ds.sel(latitude=slice(self.lat_min, self.lat_max))
             elif 'lat' in ds:
                 ds = ds.sel(lat=slice(self.lat_min, self.lat_max))
 
@@ -325,42 +328,42 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         return obj
 
-# def main():
-#     start_time = time.perf_counter()
-#     config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config.json"
-#     model_dataset = UnifiedDataset(config_path, dataset_key="model")
-#     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
-#     print(f"len model: {model_dataset.__len__()}")
-#     print(model_dataset.samples)
-#     # print(model_dataset.grid["pressure_levels"])
-#     # print(model_dataset.grid["lat"])
-#     # print(model_dataset.grid["lon"])
+def main():
+    start_time = time.perf_counter()
+    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config.json"
+    model_dataset = UnifiedDataset(config_path, dataset_key="model")
+    reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
+    print(f"len model: {model_dataset.__len__()}")
+    print(model_dataset.samples)
+    # print(model_dataset.grid["pressure_levels"])
+    print(model_dataset.grid["lat"])
+    print(model_dataset.grid["lon"])
 
-#     if reference_dataset:
-#         print(f"len ref: {reference_dataset.__len__()}")
-#         # print(model_dataset.grid["pressure_levels"])
-#         # print(model_dataset.grid["lat"])
-#         # print(model_dataset.grid["lon"])
+    if reference_dataset:
+        print(f"len ref: {reference_dataset.__len__()}")
+        # print(model_dataset.grid["pressure_levels"])
+        # print(model_dataset.grid["lat"])
+        # print(model_dataset.grid["lon"])
 
-#     print("\nModel valid times:", model_dataset.valid_times)
-#     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
-#         valid_time = model_dataset.valid_time_map[(base_time, lead_idx)]
-#         print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-#         sample = model_dataset[i]
-#         print("  base_time:", sample['base_time'])
-#         print("  lead_time:", sample['lead_time'])
+    print("\nModel valid times:", model_dataset.valid_times)
+    for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
+        valid_time = model_dataset.valid_time_map[(base_time, lead_idx)]
+        print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+        sample = model_dataset[i]
+        print("  base_time:", sample['base_time'])
+        print("  lead_time:", sample['lead_time'])
 
-#     if reference_dataset:
-#         print("\nReference valid times:", reference_dataset.valid_times)
-#         for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(reference_dataset.samples):
-#             valid_time = reference_dataset.valid_time_map[(base_time, lead_idx)]
-#             print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-#             sample = reference_dataset[i]
-#             print("  base_time:", sample['base_time'])
-#             print("  lead_time:", sample['lead_time'])
+    if reference_dataset:
+        print("\nReference valid times:", reference_dataset.valid_times)
+        for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(reference_dataset.samples):
+            valid_time = reference_dataset.valid_time_map[(base_time, lead_idx)]
+            print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+            sample = reference_dataset[i]
+            print("  base_time:", sample['base_time'])
+            print("  lead_time:", sample['lead_time'])
 
-#     end_time = time.perf_counter()
-#     print(f"Elapsed time: {end_time - start_time}")
+    end_time = time.perf_counter()
+    print(f"Elapsed time: {end_time - start_time}")
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
