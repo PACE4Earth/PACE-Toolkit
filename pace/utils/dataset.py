@@ -163,42 +163,21 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.files = []
         for file_path, base_time, lead_times, opener_kwargs in candidate_files:
-            lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
-            
-            within_base_range =  self.start_dt <= base_time <= lead_end_dt
-            
-            valid_time = base_time + (max(lead_times) if isinstance(lead_times, list) else lead_times)
-            
-            within_valid_range = (valid_time >= self.start_dt) and (valid_time <= lead_end_dt)
-            
-            # graphcast for some reason does not work with within_valid_range
-            if within_base_range:
-                print(base_time, within_base_range, valid_time, within_valid_range)
-                self.files.append((file_path, base_time, lead_times, opener_kwargs))
-        
-
-        # self.files = []
-        # for file_path, base_time, lead_time, opener_kwargs in candidate_files:
-          
-        #     lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
-        #     if not (self.start_dt <= base_time <= lead_end_dt):
-        #         continue
-
-        #     self.files.append((file_path, base_time, lead_times, opener_kwargs))
-          
-            # valid_time = base_time + lead_time
-            # within_time_range = (valid_time >= self.start_dt) and (valid_time <= lead_end_dt)
-        
-            # if within_time_range:
-            #     self.files.append((file_path, base_time, lead_time, opener_kwargs))
-            #     print(valid_time, type(valid_time), self.start_dt, type(self.start_dt))
-                
+            """ --- Use this option if each base_time should have equal number of leadtimes --- """
             # lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
-            # if not (self.start_dt <= base_time <= lead_end_dt):
-            #     continue
+            # within_lead_range =  self.start_dt <= base_time <= lead_end_dt
+            # if within_lead_range:
+            #         self.files.append((file_path, base_time, lead_times, opener_kwargs))
+            
+            """ --- Use this option to include all available samples within time range --- """
+            within_valid_range = False
+            for lead_time in lead_times:
+                valid_time = base_time + lead_time
+                within_valid_range = self.start_dt <= valid_time <= self.end_dt
+                if within_valid_range:
+                    self.files.append((file_path, base_time, lead_times, opener_kwargs))
+                    break
 
-
-        
         print(f"Done. Found {len(self.files)} usable files ({self.start_dt} -- {self.end_dt}).\n")
         if not self.files:
             raise RuntimeError(f"No input files found for dataset '{dataset_key}' in range {self.start} to {self.end}.")
@@ -238,7 +217,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
             valid_times = [base_time + lt for lt in lead_times]
             valid_times = [vt for vt in valid_times if self.start_dt <= vt <= self.end_dt]
 
-            max_lead_idx = min(self.max_lead, len(valid_times))
+            max_lead_idx = min(self.max_lead, len(valid_times)) if self.is_model_dataset else len(valid_times)
             for lead_idx in range(max_lead_idx):
                 valid_time = valid_times[lead_idx]
                 self.samples.append((file_path, base_time, lead_idx, lead_times, opener_kwargs)) # Store lead_times array in the sample
@@ -250,8 +229,11 @@ class UnifiedDataset(torch.utils.data.Dataset):
         if self.custom_times_enabled:
             chosen_valid_times = set()
             for target_time in self.custom_times_list:
-                closest_time = min(self.valid_times, key=lambda t: abs(t - target_time))
-                chosen_valid_times.add(closest_time)
+                if target_time in self.valid_times:
+                    chosen_valid_times.add(target_time)
+                else:
+                    raise ValueError(f"Target time {target_time} not found in valid_times. Please check time range and num_leadtimes in config.")
+
         else:
             rng = np.random.default_rng(42)
             if shared_valid_times is not None:

@@ -25,11 +25,11 @@
   },
   "time": {
     "start": "20210401",
-    "end": "20210410",
-    "num_lead_times": 5, 
+    "end": "20210404",
+    "num_lead_times": 2, 
     "stride_hours": 6,
-    "sample_percent": 100,
-    "custom_times": {"enabled": true, "times": ["20210405_12", "20210406_03", "20210103_12"]}
+    "sample_percent": 40,
+    "custom_times": {"enabled": true, "times": ["20210401_12"]}
   },
   "visualization": {
     "plots_dir": null,
