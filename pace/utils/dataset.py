@@ -215,7 +215,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.requested_names = list(dict.fromkeys([v for d in self.metrics.values() for v in d.values()]))
 
         self.samples = []
-        self.valid_time_map = {}
+        self.valid_times_for_samples = []  # list parallel to self.samples
         for file_path, base_time, lead_times, opener_kwargs in self.files:
             valid_times = [base_time + lt for lt in lead_times]
             valid_times = [vt for vt in valid_times if self.start_dt <= vt <= self.end_dt]
@@ -223,10 +223,10 @@ class UnifiedDataset(torch.utils.data.Dataset):
             max_lead_idx = min(self.max_lead, len(valid_times)) if self.is_model_dataset else len(valid_times)
             for lead_idx in range(max_lead_idx):
                 valid_time = valid_times[lead_idx]
-                self.samples.append((file_path, base_time, lead_idx, lead_times, opener_kwargs)) # Store lead_times array in the sample
-                self.valid_time_map[(base_time, lead_idx)] = valid_time
+                self.samples.append((file_path, base_time, lead_idx, lead_times, opener_kwargs))
+                self.valid_times_for_samples.append(valid_time)  
 
-        self.valid_times = sorted(set(self.valid_time_map.values()))
+        self.valid_times = sorted(set(self.valid_times_for_samples))
 
         # Select custom or random valid times
         if self.custom_times_enabled:
@@ -246,12 +246,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 chosen_valid_times = set(rng.choice(self.valid_times, size=num_samples, replace=False))
 
         # Filter samples
-        self.samples = [
-            (fp, bt, li, lts, o)
-            for (fp, bt, li, lts, o) in self.samples
-            if self.valid_time_map[(bt, li)] in chosen_valid_times
-        ]
-        self.samples.sort()
+        self.samples = [s for s, vt in zip(self.samples, self.valid_times_for_samples) if vt in chosen_valid_times]
+        self.valid_times_for_samples = [vt for vt in self.valid_times_for_samples if vt in chosen_valid_times]
         self.chosen_valid_times = chosen_valid_times 
 
         print(f"\nSelected {len(self.samples)} samples for {self.name}.")
@@ -334,10 +330,9 @@ def main():
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
-    print(model_dataset.samples)
     # print(model_dataset.grid["pressure_levels"])
-    print(model_dataset.grid["lat"])
-    print(model_dataset.grid["lon"])
+    # print(model_dataset.grid["lat"])
+    # print(model_dataset.grid["lon"])
 
     if reference_dataset:
         print(f"len ref: {reference_dataset.__len__()}")
@@ -347,7 +342,7 @@ def main():
 
     print("\nModel valid times:", model_dataset.valid_times)
     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
-        valid_time = model_dataset.valid_time_map[(base_time, lead_idx)]
+        valid_time = model_dataset.valid_times_for_samples[i]
         print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
         sample = model_dataset[i]
         print("  base_time:", sample['base_time'])
@@ -356,7 +351,7 @@ def main():
     if reference_dataset:
         print("\nReference valid times:", reference_dataset.valid_times)
         for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(reference_dataset.samples):
-            valid_time = reference_dataset.valid_time_map[(base_time, lead_idx)]
+            valid_time = reference_dataset.valid_times_for_samples[i]
             print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
             sample = reference_dataset[i]
             print("  base_time:", sample['base_time'])
