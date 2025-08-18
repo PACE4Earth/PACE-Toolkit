@@ -68,8 +68,12 @@ class MetricHandler(nn.Module):
         self.metrics_config = {}
         self.metrics = {}
         self.available_keys_map = {}  # metric_name -> ordered output_keys
+        requested_metrics = set(metrics)
 
         for metric_name, keys in config["metrics"].items():
+            if metric_name not in requested_metrics:
+                continue  # skip metrics not requested
+
             if metric_name not in METRIC_MODULES:
                 raise KeyError(f"Unknown metric '{metric_name}' in config")
 

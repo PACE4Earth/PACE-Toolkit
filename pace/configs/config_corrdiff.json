@@ -21,7 +21,7 @@
     "end": "20130404",
     "num_lead_times": 1, 
     "stride_hours": 6,
-    "sample_percent": 10,
+    "sample_percent": 100,
     "custom_times": {"enabled": false, "times": ["20130404_00"]}
   },
   "visualization": {

@@ -326,7 +326,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
 def main():
     start_time = time.perf_counter()
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config.json"
+    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_corrdiff.json"
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
@@ -347,6 +347,9 @@ def main():
         sample = model_dataset[i]
         print("  base_time:", sample['base_time'])
         print("  lead_time:", sample['lead_time'])
+        var_keys = [k for k in sample.keys()]
+        for k in var_keys:
+            print(f"  {k}: shape {sample[k].shape}")
 
     if reference_dataset:
         print("\nReference valid times:", reference_dataset.valid_times)
