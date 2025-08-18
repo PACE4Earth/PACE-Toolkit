@@ -1,0 +1,13 @@
+Starting multi-node, multi-GPU Python script...
+Hello from Global Rank 2/4 on node 'jwb0924.juwels'.
+  - My SLURM Local ID is: 0
+  - Visible GPUs on this node: 1
+  - I am now using GPU: 0 (NVIDIA A100-SXM4-40GB)
+-------------------------------------------------
+Hello from Global Rank 0/4 on node 'jwb0905.juwels'.
+  - My SLURM Local ID is: 0
+  - Visible GPUs on this node: 1
+  - I am now using GPU: 0 (NVIDIA A100-SXM4-40GB)
+-------------------------------------------------
+
+✅ All MPI ranks have successfully reported their GPU assignments.
