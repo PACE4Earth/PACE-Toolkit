@@ -205,8 +205,6 @@ def main(distributed=False):
     if comm.Get_rank() == 0:
         final_dataset = get_final_dataset(outputs_dir, model_name)
         
-
-    
     time_end = time.perf_counter()
     print(f"Elapsed time: {time_end - time_start:.2f} s")
 

@@ -2,7 +2,6 @@ cluster:
 
 ml Stages/2024 GCCcore/.12.3.0 GCC/12.3.0 ParaStationMPI/5.9.2-1 ecCodes/2.31.0 mpi4py/3.1.4 zarr/2.18.3 SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial boto3/1.28.70
 
-
 booster:
 
 ml Stages/2024 GCCcore/.12.3.0 GCC/12.3.0 ParaStationMPI/5.9.2-1 ecCodes/2.31.0 CUDA/12 zarr/2.18.3 SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial mpi4py/3.1.4 boto3/1.28.70

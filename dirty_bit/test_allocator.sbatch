@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=multinode_gpu_test
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=2
-#SBATCH --ntasks=4
-#SBATCH --gpus-per-node=2
+#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks=8
+#SBATCH --gpus-per-node=4
 #SBATCH --partition=booster
 #SBATCH --time=00:05:00
 #SBATCH --output=mpi_alloc.%j.out

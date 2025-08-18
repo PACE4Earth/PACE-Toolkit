@@ -1,0 +1,19 @@
+Starting multi-node, multi-GPU Python script...
+cuda:0
+6144
+cuda:0
+14336
+cuda:0
+4096
+cuda:0
+0
+
+✅ All MPI ranks have successfully reported their GPU assignments.
+cuda:0
+2048
+cuda:0
+12288
+cuda:0
+10240
+cuda:0
+8192
