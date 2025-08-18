@@ -185,6 +185,8 @@ class UnifiedDataset(torch.utils.data.Dataset):
         if not self.files:
             raise RuntimeError(f"No input files found for dataset '{dataset_key}' in range {self.start} to {self.end}.")
 
+        # TODO: Indexing``
+
         print('Static fields setup...', end=' ')
         self.grid = get_grid(
             self.files[0][0], self.files[0][3],
@@ -292,7 +294,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields['base_time'] = base_time
             fields['lead_time'] = lead_time
-            fields['idx'] = torch.ones(1, device=os.getenv('DEVICE')) # just because you are
+            fields['idx'] = idx*torch.ones(1, device=os.getenv('DEVICE')) # just because you are
 
         return fields
     

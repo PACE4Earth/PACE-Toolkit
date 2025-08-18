@@ -29,7 +29,7 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_corrdiff.json')
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
@@ -51,6 +51,7 @@ def main(distributed=False):
     comm = MPI.COMM_WORLD
     
     rank, world_size = setup(comm=comm, distributed=distributed)
+    print(f"DEBUG: rank={rank}, world_size={world_size}, comm_size={comm.Get_size()}, comm_rank={comm.Get_rank()}")
     # assert world_size == comm.Get_size()
     # assert rank == comm.Get_rank()
 
@@ -76,7 +77,13 @@ def main(distributed=False):
         model_info = None
 
     model_info = comm.bcast(model_info, root=0)
-    rank_samples = model_info["samples"][rank::world_size]
+    len_samples = len(model_info["samples"])
+    print(len_samples)
+    # Split indices for each rank
+    all_indices = np.arange(len_samples)
+    rank_indices = all_indices[rank*len_samples//world_size:(rank+1)*len_samples//world_size]
+    rank_samples = [model_info["samples"][i] for i in rank_indices]
+    print(f"Rank {rank} received {len(rank_samples)} samples, indices: {rank_indices}")
 
     model_dataset = UnifiedDataset.from_sample_list(
         sample_list=rank_samples,
@@ -121,6 +128,8 @@ def main(distributed=False):
         lat=model_dataset.grid['lat'],
         lon=model_dataset.grid['lon'],
     )
+
+    # 
 
     # Save static coordinates once (only rank 0)
     # if rank == 0:
@@ -199,11 +208,14 @@ def main(distributed=False):
 
     if distributed:
         dist.destroy_process_group()
+        
+    comm.Barrier()
     print("\n--- All ranks finished writing. Now performing final check. ---")
     
-
     if comm.Get_rank() == 0:
+    
         final_dataset = get_final_dataset(outputs_dir, model_name)
+        print(final_dataset)
         
     time_end = time.perf_counter()
     print(f"Elapsed time: {time_end - time_start:.2f} s")

@@ -91,8 +91,8 @@ def setup(comm, distributed=False):
         )
         # print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
     else:
-        rank = 0
-        world_size = 1
+        rank = comm.Get_rank()
+        world_size = comm.Get_size()
         
     # if rank == 0:
     # try:

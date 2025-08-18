@@ -2,15 +2,15 @@
   "datasets": {
     "model": {
       "name": "graphcast",
-      "path": "${GRAPHCAST_EXTENDED_DATA_PATH}"
+      "path": "/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
     },
     "reference": {
       "name": "era5",
-      "path": "${ERA5_DATA_PATH}"
+      "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
     }
   },
-  "outputs_dir": "${OUTPUTS_DIR_PATH}",
-   "metrics": {
+  "outputs_dir": "/p/scratch/hclimrep/vozar2/outputs",
+  "metrics": {
     "geostrophic_balance": ["geostrophic_wind_ratio"],
     "hydrostatic_balance": ["all"],
     "correlation": ["all"],
@@ -25,7 +25,7 @@
   },
   "time": {
     "start": "20210401",
-    "end": "20210404",
+    "end": "20210420",
     "num_lead_times": 5, 
     "stride_hours": 6,
     "sample_percent": 100,

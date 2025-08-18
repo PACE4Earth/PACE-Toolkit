@@ -7,7 +7,10 @@ from torch.nn import functional as F
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-from .operators import standardize
+try:
+    from .operators import standardize
+except Exception as e:
+    from operators import standardize
 
 WIND_MIN = -30      # m/s
 WIND_MAX = 30       # m/s
@@ -24,55 +27,77 @@ range=(
     (-1.0, 1.0), # u10m, mslp 
     (-1.0, 1.0), # v10m, mslp
 )
+# HISTOGRAM_CONFIG below is the generic config associated with the variable ranges and bins defined at the header.
 HISTOGRAM_CONFIG = {
-    't2m_u10m': {
+    '2m_temperature.10m_u_component_of_wind': {
         'bins': 64,
         'range': ((T_MIN, T_MAX), (WIND_MIN, WIND_MAX))
     },
-    't2m_v10m': {
+    '2m_temperature.10m_v_component_of_wind': {
         'bins': 64,
         'range': ((T_MIN, T_MAX), (WIND_MIN, WIND_MAX))
     },
-    't2m_mslp': {
+    '2m_temperature.mean_sea_level_pressure': {
         'bins': 64,
         'range': ((T_MIN, T_MAX), (MSLP_MIN, MSLP_MAX))
     },
-    'u10m_v10m': {
+    '10m_u_component_of_wind.10m_v_component_of_wind': {
         'bins': 64,
         'range': ((WIND_MIN, WIND_MAX), (WIND_MIN, WIND_MAX))
     },
-    'u10m_mslp': {
+    '10m_u_component_of_wind.mean_sea_level_pressure': {
         'bins': 64,
         'range': ((WIND_MIN, WIND_MAX), (MSLP_MIN, MSLP_MAX))
     },
-    'v10m_mslp': {
+    '10m_v_component_of_wind.mean_sea_level_pressure': {
         'bins': 64,
         'range': ((WIND_MIN, WIND_MAX), (MSLP_MIN, MSLP_MAX))
     },
 }
 
-class SampleWiseCorrelation(nn.Module):
+class GenericHistogram(nn.Module):
     def __init__(
         self, 
         grid,  
+        pairs=None,
+        histogram_config=None,
         ):
-        
         super().__init__()
-        
         self.histograms = {}
         self.device = os.getenv('DEVICE')
-                                
-        for key, settings in HISTOGRAM_CONFIG.items():
-            bins = settings['bins']
-            bins_y, bins_x = (bins, bins) if isinstance(bins, int) else (bins[1], bins[0])
-            
-            self.histograms[key] = {
-                'tensor': torch.zeros((bins_y, bins_x), dtype=torch.long),
-                'bins': (bins_x, bins_y),
-                'range': settings['range']
-            }
-            
-        self.corr = torch.zeros(1, 4, 4, device=self.device)  # 4x4 correlation matrix for t2m, u10m, v10m, mslp
+        self.var_ranges = {
+            '2m_temperature': (T_MIN, T_MAX),
+            '10m_u_component_of_wind': (WIND_MIN, WIND_MAX),
+            '10m_v_component_of_wind': (WIND_MIN, WIND_MAX),
+            'mean_sea_level_pressure': (MSLP_MIN, MSLP_MAX),
+        }
+        self.default_bins = 64
+        self.corr = torch.zeros(1, 4, 4, device=self.device)
+        # Use provided pairs or fallback to config-derived pairs
+        if pairs is not None:
+            self.pairs = pairs
+        else:
+            config = histogram_config if histogram_config is not None else HISTOGRAM_CONFIG
+            self.pairs = []
+            for key in config.keys():
+                var_x, var_y = key.split('.', 1)
+                self.pairs.append((var_x, var_y))
+
+    def add_histogram(self, var_x, var_y, bins=None, range_x=None, range_y=None, key=None):
+        if key is None:
+            key = f"{var_x}.{var_y}"
+        bins = bins or self.default_bins
+        bins_x, bins_y = (bins, bins) if isinstance(bins, int) else (bins[1], bins[0])
+        range_x = range_x or self.var_ranges.get(var_x)
+        range_y = range_y or self.var_ranges.get(var_y)
+        if range_x is None or range_y is None:
+            raise ValueError(f"Ranges for {var_x} or {var_y} not specified.")
+        self.histograms[key] = {
+            'tensor': torch.zeros((bins_y, bins_x), dtype=torch.long),
+            'bins': (bins_x, bins_y),
+            'range': (range_x, range_y),
+            'vars': (var_x, var_y),
+        }
 
     def evaluate_corr(self):
         
@@ -109,7 +134,7 @@ class SampleWiseCorrelation(nn.Module):
             self.histograms[key]['tensor'] = self.histograms[key]['tensor'].to(self.device)
         return self
 
-    def update(self, key, x_coords, y_coords):
+    def update_histogram(self, key, x_coords, y_coords):
         """
         Updates the histogram for a predefined key.
         """
@@ -173,17 +198,15 @@ class SampleWiseCorrelation(nn.Module):
             aspect='auto',
         )
         
-        ax.set_xlabel(key.split('_')[0])
-        ax.set_xlabel(key.split('_')[1])
+        var_x, var_y = hist_info.get('vars', tuple(key.split('.', 1)))
+        ax.set_xlabel(var_x)
+        ax.set_ylabel(var_y)
         ax.set_title(f"Histogram for {key}")
         fig.colorbar(im, ax=ax, label='Prob. density')
         
         return fig, ax
-        
+
     def forward(self, sample):
-                
-        # print('>> sample:', sample['2m_temperature'].shape)
-                
         z_temperature = standardize(sample['2m_temperature']).flatten()
         z_u10m = standardize(sample['10m_u_component_of_wind']).flatten()
         z_v10m = standardize(sample['10m_v_component_of_wind']).flatten()
@@ -196,43 +219,46 @@ class SampleWiseCorrelation(nn.Module):
             z_mslp,
         ])
         
-        self.update(
-            't2m_u10m', 
-            sample['2m_temperature'].flatten(), 
-            sample['10m_u_component_of_wind'].flatten(),
-        )
-        
-        self.update(
-            't2m_v10m', 
-            sample['2m_temperature'].flatten(), 
-            sample['10m_v_component_of_wind'].flatten(),
-        )
-        
-        self.update(
-            't2m_mslp', 
-            sample['2m_temperature'].flatten(), 
-            sample['mean_sea_level_pressure'].flatten(),
-        )
-        
-        self.update(
-            'u10m_v10m', 
-            sample['10m_u_component_of_wind'].flatten(), 
-            sample['10m_v_component_of_wind'].flatten(),
-        )
-        
-        self.update(
-            'u10m_mslp', 
-            sample['10m_u_component_of_wind'].flatten(), 
-            sample['mean_sea_level_pressure'].flatten(),
-        )
-        
-        self.update(
-            'v10m_mslp', 
-            sample['10m_v_component_of_wind'].flatten(), 
-            sample['mean_sea_level_pressure'].flatten(),
-        )
-        
+        for var_x, var_y in self.pairs:
+            key = f"{var_x}.{var_y}"
+            if key not in self.histograms:
+                self.add_histogram(var_x, var_y)
+            self.update_histogram(
+                key,
+                sample[var_x].flatten(),
+                sample[var_y].flatten(),
+            )
         corr = torch.cov(data).unsqueeze(0)   
         self.corr = torch.cat([self.corr, corr], dim=0)     
-                
         return corr
+
+if __name__ == "__main__":
+    import numpy as np
+    os.environ['DEVICE'] = 'cpu'
+    # Use scaled random normal samples for each variable
+    sample = {
+        '2m_temperature': torch.tensor(
+            np.random.randn(128, 128) * ((T_MAX - T_MIN) / 6) + ((T_MAX + T_MIN) / 2),
+            dtype=torch.float32
+        ),
+        '10m_u_component_of_wind': torch.tensor(
+            np.random.randn(128, 128) * ((WIND_MAX - WIND_MIN) / 6) + ((WIND_MAX + WIND_MIN) / 2),
+            dtype=torch.float32
+        ),
+        '10m_v_component_of_wind': torch.tensor(
+            np.random.randn(128, 128) * ((WIND_MAX - WIND_MIN) / 6) + ((WIND_MAX + WIND_MIN) / 2),
+            dtype=torch.float32
+        ),
+        'mean_sea_level_pressure': torch.tensor(
+            np.random.randn(128, 128) * ((MSLP_MAX - MSLP_MIN) / 6) + ((MSLP_MAX + MSLP_MIN) / 2),
+            dtype=torch.float32
+        ),
+    }
+    # Instantiate GenericHistogram, optionally pass pairs or config
+    metric = GenericHistogram(grid=None)
+    corr = metric.forward(sample)
+    
+    key = '2m_temperature.10m_u_component_of_wind'
+    
+    fig, ax = metric.visualize(key)
+    plt.savefig(f'corr_{key}.png')

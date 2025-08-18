@@ -27,11 +27,6 @@ echo "#########################################################"
 # This will show details about how GPUs are communicating with each other.
 export NCCL_DEBUG=INFO
 
-# Set path to GraphCast and ERA5 data (no changes needed)
-export GRAPHCAST_EXTENDED_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
-export ERA5_DATA_PATH="/p/scratch/weatherai/shared/ERA5_data_download/2021"
-export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/vozar2/outputs"
-
 # Set the master address and port for distributed training (no changes needed)
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)

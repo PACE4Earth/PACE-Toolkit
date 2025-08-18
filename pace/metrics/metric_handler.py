@@ -6,7 +6,7 @@ import torch
 from torch import nn
 
 from .geostrophic import GeostrophicWind
-from .correlation import SampleWiseCorrelation
+from .correlation import GenericHistogram
 from .correlation_map import CorrelationMap
 from .hydrostatic import HydrostaticBalance
 from .humidity import HumidityConsistency
@@ -14,7 +14,7 @@ from .potential_vorticity import PotentialVorticity
 
 METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,
-    'correlation': SampleWiseCorrelation,
+    'correlation': GenericHistogram,
     'correlation_map': CorrelationMap,
     'hydrostatic_balance': HydrostaticBalance,
     'humidity_temperature': HumidityConsistency,
