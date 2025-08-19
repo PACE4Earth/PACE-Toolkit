@@ -59,8 +59,6 @@ def get_grid(path, opener_kwargs, lat_range=None, lon_range=None, pressure_level
     if lats.ndim == 2:
         lats = lats[:, 0]
         lons = lons[0, :]
-    if lats[0] > lats[-1]:
-        lats = lats[::-1]
 
     if lat_range is not None and lat_range != "all":
         lat_min, lat_max = sorted(lat_range)
@@ -332,9 +330,9 @@ def main():
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
-    # print(model_dataset.grid["pressure_levels"])
-    # print(model_dataset.grid["lat"])
-    # print(model_dataset.grid["lon"])
+    print(model_dataset.grid["pressure_levels"])
+    print(model_dataset.grid["lat"])
+    print(model_dataset.grid["lon"])
 
     if reference_dataset:
         print(f"len ref: {reference_dataset.__len__()}")
@@ -349,7 +347,7 @@ def main():
         sample = model_dataset[i]
         print("  base_time:", sample['base_time'])
         print("  lead_time:", sample['lead_time'])
-        var_keys = [k for k in sample.keys()]
+        var_keys = [k for k in sample.keys() if k not in ['base_time', 'lead_time', 'idx']]
         for k in var_keys:
             print(f"  {k}: shape {sample[k].shape}")
 

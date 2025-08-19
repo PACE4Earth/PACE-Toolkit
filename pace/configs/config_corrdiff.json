@@ -9,12 +9,13 @@
   "outputs_dir": "${OUTPUTS_DIR_PATH}",
    "metrics": {
     "correlation": ["all"],
-    "correlation_map": ["all"]
+    "correlation_map": ["all"],
+    "case_studies": ["all"]
   },
   "spatial": {
     "pressure_levels": 3,
-    "lat_range": [49, 50],
-    "lon_range": [1, 5]
+    "lat_range": "all",
+    "lon_range": "all"
   },
   "time": {
     "start": "20130401",
@@ -22,7 +23,7 @@
     "num_lead_times": 1, 
     "stride_hours": 6,
     "sample_percent": 100,
-    "custom_times": {"enabled": false, "times": ["20130404_00"]}
+    "custom_times": {"enabled": true, "times": ["20130404_00"]}
   },
   "visualization": {
     "plots_dir": null,
