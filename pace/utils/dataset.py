@@ -264,7 +264,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 # CorrDiff time is integer steps of 6h from 2013-01-01 00:00
                 corr_start = datetime(2013, 1, 1, 0, 0)
                 step_hours = 6
-                delta = (base_time + lead_time - corr_start)
+                delta = (base_time - corr_start)
                 step_index = int(delta.total_seconds() // (step_hours * 3600))
                 ds = ds.isel(time=step_index)
             else:

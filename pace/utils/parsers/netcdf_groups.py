@@ -23,32 +23,20 @@ def parse_file(file_path: Path):
     # Open root dataset to get the global 'time' variable (valid_time)
     try:
         with xr.open_dataset(file_path, engine="netcdf4") as ds_root:
-            if "time" not in ds_root:
-                print(f"'time' variable not found in root dataset of {file_path}")
-                return results
-            
-            valid_times = pd.to_datetime(ds_root["time"].values).to_pydatetime()
+            base_times = pd.to_datetime(ds_root["time"].values).to_pydatetime()
     except Exception as e:
         print(f"Failed to read root dataset {file_path}: {e}")
         return results
-
-    # Convert valid_time to base_time once
-    base_times = [vt - lead_time for vt in valid_times]
 
     # For each group, append tuples
     for group in GROUP_NAMES:
         opener_kwargs = {"engine": "netcdf4", "group": group}
         try:
             with xr.open_dataset(file_path, **opener_kwargs) as ds_group:
-                # Only include group if it exists
-                if ds_group is None or len(ds_group.data_vars) == 0:
-                    continue
-                
                 for bt in base_times:
                     results.append((file_path, bt, [lead_time], opener_kwargs))
         except Exception as e:
             print(e)
-            # Skip missing groups
             continue
     
     return results
