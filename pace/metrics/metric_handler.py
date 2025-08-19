@@ -11,6 +11,8 @@ from .correlation_map import CorrelationMap
 from .hydrostatic import HydrostaticBalance
 from .humidity import HumidityConsistency
 from .potential_vorticity import PotentialVorticity
+from .mass_conservation import MassConservation
+from .energy_conservation import EnergyConservation
 
 METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,
@@ -19,6 +21,8 @@ METRIC_MODULES = {
     'hydrostatic_balance': HydrostaticBalance,
     'humidity_temperature': HumidityConsistency,
     'potential_vorticity': PotentialVorticity,
+    'mass_conservation': MassConservation,
+    'energy_conservation': EnergyConservation,
 }
 
 def move_dict_to_device(tensor_dict, device=None):
