@@ -18,12 +18,12 @@
     "lon_range": "all"
   },
   "time": {
-    "start": "20130401",
-    "end": "20130404",
+    "start": "20130101",
+    "end": "20131231",
     "num_lead_times": 1, 
     "stride_hours": 6,
     "sample_percent": 100,
-    "custom_times": {"enabled": true, "times": ["20130404_00"]}
+    "custom_times": {"enabled": true, "times": ["20130324_12"]}
   },
   "visualization": {
     "plots_dir": null,

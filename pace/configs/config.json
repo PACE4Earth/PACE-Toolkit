@@ -9,7 +9,7 @@
       "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
     }
   },
-  "outputs_dir": "/p/scratch/hclimrep/vozar2/outputs",
+  "outputs_dir": "/p/scratch/hclimrep/pace/outputs",
   "metrics": {
     "geostrophic_balance": ["geostrophic_wind_ratio"],
     "hydrostatic_balance": ["all"],

@@ -259,8 +259,17 @@ class UnifiedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         file_path, base_time, lead_idx, lead_times, opener_kwargs = self.samples[idx]
         lead_time = lead_times[lead_idx]
-        with xr.open_dataset(file_path, **opener_kwargs) as ds: # open_group isel
-            ds = ds.isel(time=lead_idx)
+        with xr.open_dataset(file_path, **opener_kwargs) as ds: 
+            if self.name == "corrdiff":
+                # CorrDiff time is integer steps of 6h from 2013-01-01 00:00
+                corr_start = datetime(2013, 1, 1, 0, 0)
+                step_hours = 6
+                delta = (base_time + lead_time - corr_start)
+                step_index = int(delta.total_seconds() // (step_hours * 3600))
+                ds = ds.isel(time=step_index)
+            else:
+                # Default: select by lead index
+                ds = ds.isel(time=lead_idx)
 
             if 'latitude' in ds:
                 ds = ds.sel(latitude=slice(self.lat_min, self.lat_max))
@@ -330,9 +339,9 @@ def main():
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
-    print(model_dataset.grid["pressure_levels"])
-    print(model_dataset.grid["lat"])
-    print(model_dataset.grid["lon"])
+    # print(model_dataset.grid["pressure_levels"])
+    # print(model_dataset.grid["lat"])
+    # print(model_dataset.grid["lon"])
 
     if reference_dataset:
         print(f"len ref: {reference_dataset.__len__()}")

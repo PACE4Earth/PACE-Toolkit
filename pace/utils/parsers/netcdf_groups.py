@@ -6,7 +6,7 @@ import xarray as xr
 from datetime import timedelta
 
 # GROUP_NAMES = ["truth", "prediction", "input"]
-GROUP_NAMES = ["prediction"]
+GROUP_NAMES = ["truth"]
 
 def parse_file(file_path: Path):
     """
@@ -16,17 +16,24 @@ def parse_file(file_path: Path):
     """
     results = []
 
-    # Open root dataset to get the global 'time' variable
+    # Extract lead time from filename (only once per file)
+    match = re.search(r'(\d+)h', str(file_path))
+    lead_time = timedelta(hours=int(match.group(1))) if match else timedelta(hours=0)
+    
+    # Open root dataset to get the global 'time' variable (valid_time)
     try:
         with xr.open_dataset(file_path, engine="netcdf4") as ds_root:
             if "time" not in ds_root:
                 print(f"'time' variable not found in root dataset of {file_path}")
                 return results
             
-            times = ds_root["time"].values
+            valid_times = pd.to_datetime(ds_root["time"].values).to_pydatetime()
     except Exception as e:
         print(f"Failed to read root dataset {file_path}: {e}")
         return results
+
+    # Convert valid_time to base_time once
+    base_times = [vt - lead_time for vt in valid_times]
 
     # For each group, append tuples
     for group in GROUP_NAMES:
@@ -37,11 +44,8 @@ def parse_file(file_path: Path):
                 if ds_group is None or len(ds_group.data_vars) == 0:
                     continue
                 
-                for t in times:
-                    match = re.search(r'(\d+)h', str(file_path))
-                    lead_times = [timedelta(hours=int(match.group(1))) if match else timedelta(hours=0)]
-                    base_time = pd.to_datetime(t).to_pydatetime()
-                    results.append((file_path, base_time, lead_times, opener_kwargs))
+                for bt in base_times:
+                    results.append((file_path, bt, [lead_time], opener_kwargs))
         except Exception as e:
             print(e)
             # Skip missing groups
@@ -66,9 +70,6 @@ def parse_directory_groups(base_dir, start=None, end=None):
                 
     print(len(results), "files parsed from directory:", base_dir)
     
-    # for it in range(len(results)):
-    #     print(len(results[it]), "entries in first file")
-
     return results
 
 if __name__ == "__main__":

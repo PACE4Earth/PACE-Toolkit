@@ -94,7 +94,7 @@ def main():
         axes[1, 1].imshow(temp, cmap=cmap_temp, extent=extent, origin='lower')
         cs_precip = axes[1, 1].contour(precip, colors='blue', levels=[5, 10, 15], alpha=0.7, extent=extent)
         axes[1, 1].clabel(cs_precip, inline=1, fontsize=8)
-        axes[1, 1].contourf(vmax, levels=[8, 10, 15, 20], colors='none', hatches=['/', '//', 'xx'], alpha=0.1, extent=extent)
+        axes[1, 1].contourf(vmax, levels=[10, 15, 20, 25], colors='none', hatches=['/', '//', 'xx'], alpha=0.1, extent=extent)
         
         axes[1, 1].set_title("Overlay: Temp + Precip + Vmax")
         axes[1, 1].set_xlabel("Longitude")
@@ -104,9 +104,10 @@ def main():
         axes[1, 1].set_xticklabels([f"{v:.0f}°" for v in lon_ticks])
         axes[1, 1].set_yticklabels([f"{v:.0f}°" for v in lat_ticks])
 
-        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.tight_layout()
         plt.savefig(out_dir / f"{name}_{base_str}_{lead_str}.png", dpi=300)
-        break
+        print(f"Saved to: {out_dir}/{name}_{base_str}_{lead_str}.png")
+        # break
 
     end_time = time.perf_counter()
     print(f"Elapsed time: {end_time - start_time}")
