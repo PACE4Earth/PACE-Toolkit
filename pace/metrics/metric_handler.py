@@ -11,8 +11,8 @@ from .correlation_map import CorrelationMap
 from .hydrostatic import HydrostaticBalance
 from .humidity import HumidityConsistency
 from .potential_vorticity import PotentialVorticity
-from .mass_conservation import MassConservation
-from .energy_conservation import EnergyConservation
+from .mass import MassConservation
+from .energy import EnergyConservation
 
 METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,

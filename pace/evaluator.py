@@ -29,7 +29,7 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_corrdiff.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config.json')
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
