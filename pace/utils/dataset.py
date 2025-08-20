@@ -182,20 +182,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
         if not self.files:
             raise RuntimeError(f"No input files found for dataset '{dataset_key}' in range {self.start} to {self.end}.")
 
-        # TODO: Indexing
-        
-        self.index_map = {}
-        
-        count = 0
-        
-        for (file_path, base_time, lead_times, opener_kwargs) in self.files:
-            for lead_time in lead_times:
-                self.index_map[(base_time, lead_time)] = count
-                count = count + 1
-        
-        print('Index map: ', len(list(self.index_map.keys())))
-        
-
         print('Static fields setup...', end=' ')
         self.grid = get_grid(
             self.files[0][0], self.files[0][3],
@@ -263,6 +249,15 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         print(f"\nSelected {len(self.samples)} samples for {self.name}.")
         print("---------------------------------------------\n")
+
+        self.index_map = {}
+        count = 0
+        for (file_path, base_time, lead_idx, lead_times, opener_kwargs) in self.samples:
+            for lead_time in lead_times:
+                self.index_map[(base_time, lead_time)] = count
+                count = count + 1
+        
+        # print('Index map: ', len(list(self.index_map.keys())))
 
     def __len__(self):
         return len(self.samples)
