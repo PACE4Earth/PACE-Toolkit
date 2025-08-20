@@ -80,10 +80,12 @@ def main(distributed=False):
     len_samples = len(model_info["samples"])
     print(len_samples)
     # Split indices for each rank
-    all_indices = np.arange(len_samples)
-    rank_indices = all_indices[rank*len_samples//world_size:(rank+1)*len_samples//world_size]
-    rank_samples = [model_info["samples"][i] for i in rank_indices]
-    print(f"Rank {rank} received {len(rank_samples)} samples, indices: {rank_indices}")
+    # all_indices = np.arange(len_samples)
+    # rank_indices = all_indices[rank*len_samples//world_size:(rank+1)*len_samples//world_size]
+    # rank_samples = [model_info["samples"][i] for i in rank_indices]
+    rank_samples = model_info["samples"][rank::world_size]
+    
+    # print(f"Rank {rank} received {len(rank_samples)} samples, indices: {rank_indices}")
 
     model_dataset = UnifiedDataset.from_sample_list(
         sample_list=rank_samples,

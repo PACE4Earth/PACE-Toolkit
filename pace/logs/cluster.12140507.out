@@ -1,0 +1,166 @@
+DEBUG: rank=2, world_size=8, comm_size=8, comm_rank=2
+54
+DEBUG: rank=0, world_size=8, comm_size=8, comm_rank=0
+Preparing files for corrdiff...
+5824 files parsed from directory: /p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/
+Done. Found 54 usable files (2013-01-01 00:00:00 -- 2013-01-04 23:59:00).
+
+Static fields setup... Done
+Checking required field for metrics...
+correlation             is missing field/s for computation.
+correlation_map         is missing field/s for computation.
+case_studies            is complete.
+
+Selected 54 samples for corrdiff.
+---------------------------------------------
+
+54
+Rank 0: Initializing Zarr archive and index at /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+0: Zarr store initialized for xarray at: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+DEBUG: rank=3, world_size=8, comm_size=8, comm_rank=3
+54
+DEBUG: rank=1, world_size=8, comm_size=8, comm_rank=1
+54
+DEBUG: rank=4, world_size=8, comm_size=8, comm_rank=4
+54
+DEBUG: rank=6, world_size=8, comm_size=8, comm_rank=6
+54
+DEBUG: rank=7, world_size=8, comm_size=8, comm_rank=7
+54
+DEBUG: rank=5, world_size=8, comm_size=8, comm_rank=5
+54
+Rank 4: [0.] [datetime.datetime(2013, 1, 2, 0, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4: [1.] [datetime.datetime(2013, 1, 4, 0, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4: [2.] [datetime.datetime(2013, 1, 2, 18, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4: [3.] [datetime.datetime(2013, 1, 1, 6, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4: [4.] [datetime.datetime(2013, 1, 3, 6, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4: [5.] [datetime.datetime(2013, 1, 2, 6, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4: [6.] [datetime.datetime(2013, 1, 4, 6, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 4 processed 7 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+Rank 4 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.38 s
+Rank 7: [0.] [datetime.datetime(2013, 1, 2, 18, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 7: [1.] [datetime.datetime(2013, 1, 1, 12, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 7: [2.] [datetime.datetime(2013, 1, 3, 12, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 7: [3.] [datetime.datetime(2013, 1, 2, 0, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 7: [4.] [datetime.datetime(2013, 1, 1, 0, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 7: [5.] [datetime.datetime(2013, 1, 3, 0, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 7 processed 6 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+Rank 7 waiting at barrier.
+
+Rank 5: [0.] [datetime.datetime(2013, 1, 2, 6, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 5: [1.] [datetime.datetime(2013, 1, 1, 0, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 5: [2.] [datetime.datetime(2013, 1, 3, 0, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 5: [3.] [datetime.datetime(2013, 1, 1, 12, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 5: [4.] [datetime.datetime(2013, 1, 3, 12, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 5: [5.] [datetime.datetime(2013, 1, 2, 12, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2: [0.] [datetime.datetime(2013, 1, 1, 12, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2: [1.] [datetime.datetime(2013, 1, 3, 12, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2: [2.] [datetime.datetime(2013, 1, 2, 6, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2: [3.] [datetime.datetime(2013, 1, 4, 6, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2: [4.] [datetime.datetime(2013, 1, 2, 18, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2: [5.] [datetime.datetime(2013, 1, 1, 18, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.38 s
+Rank 5: [6.] [datetime.datetime(2013, 1, 4, 12, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 5 processed 7 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+Rank 5 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.38 s
+Rank 6: [0.] [datetime.datetime(2013, 1, 2, 12, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 6: [1.] [datetime.datetime(2013, 1, 1, 6, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 6: [2.] [datetime.datetime(2013, 1, 3, 6, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 6: [3.] [datetime.datetime(2013, 1, 1, 18, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 6: [4.] [datetime.datetime(2013, 1, 3, 18, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 6: [5.] [datetime.datetime(2013, 1, 2, 18, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 6 processed 6 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+Rank 2: [6.] [datetime.datetime(2013, 1, 3, 18, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 2 processed 7 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+Rank 2 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.47 s
+Rank 6 waiting at barrier.
+
+Rank 3: [0.] [datetime.datetime(2013, 1, 1, 18, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3: [1.] [datetime.datetime(2013, 1, 3, 18, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3: [2.] [datetime.datetime(2013, 1, 2, 12, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3: [3.] [datetime.datetime(2013, 1, 1, 0, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3: [4.] [datetime.datetime(2013, 1, 3, 0, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3: [5.] [datetime.datetime(2013, 1, 2, 0, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.38 s
+Rank 1: [0.] [datetime.datetime(2013, 1, 1, 6, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 1: [1.] [datetime.datetime(2013, 1, 3, 6, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 1: [2.] [datetime.datetime(2013, 1, 2, 0, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 1: [3.] [datetime.datetime(2013, 1, 4, 0, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 1: [4.] [datetime.datetime(2013, 1, 2, 12, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 1: [5.] [datetime.datetime(2013, 1, 1, 12, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3: [6.] [datetime.datetime(2013, 1, 4, 0, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 3 processed 7 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+Rank 3 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.47 s
+Rank 1: [6.] [datetime.datetime(2013, 1, 3, 12, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 1 processed 7 samples.
+Rank 1 waiting at barrier.
+Rank 1 passed barrier.
+Rank 1 waiting at barrier.
+
+--- All ranks finished writing. Now performing final check. ---
+Elapsed time: 3.47 s
+Rank 0: [0.] [datetime.datetime(2013, 1, 1, 0, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [1.] [datetime.datetime(2013, 1, 3, 0, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [2.] [datetime.datetime(2013, 1, 1, 18, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [3.] [datetime.datetime(2013, 1, 3, 18, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [4.] [datetime.datetime(2013, 1, 2, 6, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [5.] [datetime.datetime(2013, 1, 1, 6, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [6.] [datetime.datetime(2013, 1, 3, 6, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0 processed 7 samples.
+Rank 0 waiting at barrier.
+Rank 0 passed barrier.
+Passed barrier after corrdiff.
+Rank 0 waiting at barrier.
+Passed barrier after None.
+
+--- All ranks finished writing. Now performing final check. ---
+
+<zarr.core.Array '/idx' (47,) float32 read-only>
+[0. 0. 1. 2. 0. 0. 3. 5. 2. 1. 1. 4. 3. 2. 2. 4. 6. 3. 3. 5. 1. 4. 6. 5.
+ 5. 2. 4. 3. 5. 0. 4. 6. 1. 5. 2. 6. 3. 4. 5. 0. 1. 6. 2. 3. 4. 5. 6.]
+/
+ ├── base_time (54,) datetime64[ns]
+ ├── idx (47,) float32
+ ├── lat (448,) float32
+ ├── lead_time (54,) timedelta64[h]
+ └── lon (640,) float32
+Starting robust harmonization based on 'base_time'...
+Harmonization complete.
+
+<xarray.Dataset>
+Dimensions:    (idx: 54, lat: 448, lon: 640)
+Coordinates:
+  * idx        (idx) datetime64[ns] 2013-01-01T12:00:00 ... 2013-01-04
+  * lat        (lat) float32 45.39 45.41 45.44 45.46 ... 56.49 56.51 56.54 56.56
+  * lon        (lon) float32 1.138 1.163 1.188 1.212 ... 17.04 17.06 17.09 17.11
+Data variables:
+    lead_time  (idx) timedelta64[ns] 0 days 18:00:00 ... 0 days 06:00:00
+None
+Elapsed time: 3.52 s

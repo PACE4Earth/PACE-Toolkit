@@ -19,11 +19,11 @@
   },
   "time": {
     "start": "20130101",
-    "end": "20131231",
+    "end": "20130104",
     "num_lead_times": 1, 
     "stride_hours": 6,
     "sample_percent": 100,
-    "custom_times": {"enabled": true, "times": ["20130324_12"]}
+    "custom_times": {"enabled": false, "times": ["20130324_12"]}
   },
   "visualization": {
     "plots_dir": null,
