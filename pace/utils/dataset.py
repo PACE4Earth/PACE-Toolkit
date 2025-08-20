@@ -182,7 +182,19 @@ class UnifiedDataset(torch.utils.data.Dataset):
         if not self.files:
             raise RuntimeError(f"No input files found for dataset '{dataset_key}' in range {self.start} to {self.end}.")
 
-        # TODO: Indexing``
+        # TODO: Indexing
+        
+        self.index_map = {}
+        
+        count = 0
+        
+        for (file_path, base_time, lead_times, opener_kwargs) in self.files:
+            for lead_time in lead_times:
+                self.index_map[(base_time, lead_time)] = count
+                count = count + 1
+        
+        print('Index map: ', len(list(self.index_map.keys())))
+        
 
         print('Static fields setup...', end=' ')
         self.grid = get_grid(
@@ -258,6 +270,9 @@ class UnifiedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         file_path, base_time, lead_idx, lead_times, opener_kwargs = self.samples[idx]
         lead_time = lead_times[lead_idx]
+        
+        global_idx = self.index_map[(base_time, lead_time)]
+        
         with xr.open_dataset(file_path, **opener_kwargs) as ds: 
             if self.name == "corrdiff":
                 # CorrDiff time is integer steps of 6h from 2013-01-01 00:00
@@ -300,13 +315,23 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
             fields['base_time'] = base_time
             fields['lead_time'] = lead_time
-            fields['idx'] = idx*torch.ones(1, device=os.getenv('DEVICE')) # just because you are
+            fields['idx'] = global_idx*torch.ones(1, device=os.getenv('DEVICE')) # just because you are
 
         return fields
     
     # Construct from a precomputed sample list and minimal metadata
     @classmethod
-    def from_sample_list(cls, sample_list, grid, metrics, requested_names, canonical_names, config_path=None, dataset_key='model'):
+    def from_sample_list(
+            cls, 
+            sample_list, 
+            grid, metrics, 
+            requested_names, 
+            canonical_names, 
+            config_path=None, 
+            dataset_key='model',
+            index_map=None,
+        ):
+        
         obj = cls.__new__(cls)
 
         # Reassign basic metadata
@@ -316,6 +341,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         obj.requested_names = requested_names
         obj.canonical_names = canonical_names
         obj.name = dataset_key
+        obj.index_map = index_map
 
         # Minimal needed for __getitem__
         obj.config = {}

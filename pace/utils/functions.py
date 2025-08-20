@@ -127,7 +127,7 @@ def get_dataloader(dataset, distributed=False):
 
 
 # NEW: Utility for constructing and extracting dataset metadata (used only on rank 0)
-def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None):
+def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None,):
     dataset = UnifiedDataset(config_path, dataset_key, shared_valid_times=shared_valid_times)
     return {
         "samples": dataset.samples,
@@ -135,7 +135,8 @@ def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None
         "metrics": dataset.metrics,
         "requested_names": dataset.requested_names,
         "canonical_names": dataset.canonical_names,
-        "chosen_valid_times": dataset.chosen_valid_times
+        "chosen_valid_times": dataset.chosen_valid_times,
+        "index_map": dataset.index_map
     }
 
 def harmonize_zarr_to_xarray(

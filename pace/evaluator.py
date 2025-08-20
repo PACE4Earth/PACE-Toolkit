@@ -94,7 +94,8 @@ def main(distributed=False):
         requested_names=model_info["requested_names"],
         canonical_names=model_info["canonical_names"],
         config_path=DATASET_CONFIG_PATH,
-        dataset_key="model"
+        dataset_key="model",
+        index_map=model_info["index_map"]
     )
 
     # Repeat the same for reference dataset, if present
