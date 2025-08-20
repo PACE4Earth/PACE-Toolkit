@@ -44,26 +44,28 @@ def main():
     lat_ticks = np.arange(lat.min(), lat.max(), 3)
 
     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
-        valid_time = model_dataset.valid_times_for_samples[i]
-        print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
         sample = model_dataset[i]
+        name = "CORRDIFF" if sample["2m_temperature"].ndim == 4 else "COSMO-REA2"
+        base_time = sample['base_time']
+        lead_time = sample['lead_time']
+        valid_time = model_dataset.valid_times_for_samples[i]
+        base_str = base_time.strftime("%Y%m%d_%H")
+        lead_hours = int(lead_time.total_seconds() // 3600)
+        lead_str = f"{lead_hours}h"
+        valid_str = valid_time.strftime("%Y%m%d_%H")
 
         # -------------------------------
-        # 2x2 panel plot
+        # 4x1 panel plot
         # -------------------------------
         temp, temp_units = process_var(sample["2m_temperature"], "2m_temperature")
         precip, precip_units = process_var(sample["total_precipitation"], "total_precipitation")
         vmax, vmax_units = process_var(sample["vmax_10m"], "vmax_10m")
 
-        name = "CORRDIFF" if sample["2m_temperature"].ndim == 4 else "COSMO-REA2"
-        base_time = sample['base_time']
-        lead_time = sample['lead_time']
-        base_str = base_time.strftime("%Y%m%d_%H")
-        lead_hours = int(lead_time.total_seconds() // 3600)
-        lead_str = f"{lead_hours}h"
-
-        fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-        plt.suptitle(f"{name} | Base: {base_str} | Lead: {lead_str}", fontsize=16)
+        fig, axes = plt.subplots(4, 1, figsize=(6, 16))  # 1 column, 4 rows
+        if name == "CORRDIFF":
+            plt.suptitle(f"{name} | Base: {base_str} | Lead: {lead_str}", fontsize=16)
+        else: 
+            plt.suptitle(f"{name} | Valid: {valid_str}", fontsize=16)
 
         cmap_temp = 'coolwarm'
         cmap_precip = 'Blues'
@@ -80,34 +82,48 @@ def main():
             ax.set_yticks(lat_ticks)
             ax.set_xticklabels([f"{v:.0f}°" for v in lon_ticks])
             ax.set_yticklabels([f"{v:.0f}°" for v in lat_ticks])
-            cbar = plt.colorbar(im, ax=ax, fraction=0.05, shrink=0.75, pad=0.03)  # smaller fraction
+            cbar = plt.colorbar(im, ax=ax)  
             return im
 
         # 1) Temperature
-        im0 = plot_var(axes[0, 0], temp, cmap_temp, "2m Temperature", temp_units)
+        im0 = plot_var(axes[0], temp, cmap_temp, "2m Temperature", temp_units)
+
         # 2) Precipitation
-        im1 = plot_var(axes[0, 1], precip, cmap_precip, "Total Precipitation", precip_units)
+        im1 = plot_var(axes[1], precip, cmap_precip, "Total Precipitation", precip_units)
+
         # 3) Vmax
-        im2 = plot_var(axes[1, 0], vmax, cmap_vmax, "Vmax 10m", vmax_units)
+        im2 = plot_var(axes[2], vmax, cmap_vmax, "Vmax 10m", vmax_units)
 
         # 4) Overlay
-        axes[1, 1].imshow(temp, cmap=cmap_temp, extent=extent, origin='lower')
-        cs_precip = axes[1, 1].contour(precip, colors='blue', levels=[5, 10, 15], alpha=0.7, extent=extent)
-        axes[1, 1].clabel(cs_precip, inline=1, fontsize=8)
-        axes[1, 1].contourf(vmax, levels=[10, 15, 20, 25], colors='none', hatches=['/', '//', 'xx'], alpha=0.1, extent=extent)
-        
-        axes[1, 1].set_title("Overlay: Temp + Precip + Vmax")
-        axes[1, 1].set_xlabel("Longitude")
-        axes[1, 1].set_ylabel("Latitude")
-        axes[1, 1].set_xticks(lon_ticks)
-        axes[1, 1].set_yticks(lat_ticks)
-        axes[1, 1].set_xticklabels([f"{v:.0f}°" for v in lon_ticks])
-        axes[1, 1].set_yticklabels([f"{v:.0f}°" for v in lat_ticks])
+        axes[3].imshow(temp, cmap=cmap_temp, extent=extent, origin='lower')
+        cs_precip = axes[3].contour(precip, colors='blue', levels=[5, 10, 15], alpha=0.7, extent=extent)
+        axes[3].clabel(cs_precip, inline=1, fontsize=8)
+        axes[3].contourf(vmax, levels=[10, 15, 20, 25, 30, 40, 50],
+                        colors='none', hatches=['/', '//', '///', '////', '/////', '//////'],
+                        alpha=0.1, extent=extent)
 
-        plt.tight_layout()
-        plt.savefig(out_dir / f"{name}_{base_str}_{lead_str}.png", dpi=300)
-        print(f"Saved to: {out_dir}/{name}_{base_str}_{lead_str}.png")
-        # break
+        axes[3].set_title("Overlay: Temp + Precip + Vmax")
+        axes[3].set_xlabel("Longitude")
+        axes[3].set_ylabel("Latitude")
+        axes[3].set_xticks(lon_ticks)
+        axes[3].set_yticks(lat_ticks)
+        axes[3].set_xticklabels([f"{v:.0f}°" for v in lon_ticks])
+        axes[3].set_yticklabels([f"{v:.0f}°" for v in lat_ticks])
+
+        plt.tight_layout()  
+        pos = axes[3].get_position()  
+        axes[3].set_position([pos.x0 - 0.05, pos.y0, pos.width, pos.height])  
+
+        if name == "CORRDIFF":
+            plots_dir = out_dir / f"{name}_{base_str}_{lead_str}.png"
+            plt.savefig(plots_dir, dpi=300)
+        else: 
+            plots_dir = out_dir / f"{name}_{valid_str}.png"
+            plt.savefig(plots_dir, dpi=300)
+        print(f"Saved to: {plots_dir}")
+
+        if name == "COSMO-REA2":
+            break
 
     end_time = time.perf_counter()
     print(f"Elapsed time: {end_time - start_time}")
