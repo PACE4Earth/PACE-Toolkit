@@ -17,7 +17,7 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
-from utils.output_logger import MPIZarrSaver #, ZarrDataset
+from utils.output_logger import MPIZarrSaver
 from metrics.metric_handler import MetricHandler
 from utils.functions import (
     setup,
@@ -142,7 +142,8 @@ def main(distributed=False):
 
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),
-        grid=model_dataset.grid
+        grid=model_dataset.grid,
+        config_path=DATASET_CONFIG_PATH,
     )
 
     comm.Barrier()

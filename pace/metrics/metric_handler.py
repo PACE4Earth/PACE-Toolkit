@@ -23,6 +23,7 @@ METRIC_MODULES = {
     'potential_vorticity': PotentialVorticity,
     'mass_conservation': MassConservation,
     'energy_conservation': EnergyConservation,
+    'case_studies': None,
 }
 
 def move_dict_to_device(tensor_dict, device=None):
@@ -46,7 +47,7 @@ def move_dict_to_device(tensor_dict, device=None):
     }
 
 class MetricHandler(nn.Module):
-    def __init__(self, grid, metrics: list[str]):
+    def __init__(self, grid, config_path, metrics: list[str],):
         """
         config_path: path to JSON config file, with format:
         {
@@ -61,7 +62,7 @@ class MetricHandler(nn.Module):
         
         # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
-        config_path = Path(__file__).resolve().parent.parent / "configs" / "config.json"
+        # config_path = Path(__file__).resolve().parent.parent / "configs" / "config.json"
 
         with open(config_path, "r") as f:
             config = json.load(f)
@@ -81,8 +82,11 @@ class MetricHandler(nn.Module):
             if metric_name not in METRIC_MODULES:
                 raise KeyError(f"Unknown metric '{metric_name}' in config")
 
-            module = METRIC_MODULES[metric_name](grid)
-            module.to(os.getenv('DEVICE'))
+            try:
+                module = METRIC_MODULES[metric_name](grid)
+                module.to(os.getenv('DEVICE'))
+            except:
+                module = lambda tau: 0
 
             # Get authoritative key order from module, or fallback
             if hasattr(module, "output_keys"):

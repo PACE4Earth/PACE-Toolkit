@@ -16,7 +16,6 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 
 from utils.dataset import UnifiedDataset
-from utils.output_logger import MPIZarrSaver, ZarrDataset
 
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_devel.json')
@@ -141,7 +140,7 @@ def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None
 
 def harmonize_zarr_to_xarray(
     zarr_group: zarr.hierarchy.Group,
-    main_coord_name: str = 'base_time'
+    main_coord_name: str = 'idx'
 ) -> xr.Dataset:
     """
     Builds a consistent xarray.Dataset from a Zarr group by harmonizing

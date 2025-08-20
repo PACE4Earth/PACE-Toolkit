@@ -95,8 +95,8 @@ class MPIZarrSaver:
 
 
         # index coordinates
-        arr = self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='float', overwrite=True)
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['base_time']
+        arr = self.root.create_dataset('idx', shape=(0,), chunks=(1024,), dtype='float', overwrite=True)
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
 
         # index coordinates
         arr = self.root.create_dataset('base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True)
@@ -183,134 +183,87 @@ class XarrayZarrHandler(nn.Module):
         return np.timedelta64(hours, 'h')
 
     def forward(self, sample: dict) -> dict:
-        
+        # --- Pop ALL coordinates before the loop ---
         base_times = sample.pop('base_time')
         lead_times = sample.pop('lead_time')
-        
+        indices = sample.pop('idx', None) # Safely pop idx
+
         is_single_item = not isinstance(base_times, (list, tuple))
         if is_single_item:
             base_times = [base_times]
             lead_times = [lead_times]
+            if indices is not None:
+                indices = [indices]
+
+        all_tensors_saved_successfully = True
         
+        # This loop now only processes actual data variables
         for name, tensor in sample.items():
-            local_success = False
             if isinstance(tensor, torch.Tensor):
                 try:
-                    
-                    # tensor = tensor.squeeze(0)
                     data_np = tensor.detach().cpu().numpy()
-                    
-                    # print(name, data_np.shape)
-                    
                     self.root[name].append(data_np)
-                    local_success = True
-                    
-                except ValueError:
-                    # If a shape mismatch occurs, catch it, log it, and continue
-                    print(f"Rank {self.rank}: {name} expected {self.root[name].shape} but got {data_np.shape}")
-                    continue # Explicitly move to the next item in the loop
-            
-        if local_success:
+                except ValueError as e:
+                    print(f"Rank {self.rank}: FAILED to append {name}. Shape mismatch. Error: {e}")
+                    all_tensors_saved_successfully = False
+                    break 
+        
+        # --- Atomically append ALL coordinates if the data was saved ---
+        if all_tensors_saved_successfully:
             self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
             self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
-            print(f"Rank {self.rank}: {sample['idx'].detach().cpu().numpy()} {base_times} {lead_times} {self.path}")
+            if indices is not None:
+                # Ensure indices is a numpy array before appending
+                indices_np = np.array([idx.item() if isinstance(idx, torch.Tensor) else idx for idx in indices])
+                self.root['idx'].append(indices_np)
+            
+            idx_val = indices_np[0] if indices is not None else 'N/A'
+            print(f"Rank {self.rank}: Saved idx {idx_val} for {base_times[0]} to {self.path}")
         else:
-            print(f"XXX\tRank {self.rank}: {base_times, } {self.path}")
+            print(f"XXX Rank {self.rank}: Discarded coordinates for {base_times[0]} due to data append failure.")
         
         return sample
 
-class ZarrDataset(Dataset):
-    """
-    A PyTorch Dataset for accessing a Zarr store with a specific hierarchical
-    structure: `root/{base_time}/{lead_time}/{variable}`.
-
-    Each item in the dataset corresponds to a unique (base_time, lead_time)
-    combination.
-    """
-    def __init__(self, path, variables=None, lat=None, lon=None):
-        """
-        Args:
-            zarr_path (str): Path to the root Zarr directory (e.g., 'era5.zarr').
-            variables (list of str, optional): A specific list of variables to load.
-                                               If None, all variables found in the
-                                               first sample are loaded.
-        """
-        self.zarr_path = path
-        self.root = zarr.open_group(self.zarr_path, mode='r')
-        self.samples = self._create_sample_map()
+    # def forward(self, sample: dict) -> dict:
         
-        if not self.samples:
-            raise ValueError("No samples found in the Zarr store. Check the path and structure.")
-
-        if variables:
-            self.variables = variables
-        else:
-            # Auto-discover variables from the first sample if not provided
-            first_base, first_lead = self.samples[0]
-            self.variables = list(self.root[first_base][first_lead].keys())
-            print(self.variables)
-
-
-    def _create_sample_map(self):
-        """
-        Scans the Zarr store to find all (base_time, lead_time) pairs,
-        ignoring hidden directories like .zarrlock.
-        """
-        samples = []
-        for base_time in self.root.keys():
-            # --> ADD THIS CHECK <--
-            if base_time.startswith('.'):
-                continue  # Skip hidden files/directories like .zarrlock
-
-            try:
-                base_time_group = self.root[base_time]
-                for lead_time in base_time_group.keys():
-                    samples.append((base_time, lead_time))
-            except (JSONDecodeError, KeyError) as e:
-                warnings.warn(
-                    f"Skipping corrupted or invalid entry in Zarr store: '{base_time}'. "
-                    f"Error: {e}"
-                )
-                continue
-        return samples
-
-    def __len__(self):
-        """Returns the total number of (base_time, lead_time) samples."""
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        """
-        Retrieves a single sample from the dataset.
-
-        Args:
-            idx (int): The index of the sample to retrieve.
-
-        Returns:
-            dict: A dictionary containing the 'base_time', 'lead_time',
-                  and a 'data' dictionary where keys are variable names
-                  and values are the corresponding PyTorch tensors.
-        """
-        if not 0 <= idx < len(self.samples):
-            raise IndexError("Index out of range")
-
-        base_time, lead_time = self.samples[idx]
+    #     base_times = sample.pop('base_time')
+    #     lead_times = sample.pop('lead_time')
         
-        output = {}
+    #     is_single_item = not isinstance(base_times, (list, tuple))
+    #     if is_single_item:
+    #         base_times = [base_times]
+    #         lead_times = [lead_times]
         
-        output['base_time'] = base_time
-        output['lead_time'] = lead_time
+    #     # Keep a reference to the idx for logging, if it exists
+    #     idx_for_logging = sample.get('idx', -1)
         
-        data_group = self.root[base_time][lead_time]
-
-        data_tensors = {}
-        for var_name in self.variables:
-
-            zarr_array = data_group[var_name]
-            
-            # print(var_name, type(zarr_array), zarr_array.shape)
-            
-            numpy_array = zarr_array[:]
-            output[var_name] = torch.from_numpy(numpy_array)
-            
-        return output
+    #     is_single_item = not isinstance(base_times, (list, tuple))
+    #     if is_single_item:
+    #         base_times = [base_times]
+    #         lead_times = [lead_times]
+        
+    #     # This flag will track if ALL tensors in the sample are saved
+    #     all_tensors_saved_successfully = True
+        
+    #     for name, tensor in sample.items():
+    #         if isinstance(tensor, torch.Tensor):
+    #             try:
+    #                 data_np = tensor.detach().cpu().numpy()
+    #                 self.root[name].append(data_np)
+    #             except ValueError as e:
+    #                 # If any append fails, log it and mark the entire sample as failed
+    #                 print(f"Rank {self.rank}: FAILED to append {name}. Expected shape ~{self.root[name].shape[1:]} but got {data_np.shape}. Error: {e}")
+    #                 all_tensors_saved_successfully = False
+    #                 # No need to process other tensors for this sample, break out
+    #                 break 
+        
+    #     # ONLY append coordinates if the entire sample was saved without errors
+    #     if all_tensors_saved_successfully:
+    #         self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
+    #         self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
+    #         if isinstance(idx_for_logging, torch.Tensor):
+    #             idx_for_logging = idx_for_logging.detach().cpu().numpy()
+    #         print(f"Rank {self.rank}: Saved {idx_for_logging} for {base_times} to {self.path}")
+    #     else:
+    #         print(f"XXX Rank {self.rank}: Discarded coordinates for {base_times} due to data append failure in {self.path}")
 
