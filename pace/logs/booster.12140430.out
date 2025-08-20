@@ -25,14 +25,6 @@ Number of GPUs available: 1
 Current GPU index: 0
 Current GPU name: NVIDIA A100-SXM4-40GB
 cuda:0
-6144
-DEBUG: rank=3, world_size=8, comm_size=8, comm_rank=3
-4
-Rank 3 received 1 samples, indices: [1]
-Number of GPUs available: 1
-Current GPU index: 0
-Current GPU name: NVIDIA A100-SXM4-40GB
-cuda:0
 2048
 DEBUG: rank=1, world_size=8, comm_size=8, comm_rank=1
 4
@@ -45,6 +37,14 @@ cuda:0
 DEBUG: rank=5, world_size=8, comm_size=8, comm_rank=5
 4
 Rank 5 received 1 samples, indices: [2]
+Number of GPUs available: 1
+Current GPU index: 0
+Current GPU name: NVIDIA A100-SXM4-40GB
+cuda:0
+6144
+DEBUG: rank=3, world_size=8, comm_size=8, comm_rank=3
+4
+Rank 3 received 1 samples, indices: [1]
 Number of GPUs available: 1
 Current GPU index: 0
 Current GPU name: NVIDIA A100-SXM4-40GB

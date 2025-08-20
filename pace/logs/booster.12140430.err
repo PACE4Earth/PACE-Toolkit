@@ -1,0 +1,162 @@
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+srun: Setting --cpu-bind=threads as a default of --threads-per-core use
+srun: defined options
+srun: -------------------- --------------------
+srun: (null)              : jwb[0867,0869]
+srun: gpus-per-node       : 4
+srun: jobid               : 12140430
+srun: job-name            : run_booster.sbatch
+srun: licenses            : home@just,project1@just,scratch@just
+srun: mpi                 : pspmix
+srun: nodes               : 2
+srun: ntasks              : 8
+srun: ntasks-per-node     : 4
+srun: threads-per-core    : 1
+srun: verbose             : 1
+srun: -------------------- --------------------
+srun: end of defined options
+srun: jobid 12140430: nodes(2):`jwb[0867,0869]', cpu counts: 48(x2)
+srun: CpuBindType=threads
+srun: launching StepId=12140430.0 on host jwb0867, 4 tasks: [0-3]
+srun: launching StepId=12140430.0 on host jwb0869, 4 tasks: [4-7]
+srun: topology/tree: init: topology tree plugin loaded
+srun: Node jwb0867, 4 tasks started
+srun: Node jwb0869, 4 tasks started
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 200, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 147, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 56, in evaluate_and_log
+    metrics = metric_handler(dataset[0])
+                             ~~~~~~~^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/dataset.py", line 260, in __getitem__
+    file_path, base_time, lead_idx, lead_times, opener_kwargs = self.samples[idx]
+                                                                ~~~~~~~~~~~~^^^^^
+IndexError: list index out of range
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 200, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 147, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 67, in evaluate_and_log
+    logger.save(sample_out)
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 66, in save
+    self.saver(sample)
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 205, in forward
+    self.root[name].append(data_np)
+    ~~~~~~~~~^^^^^^
+  File "/p/software/default/stages/2024/software/zarr/2.18.3-GCCcore-12.3.0/lib/python3.11/site-packages/zarr/hierarchy.py", line 511, in __getitem__
+    raise KeyError(item)
+KeyError: 'idx'
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 200, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 147, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 67, in evaluate_and_log
+    logger.save(sample_out)
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 66, in save
+    self.saver(sample)
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 205, in forward
+    self.root[name].append(data_np)
+    ~~~~~~~~~^^^^^^
+  File "/p/software/default/stages/2024/software/zarr/2.18.3-GCCcore-12.3.0/lib/python3.11/site-packages/zarr/hierarchy.py", line 511, in __getitem__
+    raise KeyError(item)
+KeyError: 'idx'
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 200, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 147, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 67, in evaluate_and_log
+    logger.save(sample_out)
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 66, in save
+    self.saver(sample)
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 205, in forward
+    self.root[name].append(data_np)
+    ~~~~~~~~~^^^^^^
+  File "/p/software/default/stages/2024/software/zarr/2.18.3-GCCcore-12.3.0/lib/python3.11/site-packages/zarr/hierarchy.py", line 511, in __getitem__
+    raise KeyError(item)
+KeyError: 'idx'
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 200, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 147, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 67, in evaluate_and_log
+    logger.save(sample_out)
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 66, in save
+    self.saver(sample)
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/output_logger.py", line 205, in forward
+    self.root[name].append(data_np)
+    ~~~~~~~~~^^^^^^
+  File "/p/software/default/stages/2024/software/zarr/2.18.3-GCCcore-12.3.0/lib/python3.11/site-packages/zarr/hierarchy.py", line 511, in __getitem__
+    raise KeyError(item)
+KeyError: 'idx'
+Fatal error in internal_Barrier: Other MPI error, error stack:
+internal_Barrier(84)................: MPI_Barrier(MPI_COMM_WORLD) failed
+MPID_Barrier(49)....................: 
+MPIR_Barrier_impl(105)..............: 
+MPIR_Barrier_allcomm_auto(53).......: 
+MPIR_Barrier_intra_smp(36)..........: 
+MPID_Barrier(49)....................: 
+MPIR_Barrier_impl(105)..............: 
+MPIR_Barrier_allcomm_auto(53).......: 
+MPIR_Barrier_intra_dissemination(34): 
+mpid_irecv_done(98).................: read from socket failed - request state:recv(pde)done
+MPIR_Barrier_intra_smp(52)..........: 
+MPID_Bcast(87)......................: 
+MPIR_Bcast_impl(444)................: 
+MPIR_Bcast_allcomm_auto(370)........: 
+MPIR_Bcast_intra_binomial(174)......: Failure during collective
+pspmix_service_abort: on users request from rank 4: Fatal error in internal_Barrier: Other MPI error, error stack:
+internal_Barrier(84)................: MPI_Barrier(MPI_COMM_WORLD) failed
+MPID_Barrier(49)....................: 
+MPIR_Barrier_impl(105)..............: 
+MPIR_Barrier_allcomm_auto(53).......: 
+MPIR_Barrier_intra_smp(36)..........: 
+MPID_Barrier(49)....................: 
+MPIR_Barrier_impl(105)..............: 
+MPIR_Barrier_allcomm_auto(53).......: 
+MPIR_Barrier_intra_dissemination(34): 
+mpid_irecv_done(98).................: read from socket failed - request state:recv(pde)done
+MPIR_Barrier_intra_smp(52)..........: 
+MPID_Bcast(87)......................: 
+MPIR_Bcast_impl(444)................: 
+MPIR_Bcast_allcomm_auto(370)........: 
+MPIR_Bcast_intra_binomial(174)......: Failure during collective
+srun: Received task exit notification for 1 task of StepId=12140430.0 (status=0x8f00).
+srun: error: jwb0869: task 4: Exited with exit code 143
+srun: Received task exit notification for 3 tasks of StepId=12140430.0 (status=0x000f).
+srun: error: jwb0869: tasks 5-7: Terminated
+srun: Received task exit notification for 4 tasks of StepId=12140430.0 (status=0x000f).
+srun: error: jwb0867: tasks 0-3: Terminated
+srun: Force Terminated StepId=12140430.0

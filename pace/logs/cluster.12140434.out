@@ -1,0 +1,39 @@
+DEBUG: rank=0, world_size=8, comm_size=8, comm_rank=0
+Preparing files for corrdiff...
+5824 files parsed from directory: /p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/
+Done. Found 5824 usable files (2013-01-01 00:00:00 -- 2013-12-31 23:59:00).
+
+Static fields setup... Done
+Checking required field for metrics...
+correlation             is missing field/s for computation.
+correlation_map         is missing field/s for computation.
+case_studies            is complete.
+
+Selected 4 samples for corrdiff.
+---------------------------------------------
+
+4
+Rank 0 received 0 samples, indices: []
+Rank 0: Initializing Zarr archive and index at /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+DEBUG: rank=2, world_size=8, comm_size=8, comm_rank=2
+4
+Rank 2 received 0 samples, indices: []
+DEBUG: rank=3, world_size=8, comm_size=8, comm_rank=3
+4
+Rank 3 received 1 samples, indices: [1]
+DEBUG: rank=1, world_size=8, comm_size=8, comm_rank=1
+4
+Rank 1 received 1 samples, indices: [0]
+DEBUG: rank=4, world_size=8, comm_size=8, comm_rank=4
+4
+Rank 4 received 0 samples, indices: []
+DEBUG: rank=5, world_size=8, comm_size=8, comm_rank=5
+4
+Rank 5 received 1 samples, indices: [2]
+DEBUG: rank=6, world_size=8, comm_size=8, comm_rank=6
+4
+Rank 6 received 0 samples, indices: []
+DEBUG: rank=7, world_size=8, comm_size=8, comm_rank=7
+4
+Rank 7 received 1 samples, indices: [3]

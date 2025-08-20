@@ -54,7 +54,7 @@ def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=
     
     if comm.Get_rank() == 0:
         metrics = metric_handler(dataset[0])
-        sample_out = {**metrics, "base_time": dataset[0]["base_time"], "lead_time": dataset[0]["lead_time"]}
+        sample_out = {**metrics, "base_time": dataset[0]["base_time"], "lead_time": dataset[0]["lead_time"], "idx": dataset[0]["idx"]}
         logger.initialize_store(sample_out)
     comm.Barrier()
     
@@ -63,7 +63,7 @@ def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=
     with torch.no_grad():
         for sample in dataloader:
             metrics = metric_handler(sample)
-            sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"]}
+            sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"], "idx": sample["idx"]}
             logger.save(sample_out)
             count += 1
     print(f"Rank {comm.Get_rank()} processed {count} samples.")
