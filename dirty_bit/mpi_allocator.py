@@ -29,7 +29,6 @@ try:
     allocated_mem = torch.cuda.memory_allocated()
     
     device = f'cuda:{logical_gpu_id}'
-    device_p = f'cuda:{visible_devices}'
     
     try:
         x = x.to(device)
