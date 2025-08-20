@@ -1,0 +1,30 @@
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+srun: Setting --cpu-bind=threads as a default of --threads-per-core use
+srun: defined options
+srun: -------------------- --------------------
+srun: (null)              : jwc05n279
+srun: jobid               : 12140083
+srun: job-name            : run_cluster.sbatch
+srun: licenses            : home@just,project1@just,scratch@just
+srun: mpi                 : pspmix
+srun: nodes               : 1
+srun: ntasks              : 1
+srun: ntasks-per-node     : 1
+srun: threads-per-core    : 1
+srun: verbose             : 1
+srun: -------------------- --------------------
+srun: end of defined options
+srun: jobid 12140083: nodes(1):`jwc05n279', cpu counts: 48(x1)
+srun: CpuBindType=threads
+srun: launching StepId=12140083.0 on host jwc05n279, 1 tasks: 0
+srun: topology/tree: init: topology tree plugin loaded
+srun: Node jwc05n279, 1 tasks started
+/p/software/default/stages/2024/software/zarr/2.18.3-GCCcore-12.3.0/lib/python3.11/site-packages/zarr/storage.py:455: UserWarning: an object_codec is only needed for object arrays
+  _init_array_metadata(
+/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py:218: UserWarning: Converting non-nanosecond precision timedelta values to nanosecond precision. This behavior can eventually be relaxed in xarray, as it is an artifact from pandas which is now beginning to support non-nanosecond precision values. This warning is caused by passing non-nanosecond np.datetime64 or np.timedelta64 values to the DataArray or Variable constructor; it can be silenced by converting the values to nanosecond precision ahead of time.
+  data_vars[key] = xr.DataArray(data=data, dims=dims, name=key)
+srun: Received task exit notification for 1 task of StepId=12140083.0 (status=0x0000).
+srun: jwc05n279: task 0: Completed

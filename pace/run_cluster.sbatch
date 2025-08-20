@@ -15,7 +15,7 @@ ml Stages/2024 GCCcore/.12.3.0 GCC/12.3.0 zarr/2.18.3
 ml SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial
 ml ParaStationMPI/5.9.2-1 mpi4py/3.1.4
 
-# Set the master address and port
+export OUTPUT_DIR='/p/scratch/hclimrep/vozar2/outputs_cluster'
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 

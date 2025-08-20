@@ -29,8 +29,8 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config.json')
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_corrdiff.json')
+DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
     print(f"Number of GPUs available: {torch.cuda.device_count()}")
@@ -129,20 +129,6 @@ def main(distributed=False):
         lon=model_dataset.grid['lon'],
     )
 
-    # 
-
-    # Save static coordinates once (only rank 0)
-    # if rank == 0:
-    #     coords_to_save = {}
-    #     for coord_name in ["lat", "lon", "pressure_levels"]:
-    #         if coord_name in model_info["grid"]:
-    #             coords_to_save[coord_name] = np.array(model_info["grid"][coord_name])
-    #     # Save to Zarr root group
-    #     zarr_path = os.path.join(outputs_dir, f"{model_name}.zarr")
-    #     root = zarr.open(zarr_path, mode="a")
-    #     for k, v in coords_to_save.items():
-    #         if k not in root:
-    #             root.create_dataset(k, data=v, overwrite=True)
     if reference_dataset:
         reference_output_logger = MPIZarrSaver(
             path=os.path.join(outputs_dir, f"{reference_name}.zarr"),
@@ -150,17 +136,6 @@ def main(distributed=False):
             lat=model_dataset.grid['lat'],
             lon=model_dataset.grid['lon'],
         )
-
-        # if rank == 0:
-        #     coords_to_save = {}
-        #     for coord_name in ["lat", "lon", "pressure_levels"]:
-        #         if coord_name in ref_info["grid"]:
-        #             coords_to_save[coord_name] = np.array(ref_info["grid"][coord_name])
-        #     zarr_path = os.path.join(outputs_dir, f"{reference_name}.zarr")
-        #     root = zarr.open(zarr_path, mode="a")
-        #     for k, v in coords_to_save.items():
-        #         if k not in root:
-        #             root.create_dataset(k, data=v, overwrite=True)
 
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),

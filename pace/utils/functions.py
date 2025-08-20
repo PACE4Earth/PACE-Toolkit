@@ -94,96 +94,25 @@ def setup(comm, distributed=False):
         rank = comm.Get_rank()
         world_size = comm.Get_size()
         
-    # if rank == 0:
-    # try:
-    #     print(f"{rank} CUDA_VISIBLE_DEVICES = {os.environ.get('CUDA_VISIBLE_DEVICES')} ")
-    # except Exception as e:
-    #     print(f"{rank} no CUDA_VISIBLE_DEVICES: {e}")
-        
     if torch.cuda.is_available():
-        print(f"Number of GPUs available: {torch.cuda.device_count()}")
-        print(f"Current GPU index: {torch.cuda.current_device()}")
-        print(f"Current GPU name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
-    #     torch.cuda.set_device(rank)
-    else:
-        print("CUDA is not available. Running on CPU.")
+        logical_gpu_id = torch.cuda.current_device() 
+        gpu_name = torch.cuda.get_device_name(logical_gpu_id)
         
-    # try:
-    #     torch.cuda.set_device(rank)
-    #     print(torch.cuda.current_device())
-    # except Exception as e:
-    #     print(f"Error setting cuda_current_device: {e}")
-
+        x = torch.ones(512*rank, device=logical_gpu_id)
+        tensor_mem = x.nelement() * x.element_size() 
+        allocated_mem = torch.cuda.memory_allocated()
+        
+        device = f'cuda:{logical_gpu_id}'
+        
+        try:
+            x = x.to(device)
+            print(x.device)
+            print(allocated_mem)
+        except Exception as e:
+            print(e)
+            
     return rank, world_size
 
-# def setup(comm, distributed=False):
-#     if distributed:
-        
-#         local_rank = int(os.environ['SLURM_LOCALID']) # SLURM provides the local rank on the node
-
-
-#         # 4. Print the requested logging information from each process rank individually
-        
-#         rank = int(os.environ['SLURM_PROCID'])
-#         world_size = int(os.environ['SLURM_NTASKS'])
-#         master_addr = os.environ['MASTER_ADDR']
-#         master_port = os.environ['MASTER_PORT']
-#         backend = "nccl" if torch.cuda.is_available() else "gloo"
-        
-        
-#         if rank==0:
-#             dist.init_process_group(
-#                 backend=backend,
-#                 init_method=f"tcp://{master_addr}:{master_port}",
-#                 world_size=world_size,
-#                 rank=rank
-#             )
-            
-#         comm.Barrier()
-
-#         distr_rank = dist.get_rank()
-#         world_size = dist.get_world_size()
-#         # 3. Set the device for this specific process
-#         # This ensures each process on a node uses a different GPU
-#         try:
-#             device_id = torch.cuda.current_device()
-#             torch.cuda.set_device(local_rank)
-#         except Exception as e:
-#             print(f"Error getting current device: {e}")
-#             device_id = -1  # Fallback if there's an error
-
-#         if rank==0:
-#             print('partition:\t', os.getenv('SLURM_JOB_PARTITION'))
-#             print('backend:\t', backend)
-#             try:
-#                 print(f"CUDA_VISIBLE_DEVICES = '{os.environ.get('CUDA_VISIBLE_DEVICES')}' | ")
-#             except Exception as e:
-#                 print(f"not CUDA_VISIBLE_DEVICES: {e}")
-
-#         print(
-#             f"[torch.distr Rank {distr_rank} |  slurm rank {local_rank}] "
-#             f"Using Device: cuda:{device_id}"
-#         )
-        
-#         # if rank==0:
-#         #     print()
-#         #     dist.init_process_group(
-#         #         backend=backend,
-#         #         init_method=f"tcp://{master_addr}:{master_port}",
-#         #         world_size=world_size,
-#         #         rank=rank
-#         #     )
-        
-
-#     else:
-#         rank = 0
-#         world_size = 1
-        
-#     comm.Barrier()
-#     if rank==0:
-#         print(f"Process group initialized for rank {rank} of {world_size} on CPU.")
-
-#     return rank, world_size
 
 def get_dataloader(dataset, distributed=False):
     num_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 0))

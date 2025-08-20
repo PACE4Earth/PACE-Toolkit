@@ -1,0 +1,53 @@
+DEBUG: rank=0, world_size=1, comm_size=1, comm_rank=0
+Preparing files for corrdiff...
+5824 files parsed from directory: /p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/
+Done. Found 5824 usable files (2013-01-01 00:00:00 -- 2013-12-31 23:59:00).
+
+Static fields setup... Done
+Checking required field for metrics...
+correlation             is missing field/s for computation.
+correlation_map         is missing field/s for computation.
+case_studies            is complete.
+
+Selected 4 samples for corrdiff.
+---------------------------------------------
+
+4
+Rank 0 received 4 samples, indices: [0 1 2 3]
+Rank 0: Initializing Zarr archive and index at /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+All 1 ranks have opened the synchronized Zarr archive.
+0: Zarr store initialized for xarray at: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [0.] [datetime.datetime(2013, 3, 23, 18, 0)] [datetime.timedelta(seconds=64800)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [1.] [datetime.datetime(2013, 3, 24, 0, 0)] [datetime.timedelta(seconds=43200)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [2.] [datetime.datetime(2013, 3, 23, 12, 0)] [datetime.timedelta(days=1)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0: [3.] [datetime.datetime(2013, 3, 24, 6, 0)] [datetime.timedelta(seconds=21600)] /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/outputs/corrdiff.zarr
+Rank 0 processed 4 samples.
+Rank 0 waiting at barrier.
+Rank 0 passed barrier.
+Passed barrier after corrdiff.
+Rank 0 waiting at barrier.
+Passed barrier after None.
+
+--- All ranks finished writing. Now performing final check. ---
+
+<zarr.core.Array '/idx' (5,) float32 read-only>
+[0. 0. 1. 2. 3.]
+/
+ ├── base_time (4,) datetime64[ns]
+ ├── idx (5,) float32
+ ├── lat (448,) float32
+ ├── lead_time (4,) timedelta64[h]
+ └── lon (640,) float32
+Starting robust harmonization based on 'base_time'...
+Harmonization complete.
+
+<xarray.Dataset>
+Dimensions:    (idx: 4, lat: 448, lon: 640)
+Coordinates:
+  * idx        (idx) datetime64[ns] 2013-03-23T18:00:00 ... 2013-03-24T06:00:00
+  * lat        (lat) float32 45.39 45.41 45.44 45.46 ... 56.49 56.51 56.54 56.56
+  * lon        (lon) float32 1.138 1.163 1.188 1.212 ... 17.04 17.06 17.09 17.11
+Data variables:
+    lead_time  (idx) timedelta64[ns] 18:00:00 12:00:00 ... 0 days 06:00:00
+None
+Elapsed time: 2.54 s
