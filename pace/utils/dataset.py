@@ -253,11 +253,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.index_map = {}
         count = 0
         for (file_path, base_time, lead_idx, lead_times, opener_kwargs) in self.samples:
-            for lead_time in lead_times:
-                self.index_map[(base_time, lead_time)] = count
-                count = count + 1
+            lead_time = lead_times[lead_idx]
+            self.index_map[(base_time, lead_time)] = count
+            count = count + 1
         
-        # print('Index map: ', len(list(self.index_map.keys())))
+        print('Index map: ', len(list(self.index_map.keys())))
+        # print(self.index_map)
 
     def __len__(self):
         return len(self.samples)
@@ -355,7 +356,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
 def main():
     start_time = time.perf_counter()
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_corrdiff.json"
+    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_graphcast.json"
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
@@ -363,11 +364,11 @@ def main():
     # print(model_dataset.grid["lat"])
     # print(model_dataset.grid["lon"])
 
-    if reference_dataset:
-        print(f"len ref: {reference_dataset.__len__()}")
-        # print(model_dataset.grid["pressure_levels"])
-        # print(model_dataset.grid["lat"])
-        # print(model_dataset.grid["lon"])
+    # if reference_dataset:
+    #     print(f"len ref: {reference_dataset.__len__()}")
+    #     # print(model_dataset.grid["pressure_levels"])
+    #     # print(model_dataset.grid["lat"])
+    #     # print(model_dataset.grid["lon"])
 
     print("\nModel valid times:", model_dataset.valid_times)
     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
@@ -380,14 +381,14 @@ def main():
         for k in var_keys:
             print(f"  {k}: shape {sample[k].shape}")
 
-    if reference_dataset:
-        print("\nReference valid times:", reference_dataset.valid_times)
-        for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(reference_dataset.samples):
-            valid_time = reference_dataset.valid_times_for_samples[i]
-            print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
-            sample = reference_dataset[i]
-            print("  base_time:", sample['base_time'])
-            print("  lead_time:", sample['lead_time'])
+    # if reference_dataset:
+    #     print("\nReference valid times:", reference_dataset.valid_times)
+    #     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(reference_dataset.samples):
+    #         valid_time = reference_dataset.valid_times_for_samples[i]
+    #         print(f"Base: {base_time}, LeadIdx: {lead_idx}, Valid: {valid_time}, File: {file_path.name}")
+    #         sample = reference_dataset[i]
+    #         print("  base_time:", sample['base_time'])
+    #         print("  lead_time:", sample['lead_time'])
 
     end_time = time.perf_counter()
     print(f"Elapsed time: {end_time - start_time}")

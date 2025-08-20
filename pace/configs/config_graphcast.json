@@ -17,9 +17,7 @@
     "correlation": ["all"],
     "correlation_map": ["all"],
     "potential_vorticity": ["all"],
-    "humidity_temperature": ["all"],
-    "mass_conservation": ["all"],
-    "energy_conservation": ["all"]
+    "humidity_temperature": ["all"]
   },
   "spatial": {
     "pressure_levels": 3,
@@ -31,8 +29,8 @@
     "end": "20210420",
     "num_lead_times": 5, 
     "stride_hours": 6,
-    "sample_percent": 100,
-    "custom_times": {"enabled": true, "times": ["20210402_12"]}
+    "sample_percent": 5,
+    "custom_times": {"enabled": false, "times": ["20210402_12"]}
   },
   "visualization": {
     "plots_dir": null,

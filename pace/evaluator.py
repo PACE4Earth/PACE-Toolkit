@@ -29,7 +29,7 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_minimal.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_graphcast.json')
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
@@ -117,7 +117,8 @@ def main(distributed=False):
             requested_names=ref_info["requested_names"],
             canonical_names=ref_info["canonical_names"],
             config_path=DATASET_CONFIG_PATH,
-            dataset_key="reference"
+            dataset_key="reference",
+            index_map=ref_info["index_map"]
         )
     else:
         reference_dataset = None
@@ -130,6 +131,7 @@ def main(distributed=False):
         comm=comm,
         lat=model_dataset.grid['lat'],
         lon=model_dataset.grid['lon'],
+        level=model_dataset.grid['pressure_levels'],
     )
 
     if reference_dataset:
@@ -138,6 +140,7 @@ def main(distributed=False):
             comm=comm,
             lat=model_dataset.grid['lat'],
             lon=model_dataset.grid['lon'],
+            level=model_dataset.grid['pressure_levels'],
         )
 
     metric_handler = MetricHandler(

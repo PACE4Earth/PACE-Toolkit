@@ -36,7 +36,7 @@ def get_final_dataset(outputs_dir, model_name):
         
         print(tmp_dataset.tree())
         # dirty bit
-        final_dataset = harmonize_zarr_to_xarray(tmp_dataset)
+        # final_dataset = harmonize_zarr_to_xarray(tmp_dataset)
         
         print()
         
