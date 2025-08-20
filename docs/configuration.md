@@ -16,6 +16,7 @@ Example configuration:
 
 ```json
 {
+  "distributed": false,
   "datasets": {
     "model": {
       "name": "graphcast",
@@ -69,6 +70,15 @@ Example configuration:
 
 ## Sections
 
+### 0. `distributed`
+
+Specifies whether the evaluation should run in distributed (parallel) mode (e.g., on an HPC system with SLURM).
+
+| Key           | Type  | Description                                                                                   | Default |
+| ------------- | ----- | --------------------------------------------------------------------------------------------- | ------- |
+| `distributed` | bool  | If `true`, the evaluation uses distributed sampling and computation across multiple workers. | false   |
+
+---
 ### 1. `datasets`
 
 Specifies the **model** and **reference** datasets to be compared.

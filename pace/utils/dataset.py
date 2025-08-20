@@ -151,7 +151,6 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.start_dt = datetime.strptime(self.start, "%Y%m%d")
         self.end_dt = datetime.strptime(self.end, "%Y%m%d") + timedelta(days=1) - timedelta(minutes=1)
-        lead_end_dt = self.end_dt - pd.to_timedelta(self.max_lead * self.stride_hours, unit='h') if self.is_model_dataset else self.end_dt
 
         # Prepare files and samples
 

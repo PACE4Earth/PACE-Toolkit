@@ -1,0 +1,20 @@
+{
+  "distributed": false,
+  "datasets": {
+    "model": {
+      "name": "corrdiff",
+      "path": "/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/"
+    }
+  },
+  "outputs_dir": "${OUTPUTS_DIR_PATH}",
+   "metrics": {
+    "correlation": ["all"],
+    "correlation_map": ["all"],
+    "case_studies": ["all"]
+  },
+  "time": {
+    "start": "20130101",
+    "end": "20130104",
+    "sample_percent": 100
+  }
+}

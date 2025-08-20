@@ -1,4 +1,5 @@
 {
+  "distributed": false,
   "datasets": {
     "model": {
       "name": "graphcast",
