@@ -18,6 +18,10 @@ T_MIN = 220         # K
 T_MAX = 325         # K
 MSLP_MIN = 95000    # Pa
 MSLP_MAX = 107000   # Pa
+VMAX_MIN = 0
+VMAX_MAX = 40
+TP_MIN = 0
+TP_MAX = 200
 
 range=(
     (-1.0, 1.0), # t2m, u10m 
@@ -53,6 +57,18 @@ HISTOGRAM_CONFIG = {
         'bins': 64,
         'range': ((WIND_MIN, WIND_MAX), (MSLP_MIN, MSLP_MAX))
     },
+    '2m_temperature.total_precipitation': {
+        'bins': 64,
+        'range': ((T_MIN, T_MAX), (TP_MIN, TP_MAX))
+    }, 
+    '2m_temperature.vmax_10m': {
+        'bins': 64,
+        'range': ((T_MIN, T_MAX), (VMAX_MIN, VMAX_MAX))
+    }, 
+    'total_precipitation.vmax_10m': {
+        'bins': 64,
+        'range': ((TP_MIN, TP_MAX), (VMAX_MIN, VMAX_MAX))
+    }, 
 }
 
 class GenericHistogram(nn.Module):
@@ -70,9 +86,11 @@ class GenericHistogram(nn.Module):
             '10m_u_component_of_wind': (WIND_MIN, WIND_MAX),
             '10m_v_component_of_wind': (WIND_MIN, WIND_MAX),
             'mean_sea_level_pressure': (MSLP_MIN, MSLP_MAX),
+            'vmax_10m': (VMAX_MIN, VMAX_MAX),
+            'total_precipitation': (TP_MIN, TP_MAX)
         }
         self.default_bins = 64
-        self.corr = torch.zeros(1, 4, 4, device=self.device)
+        self.corr = None
         # Use provided pairs or fallback to config-derived pairs
         if pairs is not None:
             self.pairs = pairs
@@ -84,8 +102,10 @@ class GenericHistogram(nn.Module):
                 self.pairs.append((var_x, var_y))
 
     def add_histogram(self, var_x, var_y, bins=None, range_x=None, range_y=None, key=None):
+        
         if key is None:
             key = f"{var_x}.{var_y}"
+        
         bins = bins or self.default_bins
         bins_x, bins_y = (bins, bins) if isinstance(bins, int) else (bins[1], bins[0])
         range_x = range_x or self.var_ranges.get(var_x)
@@ -207,30 +227,83 @@ class GenericHistogram(nn.Module):
         return fig, ax
 
     def forward(self, sample):
-        z_temperature = standardize(sample['2m_temperature']).flatten()
-        z_u10m = standardize(sample['10m_u_component_of_wind']).flatten()
-        z_v10m = standardize(sample['10m_v_component_of_wind']).flatten()
-        z_mslp = standardize(sample['mean_sea_level_pressure']).flatten()
+        """
+        Processes all tensors in the sample dictionary to compute their 
+        covariance matrix.
+        """
+        # 1. Dynamically standardize and flatten all tensor values in the sample.
+        #    We use a list comprehension for a concise implementation.
+        processed_tensors = []
+        for name, tensor in sample.items():
+            if isinstance(tensor, torch.Tensor) and name in self.var_ranges.keys():
+                print(tensor.shape)
+                if tensor.ndim == 4:
+                    processed_tensors.append(standardize(tensor).flatten())
         
-        data = torch.stack([
-            z_temperature,
-            z_u10m,
-            z_v10m,
-            z_mslp,
-        ])
+        # 2. Stack the list of processed tensors into a single tensor.
+        #    The `dim=0` argument stacks them row-wise.
+        data = torch.stack(processed_tensors, dim=0)
         
+        # This loop for histograms can remain as is, since it already
+        # uses variable keys from `self.pairs`.
         for var_x, var_y in self.pairs:
-            key = f"{var_x}.{var_y}"
-            if key not in self.histograms:
-                self.add_histogram(var_x, var_y)
-            self.update_histogram(
-                key,
-                sample[var_x].flatten(),
-                sample[var_y].flatten(),
-            )
-        corr = torch.cov(data).unsqueeze(0)   
-        self.corr = torch.cat([self.corr, corr], dim=0)     
-        return corr
+            
+            try:
+                key = f"{var_x}.{var_y}"
+                
+                if key not in self.histograms:
+                    self.add_histogram(var_x, var_y)
+                
+                self.update_histogram(
+                    key,
+                    sample[var_x].flatten(),
+                    sample[var_y].flatten(),
+                )
+            except Exception as e:
+                ...
+                # print(e)
+            
+        # 3. Calculate the covariance matrix for the generalized `data`.
+        #    The result will be a square matrix of size N x N,
+        #    where N is the number of tensors in the sample.
+        cov_matrix = torch.cov(data).unsqueeze(0)
+        
+        # 4. Update the running list of covariance matrices.
+        
+        # if self.corr == None:
+        #     self.corr = cov_matrix
+        # else:
+        #     self.corr = torch.cat([self.corr, cov_matrix], dim=0)
+            
+        # print(self.corr.shape)
+        
+        return cov_matrix
+
+    # def forward(self, sample):
+    #     z_temperature = standardize(sample['2m_temperature']).flatten()
+    #     z_u10m = standardize(sample['10m_u_component_of_wind']).flatten()
+    #     z_v10m = standardize(sample['10m_v_component_of_wind']).flatten()
+    #     z_mslp = standardize(sample['mean_sea_level_pressure']).flatten()
+        
+    #     data = torch.stack([
+    #         z_temperature,
+    #         z_u10m,
+    #         z_v10m,
+    #         z_mslp,
+    #     ])
+        
+    #     for var_x, var_y in self.pairs:
+    #         key = f"{var_x}.{var_y}"
+    #         if key not in self.histograms:
+    #             self.add_histogram(var_x, var_y)
+    #         self.update_histogram(
+    #             key,
+    #             sample[var_x].flatten(),
+    #             sample[var_y].flatten(),
+    #         )
+    #     corr = torch.cov(data).unsqueeze(0)   
+    #     self.corr = torch.cat([self.corr, corr], dim=0)     
+    #     return corr
 
 if __name__ == "__main__":
     import numpy as np

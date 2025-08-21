@@ -12,8 +12,8 @@
     "correlation_map_corrdiff": ["all"]
   },
   "time": {
-    "start": "20130905",
-    "end": "20130909",
+    "start": "20130901",
+    "end": "20130930",
     "sample_percent": 100
   }
 }

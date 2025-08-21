@@ -80,14 +80,14 @@ class MPIZarrSaver:
         arr = self.root.create_dataset(
             'base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True
         )
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['base_time']
         arr.attrs['coordinates'] = 'base_time'
 
         # lead_time coordinate (align with idx)
         arr = self.root.create_dataset(
             'lead_time', shape=(0,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True
         )
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['lead_time']
         arr.attrs['coordinates'] = 'lead_time'
 
         for name, tensor in sample.items():
@@ -185,7 +185,7 @@ class XarrayZarrHandler(nn.Module):
             indices_np = np.array([-1], dtype='i8')
             self.root['idx'].append(indices_np)
 
-        idx_val = indices_np[0] if indices_np.size > 0 else 'N/A'
+        # idx_val = indices_np[0] if indices_np.size > 0 else 'N/A'
         # print(f"Rank {self.rank}: Saved idx {idx_val} for {base_times[0]} to {self.path}")
 
         return sample

@@ -2,10 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
       
-def standardize(xi, method='z', epsilon=1e-2):
+def standardize(xi, method='z', epsilon=1e-6):
     
     if method=='z':
-        xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+        xi = (xi - torch.mean(xi, dim=(-2, -1), keepdim=True)) / (torch.std(xi, dim=(-2, -1), keepdim=True) + epsilon)
     else:
         print('Not implemented standardization method.')
     

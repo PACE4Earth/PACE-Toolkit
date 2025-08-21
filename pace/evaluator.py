@@ -29,7 +29,7 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_graphcast.json')
+DATASET_CONFIG_PATH_DEFAULT = os.path.join(BASE_DIR, 'configs', 'config_graphcast.json')
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
@@ -43,8 +43,16 @@ def main(distributed=False):
         
     time_start = time.perf_counter()
     
+    try:
+        DATASET_CONFIG_PATH = os.environ['DATASET_CONFIG_PATH']
+    except:
+        DATASET_CONFIG_PATH = DATASET_CONFIG_PATH_DEFAULT
+        
     with open(DATASET_CONFIG_PATH, 'r') as f:
         config = json.load(f)
+            
+    print('ds_config_path:', DATASET_CONFIG_PATH)
+    
     
     distributed = config.get("distributed", distributed)
     outputs_dir = config.get("outputs_dir", distributed)
@@ -211,7 +219,7 @@ def main(distributed=False):
         print(tmp_dataset.tree())
             
         try:
-            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'))
+            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'), consolidated=False)
             print('Opened using xarray.')
         except Exception as e:
             print(e)
