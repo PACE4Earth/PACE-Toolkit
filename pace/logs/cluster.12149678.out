@@ -59,49 +59,27 @@ Rank 0: Saved idx 2 for 2021-04-14 00:00:00 to /p/scratch/hclimrep/vozar2/output
 Rank 0: Saved idx 3 for 2021-04-02 00:00:00 to /p/scratch/hclimrep/vozar2/outputs_cluster/era5.zarr
 Rank 0 processed 4 samples.
 Rank 0 waiting at barrier.
-Passed barrier after <utils.dataset.UnifiedDataset object at 0x1461ee3f5690>.
+Passed barrier after <utils.dataset.UnifiedDataset object at 0x14af4b900990>.
 
 --- All ranks finished writing. Now performing final check. ---
-conflicting sizes for dimension 'level': length 3 on 'geostrophic_wind_ratio' and length 1 on {'idx': 'base_time', 'level': 'correlation', 'lat': 'correlation', 'lon': 'correlation'}
-
-<zarr.core.Array '/idx' (10,) int64 read-only>
-[0 1 2 3 4 5 6 7 8 9]
-/
- ├── base_time (10,) datetime64[ns]
- ├── correlation (10, 1, 4, 4) float32
- ├── geostrophic_wind_ratio (10, 3, 21, 21) float64
- ├── hydrostatic_abs_error (10, 3, 21, 21) float32
- ├── hydrostatic_rel_error (10, 3, 21, 21) float32
- ├── hydrostatic_rmse (10, 1, 21, 21) float32
- ├── idx (10,) int64
- ├── lat (21,) float32
- ├── lead_time (10,) timedelta64[h]
- ├── level (3,) int32
- ├── lon (21,) float32
- ├── potential_vorticity (10, 3, 21, 21) float32
- └── relative_humidity (10, 3, 21, 21) float32
-Starting universal harmonization based on 'idx'...
-  -> Broadcasting 'correlation' on 'level' dim: 1 -> 3
-  -> Broadcasting 'hydrostatic_rmse' on 'level' dim: 1 -> 3
-Harmonization complete.
-
+Opened using xarray.
 <xarray.Dataset>
-Dimensions:                 (idx: 10, lat: 21, lon: 21, level: 3, dim_2: 4,
-                             dim_3: 4)
+Dimensions:                 (idx: 0, var_1: 4, var_2: 4, level: 3, lat: 21,
+                             lon: 21)
 Coordinates:
-  * idx                     (idx) int64 0 1 2 3 4 5 6 7 8 9
+    base_time               (idx) datetime64[ns] ...
+  * idx                     (idx) float64 
   * lat                     (lat) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
+    lead_time               (idx) timedelta64[h] ...
+  * level                   (level) float64 1.0 2.0 3.0
   * lon                     (lon) float32 45.0 45.25 45.5 ... 49.5 49.75 50.0
-  * level                   (level) int32 1 2 3
-    base_time               (idx) datetime64[ns] 2021-04-09 ... 2021-04-02T12...
-    lead_time               (idx) timedelta64[ns] 0 days 18:00:00 ... 0 days ...
-Dimensions without coordinates: dim_2, dim_3
+Dimensions without coordinates: var_1, var_2
 Data variables:
-    hydrostatic_rel_error   (idx, level, lat, lon) float32 nan nan ... 0.004596
-    potential_vorticity     (idx, level, lat, lon) float32 nan nan ... nan nan
-    correlation             (idx, level, dim_2, dim_3) float32 0.9937 ... 0.9999
-    hydrostatic_rmse        (idx, level, lat, lon) float32 211.6 220.6 ... 96.1
-    geostrophic_wind_ratio  (idx, level, lat, lon) float64 1.441 ... 0.2115
-    relative_humidity       (idx, level, lat, lon) float32 0.0002313 ... 0.00...
-    hydrostatic_abs_error   (idx, level, lat, lon) float32 nan nan ... 134.7
-Elapsed time: 18.36 s
+    correlation             (idx, var_1, var_2) float32 ...
+    geostrophic_wind_ratio  (idx, level, lat, lon) float64 ...
+    hydrostatic_abs_error   (idx, level, lat, lon) float32 ...
+    hydrostatic_rel_error   (idx, level, lat, lon) float32 ...
+    hydrostatic_rmse        (idx, level, lat, lon) float32 ...
+    potential_vorticity     (idx, level, lat, lon) float32 ...
+    relative_humidity       (idx, level, lat, lon) float32 ...
+Elapsed time: 13.90 s

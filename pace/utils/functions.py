@@ -190,13 +190,13 @@ def harmonize_zarr_to_xarray(
         if data.ndim >= 1:
             dims = [sample_dim_name]
             if data.ndim == 4:
-                dims.extend(['level', 'dim_2', 'dim_3'])
+                dims.extend(['level', 'var_2', 'var_3'])
                 if data.shape[2] == target_lat_size:
                     dims[2] = 'lat'
                 if data.shape[3] == target_lon_size:
                     dims[3] = 'lon'
             else:
-                dims.extend([f'dim_{i}' for i in range(1, data.ndim)])
+                dims.extend([f'var_{i}' for i in range(1, data.ndim)])
             dims = tuple(dims)
         else:
             continue

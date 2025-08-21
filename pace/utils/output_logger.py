@@ -94,8 +94,11 @@ class MPIZarrSaver:
             if isinstance(tensor, torch.Tensor):
                 if tensor.ndim == 4:
                     tensor = tensor[0]
+                    if (tensor.shape[0] == 1) and (self.level != None):
+                        tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
+                        
                 elif tensor.ndim == 3:
-                    pass
+                    tensor = tensor[0]
                 else:
                     continue
 
@@ -108,8 +111,13 @@ class MPIZarrSaver:
                     dtype=np.array(tensor.cpu()).dtype,
                     overwrite=True,
                 )
-                arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'level', 'lat', 'lon']
-                arr.attrs['coordinates'] = 'idx base_time lead_time lat lon level'
+                
+                if tensor.ndim == 3:
+                    arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'level', 'lat', 'lon']
+                    arr.attrs['coordinates'] = 'idx base_time lead_time lat lon level'
+                elif tensor.ndim == 2:
+                    arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var_1', 'var_2']
+                    arr.attrs['coordinates'] = 'idx base_time lead_time var_1 var_2'
         
         self._initialized = True
         print(f"{self.rank}: Zarr store initialized for xarray at: {self.path}")
@@ -152,6 +160,11 @@ class XarrayZarrHandler(nn.Module):
             if isinstance(tensor, torch.Tensor):
                 try:
                     if tensor.ndim == 4:
+                        tensor = tensor[0]
+                        if (tensor.shape[0] == 1) and (self.level != None):
+                            tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
+                    elif tensor.ndim == 3:
+                        # print(name, tensor.shape)
                         tensor = tensor[0]
                     data_np = tensor.detach().cpu().numpy()
                     data_np = np.expand_dims(data_np, axis=0)  # add idx dimension

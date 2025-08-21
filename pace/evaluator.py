@@ -198,7 +198,8 @@ def main(distributed=False):
     if comm.Get_rank() == 0:
     
         try:
-            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'), consolidated=False)
+            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'))
+            print('Opened using xarray.')
         except Exception as e:
             print(e)
             final_dataset = get_final_dataset(outputs_dir, model_name)
