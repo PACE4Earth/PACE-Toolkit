@@ -16,11 +16,6 @@ ml Stages/2024 GCCcore/.12.3.0 GCC/12.3.0 zarr/2.18.3
 ml SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial
 ml ParaStationMPI/5.9.2-1 mpi4py/3.1.4
 
-module --force purge
-ml Stages/2024 GCCcore/.12.3.0 GCC/12.3.0 zarr/2.18.3
-ml SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial
-ml ParaStationMPI/5.9.2-1 mpi4py/3.1.4
-
 export OUTPUT_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster"
 export PLOTS_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster/plots"
 
