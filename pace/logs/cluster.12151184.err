@@ -1,0 +1,274 @@
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+srun: Setting --cpu-bind=threads as a default of --threads-per-core use
+srun: defined options
+srun: -------------------- --------------------
+srun: (null)              : jwc00n[001-002]
+srun: jobid               : 12151184
+srun: job-name            : run_cluster.sbatch
+srun: licenses            : home@just,project1@just,scratch@just
+srun: mpi                 : pspmix
+srun: nodes               : 2
+srun: ntasks              : 8
+srun: ntasks-per-node     : 4
+srun: threads-per-core    : 1
+srun: verbose             : 1
+srun: -------------------- --------------------
+srun: end of defined options
+srun: jobid 12151184: nodes(2):`jwc00n[001-002]', cpu counts: 48(x2)
+srun: CpuBindType=threads
+srun: launching StepId=12151184.0 on host jwc00n001, 4 tasks: [0-3]
+srun: launching StepId=12151184.0 on host jwc00n002, 4 tasks: [4-7]
+srun: topology/tree: init: topology tree plugin loaded
+srun: Node jwc00n001, 4 tasks started
+srun: Node jwc00n002, 4 tasks started
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 60, in evaluate_and_log
+    metrics = metric_handler(dataset[0])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 227, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 155, in main
+    evaluate_and_log(
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 69, in evaluate_and_log
+    metrics = metric_handler(sample)
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/metric_handler.py", line 127, in forward
+    result = module(sample)
+             ^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwels/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/correlation.py", line 210, in forward
+    z_temperature = standardize(sample['2m_temperature']).flatten()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/metrics/operators.py", line 8, in standardize
+    xi = (xi - xi.mean(dim=(-2, -1))) / (xi.std(dim=(-2, -1)) + epsilon)
+          ~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (640) must match the size of tensor b (8) at non-singleton dimension 3
+srun: Received task exit notification for 4 tasks of StepId=12151184.0 (status=0x0100).
+srun: error: jwc00n002: tasks 4-7: Exited with exit code 1
+srun: Received task exit notification for 4 tasks of StepId=12151184.0 (status=0x0100).
+srun: error: jwc00n001: tasks 0-3: Exited with exit code 1

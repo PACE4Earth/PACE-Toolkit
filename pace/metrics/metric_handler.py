@@ -18,6 +18,8 @@ METRIC_MODULES = {
     'geostrophic_balance': GeostrophicWind,
     'correlation': GenericHistogram,
     'correlation_map': CorrelationMap,
+    'correlation_corrdiff': GenericHistogram,
+    'correlation_map_corrdiff': CorrelationMap,
     'hydrostatic_balance': HydrostaticBalance,
     'humidity_temperature': HumidityConsistency,
     'potential_vorticity': PotentialVorticity,

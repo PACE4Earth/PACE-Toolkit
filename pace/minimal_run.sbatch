@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
+#SBATCH --partition=devel
 #SBATCH --time=00:15:00
 #SBATCH --output=logs/cluster.%j.out
 #SBATCH --error=logs/cluster.%j.err

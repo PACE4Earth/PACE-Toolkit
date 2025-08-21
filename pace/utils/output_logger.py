@@ -186,7 +186,7 @@ class XarrayZarrHandler(nn.Module):
             self.root['idx'].append(indices_np)
 
         idx_val = indices_np[0] if indices_np.size > 0 else 'N/A'
-        print(f"Rank {self.rank}: Saved idx {idx_val} for {base_times[0]} to {self.path}")
+        # print(f"Rank {self.rank}: Saved idx {idx_val} for {base_times[0]} to {self.path}")
 
         return sample
 

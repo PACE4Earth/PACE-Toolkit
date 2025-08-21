@@ -20,21 +20,21 @@ from utils.dataset import UnifiedDataset
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_devel.json')
 
-def get_final_dataset(outputs_dir, model_name):
+def get_final_dataset(tmp_dataset):
 
     try:
         # final_dataset = xr.open_zarr(os.path.join(outputs_dir, f"{model_name}.zarr"), consolidated=False)
         
-        tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
+        # tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
         
-        print()
-        print(tmp_dataset['idx'])
-        try:
-            print(tmp_dataset['idx'][:])
-        except:
-            print('hell naw')
+        # print()
+        # print(tmp_dataset['idx'])
+        # try:
+        #     print(tmp_dataset['idx'][:])
+        # except:
+        #     print('hell naw')
         
-        print(tmp_dataset.tree())
+        # print(tmp_dataset.tree())
         
         # dirty bit
         

@@ -1,0 +1,49 @@
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=0, world_size=8, comm_size=8, comm_rank=0
+Preparing files for corrdiff...
+5824 files parsed from directory: /p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/
+Done. Found 80 usable files (2013-09-05 00:00:00 -- 2013-09-09 23:59:00).
+
+Static fields setup... Done
+Checking required field for metrics...
+avail: ['vmax_10m_target', 'tp_target', 't2m_target']
+requr: ['vmax_10m', 'total_precipitation', '2m_temperature']
+vmax_10m_target
+tp_target
+t2m_target
+correlation_corrdiff    is complete.
+avail: ['vmax_10m_target', 'tp_target', 't2m_target']
+requr: ['vmax_10m', 'total_precipitation', '2m_temperature']
+vmax_10m_target
+tp_target
+t2m_target
+correlation_map_corrdiff is complete.
+
+Selected 80 samples for corrdiff.
+---------------------------------------------
+
+Index map:  80
+80
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs_cluster/corrdiff.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=3, world_size=8, comm_size=8, comm_rank=3
+80
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=1, world_size=8, comm_size=8, comm_rank=1
+80
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=2, world_size=8, comm_size=8, comm_rank=2
+80
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=5, world_size=8, comm_size=8, comm_rank=5
+80
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=7, world_size=8, comm_size=8, comm_rank=7
+80
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=4, world_size=8, comm_size=8, comm_rank=4
+80
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=6, world_size=8, comm_size=8, comm_rank=6
+80

@@ -6,7 +6,7 @@ import xarray as xr
 from datetime import timedelta
 
 # GROUP_NAMES = ["truth", "prediction", "input"]
-GROUP_NAMES = ["truth"]
+GROUP_NAMES = ["prediction"]
 
 def parse_file(file_path: Path):
     """
