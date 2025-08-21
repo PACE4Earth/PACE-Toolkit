@@ -29,7 +29,7 @@ from utils.functions import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_graphcast.json')
+DATASET_CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'config_minimal.json')
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
@@ -196,6 +196,11 @@ def main(distributed=False):
     print("\n--- All ranks finished writing. Now performing final check. ---")
     
     if comm.Get_rank() == 0:
+    
+        tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
+
+        print(tmp_dataset['idx'])
+        print(np.sort(tmp_dataset['idx'][:]))
     
         try:
             final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'))

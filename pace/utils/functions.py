@@ -73,6 +73,7 @@ def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=
     print(f"Rank {comm.Get_rank()} processed {count} samples.")
 
 def setup(comm, distributed=False):
+    
     if distributed:
         rank = comm.Get_rank()
         world_size = comm.Get_size()
@@ -114,7 +115,9 @@ def setup(comm, distributed=False):
             print(allocated_mem)
         except Exception as e:
             print(e)
-            
+       
+    comm.Barrier()
+         
     return rank, world_size
 
 
