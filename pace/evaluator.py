@@ -1,4 +1,5 @@
 import os
+import shutil
 import json
 from mpi4py import MPI
 from collections import defaultdict
@@ -202,7 +203,29 @@ def main(distributed=False):
         
     comm.Barrier()
     
-    
+    model_store_path = os.path.join(outputs_dir, f"{model_name}.zarr")
+    ref_store_path = os.path.join(outputs_dir, f"{reference_name}.zarr")
+
+    if comm.Get_rank() == 0:
+        print("Reconsolidating metadata...")
+        # Make sure no stale lock file
+        lockfile = os.path.join(model_store_path, '.zarrlock')
+        if os.path.exists(lockfile):
+            shutil.rmtree(lockfile)
+        grp = zarr.open_group(model_store_path, mode="r")
+        zarr.consolidate_metadata(model_store_path)
+
+        if reference_dataset:
+            lockfile = os.path.join(ref_store_path, '.zarrlock')
+            if os.path.exists(lockfile):
+                shutil.rmtree(lockfile)
+            grp = zarr.open_group(ref_store_path, mode="r")
+            zarr.consolidate_metadata(ref_store_path)
+
+        print("Done.")
+
+    comm.Barrier()
+
     if comm.Get_rank() == 0:
         
         # TODO:
@@ -219,7 +242,7 @@ def main(distributed=False):
         print(tmp_dataset.tree())
             
         try:
-            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'), consolidated=False)
+            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'))
             print('Opened using xarray.')
         except Exception as e:
             print(e)
