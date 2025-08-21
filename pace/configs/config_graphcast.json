@@ -26,10 +26,10 @@
   },
   "time": {
     "start": "20210401",
-    "end": "20210420",
+    "end": "20210404",
     "num_lead_times": 5, 
     "stride_hours": 6,
-    "sample_percent": 5,
+    "sample_percent": 100,
     "custom_times": {"enabled": false, "times": ["20210402_12"]}
   },
   "visualization": {

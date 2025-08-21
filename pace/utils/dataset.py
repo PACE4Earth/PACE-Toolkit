@@ -23,15 +23,15 @@ def check_required_fields(path, opener_kwargs, metric_requirements, aliases):
     with xr.open_dataset(path, **opener_kwargs) as ds:
         available_fields = list(ds.variables.keys())
     
-    print('avail:', available_fields)
-    print('requr:', metric_requirements)
+    # print('avail:', available_fields)
+    # print('requr:', metric_requirements)
         
     for metric in metric_requirements:
         ret[metric] = None
         for alias in aliases.get(metric, []):
             if alias in available_fields:
                 ret[metric] = alias
-                print(alias)
+                # print(alias)
                 break
     return ret
 
