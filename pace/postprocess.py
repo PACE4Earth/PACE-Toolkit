@@ -94,7 +94,7 @@ def select_sample_leadtimes(zarr_path: Path, total_expected: int, max_leadtimes:
 
 def main():
     time_start = time.perf_counter()
-    config_path = Path(__file__).resolve().parent / "configs" / "config.json"
+    config_path = Path(__file__).resolve().parent / "configs" / "config_graphcast.json"
     with open(config_path, "r") as f:
         config = json.load(f)
 
@@ -108,7 +108,7 @@ def main():
     # plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir") or Path(os.path.abspath(os.path.dirname(__file__))) / "plots")))
 
     model_name = config['datasets']['model']['name']
-    total_leadtimes = config["time"]["lead_times"]
+    total_leadtimes = config["time"]["num_lead_times"]
     model_path = outputs_dir / f"{model_name}.zarr"
     model_leadtimes = select_sample_leadtimes(model_path, total_expected=total_leadtimes)
     model_store = unpack_custom_zarr_vars(model_path)

@@ -47,6 +47,14 @@ def main(distributed=False):
         config = json.load(f)
     
     distributed = config.get("distributed", distributed)
+    outputs_dir = config.get("outputs_dir", distributed)
+    
+    try:
+        outputs_dir = os.environ['OUTPUT_DIR_PATH']
+    except:
+        ...
+    
+    print('output dir:', outputs_dir)
     
     comm = MPI.COMM_WORLD
     
@@ -62,13 +70,6 @@ def main(distributed=False):
         ...
     comm.Barrier()
     
-
-    outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
-    if not outputs_dir.exists():
-        outputs_dir = Path(__file__).resolve().parent / "outputs"
-    os.makedirs(outputs_dir, exist_ok=True)
-
-    # print('output dir:', outputs_dir)
 
     # RANK 0 builds the full dataset and sample list
     if rank == 0:
@@ -196,7 +197,12 @@ def main(distributed=False):
     
     if comm.Get_rank() == 0:
     
-        final_dataset = get_final_dataset(outputs_dir, model_name)
+        try:
+            final_dataset = xr.open_zarr(os.path.join(outputs_dir, f'{model_name}.zarr'), consolidated=False)
+        except Exception as e:
+            print(e)
+            final_dataset = get_final_dataset(outputs_dir, model_name)
+            
         print(final_dataset)
         
     time_end = time.perf_counter()

@@ -1,0 +1,28 @@
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+srun: Setting --cpu-bind=threads as a default of --threads-per-core use
+srun: defined options
+srun: -------------------- --------------------
+srun: (null)              : jwc01n165
+srun: jobid               : 12149284
+srun: job-name            : minimal_run.sbatch
+srun: licenses            : home@just,project1@just,scratch@just
+srun: mpi                 : pspmix
+srun: nodes               : 1
+srun: ntasks              : 1
+srun: ntasks-per-node     : 1
+srun: threads-per-core    : 1
+srun: verbose             : 1
+srun: -------------------- --------------------
+srun: end of defined options
+srun: jobid 12149284: nodes(1):`jwc01n165', cpu counts: 48(x1)
+srun: CpuBindType=threads
+srun: launching StepId=12149284.0 on host jwc01n165, 1 tasks: 0
+srun: topology/tree: init: topology tree plugin loaded
+srun: Node jwc01n165, 1 tasks started
+/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py:230: UserWarning: Converting non-nanosecond precision timedelta values to nanosecond precision. This behavior can eventually be relaxed in xarray, as it is an artifact from pandas which is now beginning to support non-nanosecond precision values. This warning is caused by passing non-nanosecond np.datetime64 or np.timedelta64 values to the DataArray or Variable constructor; it can be silenced by converting the values to nanosecond precision ahead of time.
+  ds_cleaned = xr.Dataset(data_vars, coords=coords)
+srun: Received task exit notification for 1 task of StepId=12149284.0 (status=0x0000).
+srun: jwc01n165: task 0: Completed
