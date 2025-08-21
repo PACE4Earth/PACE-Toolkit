@@ -94,7 +94,7 @@ class MPIZarrSaver:
             if isinstance(tensor, torch.Tensor):
                 if tensor.ndim == 4:
                     tensor = tensor[0]
-                    if (tensor.shape[0] == 1) and (self.level != None):
+                    if (tensor.shape[0] == 1) and (np.array(self.level).shape[0] != 1):
                         tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
                         
                 elif tensor.ndim == 3:
