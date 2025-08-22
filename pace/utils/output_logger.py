@@ -82,18 +82,18 @@ class MPIZarrSaver:
         )
         arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
 
-        # base_time coordinate
+        # base_time coordinate (as coordinate of idx)
         arr = self.root.create_dataset(
             'base_time', shape=(self.N_total,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True
         )
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['base_time']
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
         arr.attrs['coordinates'] = 'base_time'
 
-        # lead_time coordinate
+        # lead_time coordinate (as coordinate of idx)
         arr = self.root.create_dataset(
             'lead_time', shape=(self.N_total,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True
         )
-        arr.attrs['_ARRAY_DIMENSIONS'] = ['lead_time']
+        arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
         arr.attrs['coordinates'] = 'lead_time'
 
         # Preallocate metric arrays
@@ -119,14 +119,13 @@ class MPIZarrSaver:
                     dtype=np.array(tensor.cpu()).dtype,
                     overwrite=True,
                 )
-                
                 if tensor.ndim == 3:
                     arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'level', 'lat', 'lon']
-                    arr.attrs['coordinates'] = 'idx base_time lead_time lat lon level'
+                    arr.attrs['coordinates'] = 'idx level lat lon'
                 elif tensor.ndim == 2:
                     arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var_1', 'var_2']
-                    arr.attrs['coordinates'] = 'idx base_time lead_time var_1 var_2'
-        
+                    arr.attrs['coordinates'] = 'idx var_1 var_2'
+
         self._initialized = True
         print(f"{self.rank}: Zarr store initialized for xarray at: {self.path}")
         try:
