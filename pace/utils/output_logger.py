@@ -1,22 +1,18 @@
 import os
 from mpi4py import MPI
 import shutil
-import warnings
-from json import JSONDecodeError
 from datetime import timedelta
 
 import zarr
 import xarray as xr
 import numpy as np
-import numcodecs
 
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
 class MPIZarrSaver:
-    def __init__(self, path: str, comm, lat=None, lon=None, level=None):
-        
+    def __init__(self, path: str, comm, lat=None, lon=None, level=None, N_total=None):  
         self._initialized = False
         
         self.comm = comm
@@ -26,6 +22,7 @@ class MPIZarrSaver:
         self.lat = lat
         self.lon = lon
         self.level = level
+        self.N_total = N_total  
 
         if self.rank == 0:
             print(f"Rank 0: Initializing Zarr archive and index at {self.path}")
@@ -39,7 +36,16 @@ class MPIZarrSaver:
         lock_path = os.path.join(self.path, '.zarrlock')
         lock = zarr.ProcessSynchronizer(lock_path)
         
-        self.saver = XarrayZarrHandler(self.path, synchronizer=lock, lat=lat, lon=lon, level=level, rank=self.rank)
+        self.saver = XarrayZarrHandler(
+            self.path,
+            synchronizer=lock,
+            lat=lat,
+            lon=lon,
+            level=level,
+            rank=self.rank,
+            comm=self.comm,       
+            N_total=self.N_total  
+        )
         if self.rank == 0:
             print(f"All {self.size} ranks have opened the synchronized Zarr archive.")
 
@@ -70,31 +76,32 @@ class MPIZarrSaver:
             )
             arr.attrs['_ARRAY_DIMENSIONS'] = ['level']
 
-        # idx coordinate
+        # Preallocate idx coordinate
         arr = self.root.create_dataset(
-            'idx', shape=(0,), chunks=(1024,), dtype='i8', overwrite=True
+            'idx', shape=(self.N_total,), chunks=(1024,), dtype='i8', overwrite=True
         )
         arr.attrs['_ARRAY_DIMENSIONS'] = ['idx']
 
-        # base_time coordinate (align with idx)
+        # base_time coordinate
         arr = self.root.create_dataset(
-            'base_time', shape=(0,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True
+            'base_time', shape=(self.N_total,), chunks=(1024,), dtype='datetime64[ns]', overwrite=True
         )
         arr.attrs['_ARRAY_DIMENSIONS'] = ['base_time']
         arr.attrs['coordinates'] = 'base_time'
 
-        # lead_time coordinate (align with idx)
+        # lead_time coordinate
         arr = self.root.create_dataset(
-            'lead_time', shape=(0,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True
+            'lead_time', shape=(self.N_total,), chunks=(1024,), dtype='timedelta64[h]', overwrite=True
         )
         arr.attrs['_ARRAY_DIMENSIONS'] = ['lead_time']
         arr.attrs['coordinates'] = 'lead_time'
 
+        # Preallocate metric arrays
         for name, tensor in sample.items():
             if isinstance(tensor, torch.Tensor):
                 if tensor.ndim == 4:
                     tensor = tensor[0]
-                    if self.level != None:
+                    if self.level is not None:
                         if (tensor.shape[0] == 1) and (np.array(self.level).shape[0] != 1):
                             tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
                         
@@ -103,7 +110,7 @@ class MPIZarrSaver:
                 else:
                     continue
 
-                shape = (0,) + tensor.shape
+                shape = (self.N_total,) + tensor.shape   # preallocate with N_total
                 chunks = (1,) + tensor.shape
                 arr = self.root.create_dataset(
                     name,
@@ -129,13 +136,16 @@ class MPIZarrSaver:
         
 
 class XarrayZarrHandler(nn.Module):
-    def __init__(self, path: str, lat: np.ndarray, lon: np.ndarray, level=None, mode='a', synchronizer=None, rank=-1):
+    def __init__(self, path: str, lat: np.ndarray, lon: np.ndarray, level=None,
+                 mode='a', synchronizer=None, rank=-1, comm=None, N_total=None):  
         super().__init__()
         self.path = path
         self.rank = rank
         self.lat = lat
         self.lon = lon
         self.level = level
+        self.comm = comm
+        self.N_total = N_total
         self.root = zarr.open_group(self.path, mode=mode, synchronizer=synchronizer)
 
     def _to_timedelta(self, lt: timedelta) -> np.timedelta64:
@@ -156,39 +166,34 @@ class XarrayZarrHandler(nn.Module):
             if indices is not None:
                 indices = [indices]
 
-        # First, append the metric data
-        for name, tensor in sample.items():
-            if isinstance(tensor, torch.Tensor):
-                try:
-                    if tensor.ndim == 4:
-                        tensor = tensor[0]
-                        if (tensor.shape[0] == 1) and (self.level != None):
-                            tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
-                    elif tensor.ndim == 3:
-                        # print(name, tensor.shape)
-                        tensor = tensor[0]
-                    data_np = tensor.detach().cpu().numpy()
-                    data_np = np.expand_dims(data_np, axis=0)  # add idx dimension
-                    self.root[name].append(data_np)
-                except ValueError as e:
-                    print(f"Rank {self.rank}: FAILED to append {name}. Shape mismatch. Error: {e}")
-                    return sample  # skip saving coordinates if metric fails
-
-        # Then, append coordinates just once per sample
-        self.root['base_time'].append(np.array(base_times, dtype='datetime64[ns]'))
-        self.root['lead_time'].append(np.array([self._to_timedelta(lt) for lt in lead_times]))
-        
+        # Compute actual indices to write into
         if indices is not None:
             indices_np = np.array([idx.item() if isinstance(idx, torch.Tensor) else idx for idx in indices], dtype='i8')
-            self.root['idx'].append(indices_np)
         else:
-            indices_np = np.array([-1], dtype='i8')
-            self.root['idx'].append(indices_np)
+            # fallback if idx not provided
+            indices_np = np.arange(len(base_times), dtype='i8')
 
-        # idx_val = indices_np[0] if indices_np.size > 0 else 'N/A'
-        # print(f"Rank {self.rank}: Saved idx {idx_val} for {base_times[0]} to {self.path}")
+        # Write metric data directly at global positions
+        for name, tensor in sample.items():
+            if isinstance(tensor, torch.Tensor):
+                if tensor.ndim == 4:
+                    tensor = tensor[0]
+                    if (tensor.shape[0] == 1) and (self.level is not None):
+                        tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
+                elif tensor.ndim == 3:
+                    tensor = tensor[0]
+                data_np = tensor.detach().cpu().numpy()
+                data_np = np.expand_dims(data_np, axis=0)  # (1,...)
+                self.root[name][indices_np] = data_np  # write at actual idx
+
+
+        # Write coordinates
+        self.root['base_time'][indices_np] = np.array(base_times, dtype='datetime64[ns]')
+        self.root['lead_time'][indices_np] = np.array([self._to_timedelta(lt) for lt in lead_times])
+        self.root['idx'][indices_np] = indices_np
 
         return sample
+
 
 
 # import os

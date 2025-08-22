@@ -142,6 +142,7 @@ def main(distributed=False):
         lat=model_dataset.grid['lat'],
         lon=model_dataset.grid['lon'],
         level=model_dataset.grid['pressure_levels'],
+        N_total=len(model_info["samples"])
     )
 
     if reference_dataset:
@@ -151,6 +152,7 @@ def main(distributed=False):
             lat=model_dataset.grid['lat'],
             lon=model_dataset.grid['lon'],
             level=model_dataset.grid['pressure_levels'],
+            N_total=len(ref_info["samples"])
         )
 
     metric_handler = MetricHandler(
