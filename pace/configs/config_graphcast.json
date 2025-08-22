@@ -10,7 +10,7 @@
       "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
     }
   },
-  "outputs_dir": "/p/scratch/hclimrep/pace/outputs",
+  "outputs_dir": "/p/project/hclimrep/vas1/PACE-Toolkit/pace/outputs",
   "metrics": {
     "geostrophic_balance": ["geostrophic_wind_ratio"],
     "hydrostatic_balance": ["all"],
@@ -20,7 +20,7 @@
     "humidity_temperature": ["all"]
   },
   "spatial": {
-    "pressure_levels": 3,
+    "pressure_levels": 37,
     "lat_range": [45, 50],
     "lon_range": [45, 50]
   },
@@ -34,9 +34,9 @@
   },
   "visualization": {
     "plots_dir": null,
-    "histogram": false,
-    "vertical_profile": false,
+    "histogram": true,
+    "vertical_profile": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
+    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
   }
 }

@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List, Dict, Tuple, Optional
 import seaborn as sns
+import xarray as xr
 
 BIN_CONFIG = {
     "geostrophic_wind_ratio": {"vmin": 0, "vmax": 2, "scale": "linear"},
@@ -30,7 +31,7 @@ def get_bins_for_variable(
 
 
 def compute_histograms(
-    store: Dict[Tuple[str, np.datetime64, int], np.ndarray],
+    store: Dict[str, xr.DataArray],
     selected_leadtimes: Optional[List[int]] = None,
     bins: int = 100,
     bin_config: Dict[str, Dict] = None,
@@ -38,6 +39,9 @@ def compute_histograms(
     """
     Compute histograms only for variables defined in bin_config and present in store.
     Skips variables that have no data.
+
+    `store` is expected to be {var_name: DataArray}.
+    Here, `lead_time` is a coordinate (on dimension `idx`), NOT a dim itself.
     """
     if bin_config is None:
         raise ValueError("bin_config must be provided with variable bin specifications")
@@ -54,31 +58,56 @@ def compute_histograms(
         for var_name, cfg in bin_config.items()
     }
 
-    # Accumulate counts only for variables actually present in store
     hist_data: Dict[str, Dict[int, np.ndarray]] = {}
 
-    for (var_name, _, lead_time), arr in store.items():
-        if selected_leadtimes is not None and lead_time not in selected_leadtimes:
-            continue
+    for var_name, arr in store.items():
         if var_name not in bin_config:
             continue
 
-        bin_edges = bin_edges_map[var_name]
-        data = arr[:]
+        if ("idx" in arr.dims) and ("lead_time" in arr.coords):
+            # lead_time is a coordinate aligned along idx
+            lt_hours_all = np.array(arr.coords["lead_time"].values, dtype="timedelta64[h]").astype(int)
+            if selected_leadtimes is None:
+                leadtimes_to_use = np.unique(lt_hours_all)
+            else:
+                # intersect with what actually exists in this array
+                leadtimes_to_use = [lt for lt in selected_leadtimes if np.any(lt_hours_all == lt)]
 
-        mask = ~np.isnan(data)
-        if not np.any(mask):
-            continue
+            for lt_hours in leadtimes_to_use:
+                idx_mask_np = (lt_hours_all == lt_hours)
+                if not np.any(idx_mask_np):
+                    continue
 
-        values = data[mask]
-        counts, _ = np.histogram(values, bins=bin_edges)
+                # Build an xarray mask on the idx dimension and drop others
+                idx_mask = xr.DataArray(idx_mask_np, dims=("idx",), coords={"idx": arr["idx"]})
+                subset = arr.where(idx_mask, drop=True).values
 
-        if var_name not in hist_data:
-            hist_data[var_name] = {}
-        if lead_time in hist_data[var_name]:
-            hist_data[var_name][lead_time] += counts
+                mask = ~np.isnan(subset)
+                if not np.any(mask):
+                    continue
+
+                values = subset[mask].ravel()
+                counts, _ = np.histogram(values, bins=bin_edges_map[var_name])
+
+                if var_name not in hist_data:
+                    hist_data[var_name] = {}
+                if lt_hours in hist_data[var_name]:
+                    hist_data[var_name][lt_hours] += counts
+                else:
+                    hist_data[var_name][lt_hours] = counts
         else:
-            hist_data[var_name][lead_time] = counts
+            # No lead_time coordinate to split by: aggregate all samples
+            data = arr.values
+            mask = ~np.isnan(data)
+            if not np.any(mask):
+                continue
+
+            values = data[mask].ravel()
+            counts, _ = np.histogram(values, bins=bin_edges_map[var_name])
+
+            if var_name not in hist_data:
+                hist_data[var_name] = {}
+            hist_data[var_name][0] = counts  # dummy lead time
 
     # Convert to normalized histograms with bin centers
     hist_result: Dict[str, Dict[int, Tuple[np.ndarray, np.ndarray]]] = {}
@@ -94,7 +123,6 @@ def compute_histograms(
                 centers,
                 counts / total if total > 0 else counts,
             )
-        # Keep only variables that had data
         filtered_bin_config[var_name] = bin_config[var_name]
 
     return filtered_bin_config, hist_result
@@ -112,7 +140,7 @@ def plot_hist(
     out_dir = output_dir / "histograms"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Define a nice color palette for model lines
+    # color count = number of lead times in the first metric
     palette = sns.color_palette("tab10", n_colors=len(next(iter(model_hist.values()))))
 
     for metric in model_hist.keys():
@@ -123,8 +151,8 @@ def plot_hist(
             plt.plot(
                 centers, counts,
                 label=f"{model_name}: Lt {lt}h",
-                color=palette[i % len(palette)],
                 linewidth=1.8,
+                color=palette[i % len(palette)],
             )
 
         # Plot reference histogram aggregated over lead times
@@ -141,30 +169,27 @@ def plot_hist(
                     label=f"{ref_name}",
                     linewidth=2.5,
                     linestyle="--",
-                    color='black'
+                    color="black",
                 )
 
-        plt.title(f"Histogram - {metric.replace('_', ' ').capitalize()}", fontsize=16, weight='bold')
+        plt.title(f"Histogram - {metric.replace('_', ' ').capitalize()}", fontsize=16, weight="bold")
         plt.xlabel(f"{metric.replace('_', ' ').capitalize()}", fontsize=14)
         plt.ylabel("Probability Density", fontsize=14)
 
-        # Improve axes aesthetics
         ax = plt.gca()
-        ax.tick_params(axis='both', which='major', labelsize=12, direction='in', length=6, width=1.2)
-        ax.tick_params(axis='both', which='minor', direction='in', length=3, width=1)
+        ax.tick_params(axis="both", which="major", labelsize=12, direction="in", length=6, width=1.2)
+        ax.tick_params(axis="both", which="minor", direction="in", length=3, width=1)
         for spine in ax.spines.values():
             spine.set_linewidth(1.2)
-            spine.set_color('black')
+            spine.set_color("black")
 
-        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=1)
+        plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=1)
 
-        # Set x scale if specified
         if bin_config and metric in bin_config:
             if bin_config[metric].get("scale", "linear") == "log":
                 plt.xscale("log")
 
-        # Legend styling
-        leg = plt.legend(frameon=True, fontsize=12, loc='best', edgecolor='black', fancybox=True)
+        leg = plt.legend(frameon=True, fontsize=12, loc="best", edgecolor="black", fancybox=True)
         leg.get_frame().set_alpha(0.9)
 
         plt.tight_layout()

@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List, Dict, Tuple, Optional
 import seaborn as sns
+import xarray as xr
 
 PROFILE_CONFIG = {
     "geostrophic_wind_ratio": {
@@ -42,28 +43,27 @@ use_weights = True  # Set to False to disable latitude weighting
 
 
 def compute_summary_stats(
-    store: Dict[Tuple[str, np.datetime64, int], np.ndarray],
+    store: Dict[str, xr.DataArray],
     latitudes: np.ndarray,
     selected_leadtimes: Optional[List[int]] = None,
     summary_stats: List[str] = ["mean", "stdev", "min", "max"],
 ) -> Dict[str, Dict[str, np.ndarray]]:
     """
-    Compute weighted or unweighted summary statistics over lat/lon per vertical level, sample-wise then averaged.
-    Latitude weighting uses w = cos(lat) in radians if use_weights=True.
+    Compute weighted/unweighted summary statistics over lat/lon per vertical level.
 
     Parameters:
-    - store: dict of {(var_name, base_time, lead_time): np.ndarray}, shape [1, level, lat, lon]
+    - store: dict[var_name: DataArray], shape [idx, level, lat, lon], with coords 'lead_time' (timedelta64[h])
     - latitudes: 1D array of latitudes corresponding to lat dimension, in degrees
-    - selected_leadtimes: list of lead times for model, None for reference (all leadtimes)
+    - selected_leadtimes: list of lead times for model; None means "reference" → collapse all leadtimes
     - summary_stats: list of stats to compute: mean, stdev, min, max
 
     Returns:
-    - results: dict[var_name][stat] = np.ndarray shape [num_levels] for reference or
-      shape [num_leadtimes, num_levels] for model.
+    - results: dict[var_name][stat] =
+        - np.ndarray shape [num_leadtimes, num_levels] for model
+        - np.ndarray shape [num_levels] for reference
     """
 
     if use_weights:
-        # Convert latitudes to radians and compute weights shape [lat]
         lat_radians = np.deg2rad(latitudes)
         weights_1d = np.cos(lat_radians)
         weights_1d = np.clip(weights_1d, 0, None)
@@ -93,9 +93,7 @@ def compute_summary_stats(
             "min": nan_min,
             "max": nan_max,
         }
-
     else:
-        # No weights: simple unweighted stats over lat/lon
         def simple_mean(data: np.ndarray) -> np.ndarray:
             return np.nanmean(data, axis=(-2, -1))
 
@@ -115,70 +113,57 @@ def compute_summary_stats(
             "max": nan_max,
         }
 
-    if selected_leadtimes is not None:
-        data_accum = {}
-        for (var_name, base_time, lead_time), arr in store.items():
-            if lead_time not in selected_leadtimes:
-                continue
-            if var_name not in data_accum:
-                data_accum[var_name] = {}
-            if lead_time not in data_accum[var_name]:
-                data_accum[var_name][lead_time] = {stat: [] for stat in summary_stats}
+    results: Dict[str, Dict[str, np.ndarray]] = {}
 
-            data = np.array(arr).squeeze()
-            if data.ndim != 3:
-                continue
+    for var_name, arr in store.items():
+        if "level" not in arr.dims:
+            continue
 
-            for stat in summary_stats:
-                if stat == "stdev":
-                    mean_val = stat_funcs["mean"](data)
-                    val = stat_funcs["stdev"](data, mean_val)
-                else:
-                    val = stat_funcs[stat](data)
-                data_accum[var_name][lead_time][stat].append(val)
+        lt_hours_all = None
+        if "lead_time" in arr.coords:
+            lt_hours_all = np.array(arr["lead_time"].values, dtype="timedelta64[h]").astype(int)
 
-        results = {}
-        for var_name, lt_dict in data_accum.items():
+        if selected_leadtimes is not None and lt_hours_all is not None:
+            # --- MODEL: compute per-leadtime ---
             results[var_name] = {}
-            for stat in summary_stats:
-                stat_per_lt = []
-                leadtimes_sorted = sorted(lt_dict.keys())
-                for lt in leadtimes_sorted:
-                    arrs = lt_dict[lt][stat]
-                    mean_arr = np.nanmean(arrs, axis=0)
-                    stat_per_lt.append(mean_arr)
-                results[var_name][stat] = np.stack(stat_per_lt, axis=0)
+            stat_per_lt = {stat: [] for stat in summary_stats}
+            leadtimes_sorted = [lt for lt in selected_leadtimes if np.any(lt_hours_all == lt)]
 
-    else:
-        data_accum = {}
-        for (var_name, base_time, lead_time), arr in store.items():
-            if var_name not in data_accum:
-                data_accum[var_name] = {stat: [] for stat in summary_stats}
-
-            data = np.array(arr).squeeze()
-            if data.ndim != 3:
-                continue
-
-            for stat in summary_stats:
-                if stat == "stdev":
-                    mean_val = stat_funcs["mean"](data)
-                    val = stat_funcs["stdev"](data, mean_val)
-                else:
-                    val = stat_funcs[stat](data)
-                data_accum[var_name][stat].append(val)
-
-        results = {}
-        for var_name, stat_dict in data_accum.items():
-            results[var_name] = {}
-            for stat in summary_stats:
-                arrs = stat_dict[stat]
-                if len(arrs) == 0:
-                    print(f"No valid samples for {var_name} stat {stat}")
+            for lt in leadtimes_sorted:
+                idx_mask = (lt_hours_all == lt)
+                subset = arr.isel(idx=np.where(idx_mask)[0]).values  # shape [n_samples, level, lat, lon]
+                if subset.size == 0:
                     continue
-                stacked = np.stack(arrs, axis=0)
-                results[var_name][stat] = np.nanmean(stacked, axis=0)
+
+                for stat in summary_stats:
+                    if stat == "stdev":
+                        mean_val = stat_funcs["mean"](np.nanmean(subset, axis=0))
+                        val = stat_funcs["stdev"](np.nanmean(subset, axis=0), mean_val)
+                    else:
+                        val = stat_funcs[stat](np.nanmean(subset, axis=0))
+                    stat_per_lt[stat].append(val)
+
+            for stat in summary_stats:
+                if stat_per_lt[stat]:
+                    results[var_name][stat] = np.stack(stat_per_lt[stat], axis=0)
+
+        else:
+            # --- REFERENCE: collapse all leadtimes into one ---
+            results[var_name] = {}
+            subset = arr.values  # shape [n_samples, level, lat, lon]
+            if subset.size == 0:
+                continue
+
+            for stat in summary_stats:
+                if stat == "stdev":
+                    mean_val = stat_funcs["mean"](np.nanmean(subset, axis=0))
+                    val = stat_funcs["stdev"](np.nanmean(subset, axis=0), mean_val)
+                else:
+                    val = stat_funcs[stat](np.nanmean(subset, axis=0))
+                results[var_name][stat] = val  # [levels]
 
     return results
+
 
 
 # plot_profiles remains unchanged
