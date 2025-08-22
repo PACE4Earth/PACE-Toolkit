@@ -190,6 +190,7 @@ def main(distributed=False):
             distributed=distributed,
             comm=comm,
         )
+        comm.Barrier()
 
 
     print(f"Rank {comm.Get_rank()} waiting at barrier.")
@@ -240,7 +241,7 @@ def main(distributed=False):
         tmp_dataset = zarr.open(os.path.join(outputs_dir, f"{model_name}.zarr"), mode='r')
 
         print(tmp_dataset['idx'])
-        print(np.sort(tmp_dataset['idx'][:]))
+        print(tmp_dataset['idx'][:])
         print(tmp_dataset.tree())
             
         try:
@@ -252,8 +253,8 @@ def main(distributed=False):
             
         print(final_dataset)
         
-    time_end = time.perf_counter()
-    print(f"Elapsed time: {time_end - time_start:.2f} s")
+        time_end = time.perf_counter()
+        print(f"Elapsed time: {time_end - time_start:.2f} s")
 
 
 if __name__ == "__main__":

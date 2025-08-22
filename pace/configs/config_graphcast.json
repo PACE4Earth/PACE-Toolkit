@@ -1,5 +1,5 @@
 {
-  "distributed": false,
+  "distributed": true,
   "datasets": {
     "model": {
       "name": "graphcast",
