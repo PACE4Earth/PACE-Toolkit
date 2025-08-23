@@ -1,0 +1,40 @@
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+srun: Setting --cpu-bind=threads as a default of --threads-per-core use
+srun: defined options
+srun: -------------------- --------------------
+srun: (null)              : jwb[0261,0280]
+srun: gpus-per-node       : 4
+srun: jobid               : 12168588
+srun: job-name            : run_booster.sbatch
+srun: licenses            : home@just,project1@just,scratch@just
+srun: mpi                 : pspmix
+srun: nodes               : 2
+srun: ntasks              : 8
+srun: ntasks-per-node     : 4
+srun: threads-per-core    : 1
+srun: verbose             : 1
+srun: -------------------- --------------------
+srun: end of defined options
+srun: jobid 12168588: nodes(2):`jwb[0261,0280]', cpu counts: 48(x2)
+srun: CpuBindType=threads
+srun: launching StepId=12168588.0 on host jwb0261, 4 tasks: [0-3]
+srun: launching StepId=12168588.0 on host jwb0280, 4 tasks: [4-7]
+srun: topology/tree: init: topology tree plugin loaded
+srun: Node jwb0261, 4 tasks started
+srun: Node jwb0280, 4 tasks started
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:436] [c10d] The server socket cannot be initialized on [::]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0261.juwels]:18588 (errno: 97 - Address family not supported by protocol).
+srun: Received task exit notification for 4 tasks of StepId=12168588.0 (status=0x0000).
+srun: jwb0280: tasks 4-7: Completed
+srun: Received task exit notification for 4 tasks of StepId=12168588.0 (status=0x0000).
+srun: jwb0261: tasks 0-3: Completed

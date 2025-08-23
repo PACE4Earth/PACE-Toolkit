@@ -41,15 +41,24 @@ def select_sample_leadtimes(ds, max_leadtimes: int = 5):
 
 def main():
     time_start = time.perf_counter()
-    config_path = Path(__file__).resolve().parent / "configs" / "config_graphcast.json"
+    try:
+        config_path = Path(os.environ['DATASET_CONFIG_PATH'])
+    except:
+        config_path = Path(__file__).resolve().parent / "configs" / "config_graphcast.json"
     with open(config_path, "r") as f:
         config = json.load(f)
 
-    outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
+    try:
+        outputs_dir = Path(os.environ['OUTPUT_DIR_PATH'])
+    except:
+        outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
     if not outputs_dir.exists():
         outputs_dir = Path(__file__).resolve().parent / "outputs"
     
-    plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir", ""))))
+    try:
+        plots_dir = Path(os.environ['PLOTS_DIR_PATH'])
+    except:
+        plots_dir = Path(os.path.expandvars(str(config["visualization"].get("plots_dir", ""))))
     if not plots_dir.exists():
         plots_dir = Path(__file__).resolve().parent / "plots"
 

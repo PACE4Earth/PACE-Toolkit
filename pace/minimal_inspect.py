@@ -13,10 +13,10 @@ import datetime
 
 def main():
     
-    base_path = '/p/scratch/hclimrep/vozar2/outputs_cluster/graphcast.zarr'
     plot_dir = './outputs'
+    zarr_path = '/p/scratch/hclimrep/vozar2/outputs_cluster/graphcast.zarr'
 
-    with xr.open_zarr(base_path, consolidated=False) as ds:
+    with xr.open_zarr(zarr_path, consolidated=False) as ds:
         print(ds, '\n__________\n')
         
         # Using .values is a good practice to avoid potential coordinate conflicts

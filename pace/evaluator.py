@@ -45,7 +45,7 @@ def main(distributed=False):
     time_start = time.perf_counter()
     
     try:
-        DATASET_CONFIG_PATH = os.environ['DATASET_CONFIG_PATH']
+        DATASET_CONFIG_PATH = Path(os.environ['DATASET_CONFIG_PATH'])
     except:
         DATASET_CONFIG_PATH = DATASET_CONFIG_PATH_DEFAULT
         
@@ -56,12 +56,11 @@ def main(distributed=False):
     
     
     distributed = config.get("distributed", distributed)
-    outputs_dir = config.get("outputs_dir", distributed)
     
     try:
         outputs_dir = os.environ['OUTPUT_DIR_PATH']
     except:
-        ...
+        outputs_dir = config.get("outputs_dir", None)
     
     print('output dir:', outputs_dir)
     

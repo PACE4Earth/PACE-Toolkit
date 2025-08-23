@@ -236,7 +236,7 @@ class GenericHistogram(nn.Module):
         processed_tensors = []
         for name, tensor in sample.items():
             if isinstance(tensor, torch.Tensor) and name in self.var_ranges.keys():
-                print(tensor.shape)
+                # print(tensor.shape)
                 if tensor.ndim == 4:
                     processed_tensors.append(standardize(tensor).flatten())
         
