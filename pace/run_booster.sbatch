@@ -16,8 +16,8 @@ ml SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial
 ml ParaStationMPI/5.9.2-1 mpi4py/3.1.4
 
 export NCCL_DEBUG=INFO
-export OUTPUT_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_booster"
 
+export OUTPUT_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_booster"
 mkdir -p "$OUTPUT_DIR_PATH"
 
 # export DATASET_CONFIG_PATH="/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/config_devel.json"

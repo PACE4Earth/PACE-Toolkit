@@ -1,0 +1,23 @@
+{
+  "distributed": false,
+  "datasets": {
+    "model": {
+      "name": "graphcast",
+      "path": "/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
+    },
+    "reference": {
+      "name": "era5",
+      "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
+    }
+  },
+  "outputs_dir": "${OUTPUTS_DIR_PATH}",
+   "metrics": {
+    "correlation": ["all"],
+    "correlation_map": ["all"]
+  },
+  "time": {
+    "start": "20210601",
+    "end": "20210630",
+    "sample_percent": 100
+  }
+}

@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
       
-def standardize(xi, method='z', epsilon=1e-6):
+def standardize(xi, method='z', epsilon=1e-9):
     
     if method=='z':
         xi = (xi - torch.mean(xi, dim=(-2, -1), keepdim=True)) / (torch.std(xi, dim=(-2, -1), keepdim=True) + epsilon)

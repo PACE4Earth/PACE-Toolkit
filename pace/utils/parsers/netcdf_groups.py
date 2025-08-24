@@ -1,12 +1,13 @@
 import os
 import re
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import xarray as xr
 from datetime import timedelta
 
 # GROUP_NAMES = ["truth", "prediction", "input"]
-GROUP_NAMES = ["prediction"]
+GROUP_NAMES = ["truth"]
 
 def parse_file(file_path: Path):
     """
@@ -63,8 +64,24 @@ def parse_directory_groups(base_dir, start=None, end=None):
 if __name__ == "__main__":
     
     path = Path("/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/corrdiff_output_ensemble_18h.nc")
+    
     results = parse_file(path)
     
-    for i in range(len(results[:100])):
-        print(results[i])
-    # print(results[0])
+    print(len(results))
+    
+    def make_hashable_row(row):
+        """Converts a row into a fully hashable tuple."""
+        new_row = []
+        for element in row:
+            if isinstance(element, list):
+                new_row.append(tuple(element))
+            elif isinstance(element, dict):
+                new_row.append(tuple(sorted(element.items())))
+            else:
+                new_row.append(element)
+        return tuple(new_row)
+
+    unique_items = {make_hashable_row(row) for row in results}
+    unique_count = len(unique_items)
+
+    print(f"The count of unique items is: {unique_count}")

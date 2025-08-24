@@ -56,6 +56,10 @@ def get_final_dataset(tmp_dataset):
 
 def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=False, comm=None):
     
+    if comm == None:
+        comm = MPI.COMM_WORLD
+
+    
     if comm.Get_rank() == 0:
         metrics = metric_handler(dataset[0])
         sample_out = {**metrics, "base_time": dataset[0]["base_time"], "lead_time": dataset[0]["lead_time"], "idx": dataset[0]["idx"]}
@@ -68,9 +72,30 @@ def evaluate_and_log(dataset, logger, metric_handler, dataset_name, distributed=
         for sample in dataloader:
             metrics = metric_handler(sample)
             sample_out = {**metrics, "base_time": sample["base_time"], "lead_time": sample["lead_time"], "idx": sample["idx"]}
+            # print(sample_out)
             logger.save(sample_out)
             count += 1
+            
+        evaluate_accumulated(
+            logger=logger,
+            metric_handler=metric_handler,
+            dataset_name=dataset_name,
+            comm=comm,
+        )
+            
     print(f"Rank {comm.Get_rank()} processed {count} samples.")
+
+def evaluate_accumulated(logger, metric_handler, dataset_name, comm):
+    
+    for metric, module in metric_handler.metrics.items():
+        try:
+            module.evaluate(logger, comm)
+            print(metric, 'success')
+        except Exception as e:
+            if comm.Get_rank() == 0:
+                print(metric, e)
+    
+    return None
 
 def setup(comm, distributed=False):
     

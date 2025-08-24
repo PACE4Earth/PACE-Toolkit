@@ -52,8 +52,6 @@ def main(distributed=False):
     with open(DATASET_CONFIG_PATH, 'r') as f:
         config = json.load(f)
             
-    print('ds_config_path:', DATASET_CONFIG_PATH)
-    
     
     distributed = config.get("distributed", distributed)
     
@@ -62,12 +60,15 @@ def main(distributed=False):
     except:
         outputs_dir = config.get("outputs_dir", None)
     
-    print('output dir:', outputs_dir)
     
     comm = MPI.COMM_WORLD
     
+    
     rank, world_size = setup(comm=comm, distributed=distributed)
-    print(f"DEBUG: rank={rank}, world_size={world_size}, comm_size={comm.Get_size()}, comm_rank={comm.Get_rank()}")
+    if rank == 0:
+        print('ds_config_path:', DATASET_CONFIG_PATH)
+        print('output dir:', outputs_dir)
+        print(f"DEBUG: rank={rank}, world_size={world_size}, comm_size={comm.Get_size()}, comm_rank={comm.Get_rank()}")
     # assert world_size == comm.Get_size()
     # assert rank == comm.Get_rank()
 
@@ -195,7 +196,7 @@ def main(distributed=False):
     print(f"Rank {comm.Get_rank()} waiting at barrier.")
     comm.Barrier()
     if rank==0:
-        print(f'Passed barrier after {reference_dataset}.')    
+        print(f'Passed barrier after {reference_name}.')    
     time.sleep(0.1)
 
     comm.Barrier()

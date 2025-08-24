@@ -1,55 +1,29 @@
 import os
 
+import numpy as np
 import torch
+import zarr
 from torch import nn
 from torch.nn import functional as F
         
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-# class CorrelationMap(nn.Module):
-#     def __init__(self, grid):
-#         super().__init__()
-        
-#         self.device = os.getenv('DEVICE')  # Get device from environment variable or default to CPU
-#         c = 4
-#         h = grid['lat'].shape[0]
-#         w = grid['lon'].shape[0]
-        
-#         self.sum_c = torch.zeros(1, c, h, w, device=self.device, dtype=torch.float32)
-#         self.sum_c_sq = torch.zeros(1, c, h, w, device=self.device, dtype=torch.float32)
-#         self.sum_cc = torch.zeros(c, c, h, w, device=self.device, dtype=torch.float32)
-#         self.count = 0
-        
-#     def forward(self, sample):
-        
-#         data = torch.cat(
-#             [
-#                 sample['2m_temperature'],
-#                 sample['10m_u_component_of_wind'],
-#                 sample['10m_v_component_of_wind'],
-#                 sample['mean_sea_level_pressure'],
-#             ],
-#             dim=1,
-#         )
-        
-#         self.count = self.count + 1
-        
-#         self.sum_c = self.sum_c + data
-#         self.sum_cc = self.sum_cc + data*data.transpose(1, 0)
-#         self.sum_c_sq = self.sum_c_sq + data**2
-        
-#         if self.count == 6480:
-#             self.visualize()
-        
-#         return None
+VARIABLES = [
+    '2m_temperature',
+    '10m_u_component_of_wind',
+    '10m_v_component_of_wind',
+    'mean_sea_level_pressure',
+    'vmax_10m',
+    'total_precipitation',
+]
 
 class CorrelationMap(nn.Module):
     """
     Computes point-wise correlation statistics for a given list of variables
     in a time series.
     """
-    def __init__(self, grid, variables: list, device=None):
+    def __init__(self, grid, device=None):
         """
         Initializes the module.
 
@@ -67,8 +41,9 @@ class CorrelationMap(nn.Module):
         else:
             self.device = device
             
-        self.variables = variables
-        c = len(self.variables)  # Number of channels is now dynamic
+        self.variables = VARIABLES
+        # c = len(self.variables)  # Number of channels is now dynamic
+        c = 3
         h = grid['lat'].shape[0]
         w = grid['lon'].shape[0]
         
@@ -85,26 +60,30 @@ class CorrelationMap(nn.Module):
         """
         Updates the running sums with a new data sample.
         """
-        # Dynamically build the tensor from the list of variables
-        tensors_to_cat = [sample[var] for var in self.variables]
-        data = torch.cat(tensors_to_cat, dim=1).to(self.device)
-        
-        # Ensure data has a batch dimension of 1 for broadcasting
-        if data.dim() == 3:
-            data = data.unsqueeze(0) # Shape: [1, C, H, W]
+        processed_tensors = []
+        variable_names = []
+        for name, tensor in sample.items():
+            if isinstance(tensor, torch.Tensor) and name in self.variables:
+                if tensor.ndim == 2:
+                    tensor = tensor.unsqueeze(0)
+                elif tensor.ndim == 4:
+                ############################################# this
+                    tensor = tensor[0, [0]]
+                
+                processed_tensors.append(tensor)
+                variable_names.append(name)
+                    
+        data = torch.stack(processed_tensors, dim=0).contiguous()
+        c, n, h, w = data.shape
 
-        # No gradients needed for these calculations
         with torch.no_grad():
             self.count += data.shape[0]
             self.sum_c += torch.sum(data, dim=0, keepdim=True)
             self.sum_c_sq += torch.sum(data**2, dim=0, keepdim=True)
-            
-            # einsum is a clear way to compute the outer product batch-wise
-            # 'bchw,bdhw->cdhw' means for each item in the batch, compute the
-            # outer product of the channel vectors at each (h,w) location.
             self.sum_cc += torch.einsum('bchw,bdhw->cdhw', data, data)
         
         return None
+        # return torch.zeros(1, 1, device=data.device)
 
     def compute_correlation(self, epsilon=1e-8):
         """
@@ -143,20 +122,125 @@ class CorrelationMap(nn.Module):
         self.sum_cc.zero_()
         self.count.zero_()
     
-    def evaluate(self):
+    # def evaluate(self):
         
-        sum_c_prod = self.sum_c * self.sum_c.transpose(1, 0)
-        numerator = self.count * self.sum_cc - sum_c_prod
+    #     sum_c_prod = self.sum_c * self.sum_c.transpose(1, 0)
+    #     numerator = self.count * self.sum_cc - sum_c_prod
         
-        var_term = self.count * self.sum_c_sq - self.sum_c_sq
-        denominator_sq = var_term*var_term.transpose(1,0)
-        denominator = torch.sqrt(denominator_sq + 1e-6)
+    #     var_term = self.count * self.sum_c_sq - self.sum_c_sq
+    #     denominator_sq = var_term*var_term.transpose(1,0)
+    #     denominator = torch.sqrt(denominator_sq + 1e-6)
         
-        print(numerator.shape, denominator.shape)
+    #     print(numerator.shape, denominator.shape)
         
-        correlation_map = numerator / denominator
+    #     correlation_map = numerator / denominator
         
-        return correlation_map
+    #     return correlation_map
+    
+    def evaluate(self, logger, comm):
+        """
+        Performs a collective reduction and computes the correlation map.
+
+        1.  All ranks write their local data to a shared Zarr archive.
+        2.  All ranks wait at a barrier for writing to complete.
+        3.  Rank 0 reads and aggregates all data from the archive.
+        4.  Rank 0 computes the final correlation map and returns it.
+        5.  Other ranks return None.
+        """
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+        zarr_path = logger.path
+
+        # === Part 1: Reduction Logic (executed by ALL ranks) ===
+        synchronizer = zarr.ProcessSynchronizer(f'{zarr_path}.sync')
+        store = zarr.DirectoryStore(zarr_path)
+        root = zarr.group(store=store, synchronizer=synchronizer, overwrite=False)
+
+        # Each rank saves its local data to a unique group
+        rank_group = root.create_group(f'corr_map_rank_{rank}', overwrite=True)
+        rank_group.array('count', np.array(self.count))
+        rank_group.array('sum_c', self.sum_c.numpy())
+        rank_group.array('sum_c_sq', self.sum_c_sq.numpy())
+        rank_group.array('sum_cc', self.sum_cc.numpy())
+        
+        # Wait for all ranks to finish writing
+        comm.Barrier()
+
+        # === Part 2: Aggregation & Calculation (executed ONLY by rank 0) ===
+        if rank == 0:
+            print("Rank 0 is aggregating results from all ranks...")
+            # Initialize with its own data
+            global_count = self.count
+            global_sum_c = self.sum_c.clone()
+            global_sum_c_sq = self.sum_c_sq.clone()
+            global_sum_cc = self.sum_cc.clone()
+
+            # Loop through other ranks and add their contributions
+            for i in range(1, size):
+                other_rank_group = root[f'corr_map_rank_{i}']
+                global_count += other_rank_group['count'][()]
+                global_sum_c += torch.from_numpy(other_rank_group['sum_c'][:])
+                global_sum_c_sq += torch.from_numpy(other_rank_group['sum_c_sq'][:])
+                global_sum_cc += torch.from_numpy(other_rank_group['sum_cc'][:])
+
+            print(f"Aggregation complete. Total count: {global_count}")
+
+                # --- Correlation Calculation ---
+            global_sum_c_prod = global_sum_c * global_sum_c.transpose(1, 0)
+            numerator = global_count * global_sum_cc - global_sum_c_prod
+            
+            var_term = global_count * global_sum_c_sq - global_sum_c_sq
+            denominator_sq = var_term*var_term.transpose(1,0)
+            denominator = torch.sqrt(denominator_sq + 1e-6)
+            
+            print(numerator.shape, denominator.shape)
+            
+            correlation_map = numerator / denominator
+            
+            print(correlation_map.shape)
+            
+            output_zarr_path = logger.path
+        
+            # 3. Write the data variables and link them to coordinates via attributes
+            corr_arr = root.create_dataset(
+                'correlation_map',
+                data=correlation_map.numpy(),
+                dtype='f4'
+            )
+            corr_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
+
+            # gsc_arr = root.create_dataset(
+            #     'global_sum_c', 
+            #     data=global_sum_c.numpy(), 
+            #     dtype='f4',
+            # )
+            # gsc_arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var', 'lat', 'lon']
+            
+            # gscs_arr = root.create_dataset('global_sum_c_sq', data=global_sum_c_sq.numpy(), dtype='f4')
+            # gscs_arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var', 'lat', 'lon']
+
+            # gscc_arr = root.create_dataset('global_sum_cc', data=global_sum_cc.numpy(), dtype='f4')
+            # gscc_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
+
+            # root.create_dataset('global_count', data=global_count)
+        # --- END OF MODIFIED SECTION ---
+            
+            # if output_zarr_path:
+            
+            #     print(f"Rank 0 writing correlation map to: {output_zarr_path}")
+            #     output_root = zarr.open_group(output_zarr_path, mode='w')
+            #     corr_arr = output_root.create_dataset(
+            #         'correlation_map',
+            #         shape=correlation_map.shape,
+            #         dtype='f4',
+            #         data=correlation_map.numpy(),
+            #     )
+            #     corr_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
+            #     corr_arr.attrs['variable_names'] = self.variables
+                
+            return correlation_map
+        else:
+            return None
     
     def visualize(self):
         

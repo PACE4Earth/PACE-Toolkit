@@ -106,6 +106,10 @@ class MPIZarrSaver:
                         
                 elif tensor.ndim == 3:
                     tensor = tensor[0]
+                    
+                elif tensor.ndim == 2:
+                    tensor = tensor[0]
+                    
                 else:
                     continue
 
@@ -122,6 +126,30 @@ class MPIZarrSaver:
                 elif tensor.ndim == 2:
                     arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var_1', 'var_2']
                     arr.attrs['coordinates'] = 'base_time lead_time'
+                elif tensor.ndim == 1:
+                    arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'null']
+                    arr.attrs['coordinates'] = 'base_time lead_time'
+                    
+            elif isinstance(tensor, list) and name=='var_names':
+                var1_coord = self.root.create_dataset(
+                    'var_1', 
+                    data=tensor, 
+                    shape=(len(tensor),), 
+                    dtype=str, 
+                    overwrite=True
+                )
+                
+                var1_coord.attrs['_ARRAY_DIMENSIONS'] = ['var_1']
+
+                var2_coord = self.root.create_dataset(
+                    'var_2', 
+                    data=tensor, 
+                    shape=(len(tensor),), 
+                    dtype=str, 
+                    overwrite=True
+                )
+                var2_coord.attrs['_ARRAY_DIMENSIONS'] = ['var_2']
+                
 
         self._initialized = True
         print(f"{self.rank}: Zarr store initialized for xarray at: {self.path}")
@@ -168,12 +196,16 @@ class XarrayZarrHandler(nn.Module):
         # Write metric data directly at global positions
         for name, tensor in sample.items():
             if isinstance(tensor, torch.Tensor):
+                # print(name, tensor.shape)
                 if tensor.ndim == 4:
                     tensor = tensor[0]
                     if (tensor.shape[0] == 1) and (self.level is not None):
                         tensor = tensor.expand(np.array(self.level).shape[0], -1, -1)
                 elif tensor.ndim == 3:
+                    tensor = tensor[0]                
+                elif tensor.ndim == 2:
                     tensor = tensor[0]
+                    
                 data_np = tensor.detach().cpu().numpy()
                 data_np = np.expand_dims(data_np, axis=0)  # (1,...)
                 self.root[name][indices_np] = data_np  # write at actual idx

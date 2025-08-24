@@ -23,14 +23,14 @@ VMAX_MAX = 40
 TP_MIN = 0
 TP_MAX = 200
 
-range=(
-    (-1.0, 1.0), # t2m, u10m 
-    (-1.0, 1.0), # t2m, v10m 
-    (-1.0, 1.0), # t2m, mslp 
-    (-1.0, 1.0), # u10m, v10m 
-    (-1.0, 1.0), # u10m, mslp 
-    (-1.0, 1.0), # v10m, mslp
-)
+# range=(
+#     (-1.0, 1.0), # t2m, u10m 
+#     (-1.0, 1.0), # t2m, v10m 
+#     (-1.0, 1.0), # t2m, mslp 
+#     (-1.0, 1.0), # u10m, v10m 
+#     (-1.0, 1.0), # u10m, mslp 
+#     (-1.0, 1.0), # v10m, mslp
+# )
 # HISTOGRAM_CONFIG below is the generic config associated with the variable ranges and bins defined at the header.
 HISTOGRAM_CONFIG = {
     '2m_temperature.10m_u_component_of_wind': {
@@ -91,6 +91,7 @@ class GenericHistogram(nn.Module):
         }
         self.default_bins = 64
         self.corr = None
+        
         # Use provided pairs or fallback to config-derived pairs
         if pairs is not None:
             self.pairs = pairs
@@ -222,7 +223,7 @@ class GenericHistogram(nn.Module):
         ax.set_xlabel(var_x)
         ax.set_ylabel(var_y)
         ax.set_title(f"Histogram for {key}")
-        fig.colorbar(im, ax=ax, label='Prob. density')
+        fig.colorbar(im, ax=ax, label='Prob. density') 
         
         return fig, ax
 
@@ -231,21 +232,32 @@ class GenericHistogram(nn.Module):
         Processes all tensors in the sample dictionary to compute their 
         covariance matrix.
         """
-        # 1. Dynamically standardize and flatten all tensor values in the sample.
-        #    We use a list comprehension for a concise implementation.
+
         processed_tensors = []
+        variable_names = []
         for name, tensor in sample.items():
             if isinstance(tensor, torch.Tensor) and name in self.var_ranges.keys():
-                # print(tensor.shape)
-                if tensor.ndim == 4:
-                    processed_tensors.append(standardize(tensor).flatten())
+                if tensor.ndim == 2:
+                    tensor = tensor.unsqueeze(0)
+                elif tensor.ndim == 4:
+                ############################################# this
+                    tensor = tensor[0, [0]]
+                
+                tensor = standardize(tensor)
+                    
+                processed_tensors.append(tensor)
+                variable_names.append(name)
+                    
+        data = torch.stack(processed_tensors, dim=0).contiguous()
+        c, n, h, w = data.shape
         
-        # 2. Stack the list of processed tensors into a single tensor.
-        #    The `dim=0` argument stacks them row-wise.
-        data = torch.stack(processed_tensors, dim=0)
+        corr_column = []
+        for jt in range(n):
+            corr_item = torch.cov(data[:, jt, ...].reshape(c, -1))
+            corr_column.append(corr_item.unsqueeze(0))
         
-        # This loop for histograms can remain as is, since it already
-        # uses variable keys from `self.pairs`.
+        corr_column = torch.cat(corr_column, dim=0)
+        
         for var_x, var_y in self.pairs:
             
             try:
@@ -261,23 +273,11 @@ class GenericHistogram(nn.Module):
                 )
             except Exception as e:
                 ...
-                # print(e)
-            
-        # 3. Calculate the covariance matrix for the generalized `data`.
-        #    The result will be a square matrix of size N x N,
-        #    where N is the number of tensors in the sample.
-        cov_matrix = torch.cov(data).unsqueeze(0)
         
-        # 4. Update the running list of covariance matrices.
-        
-        # if self.corr == None:
-        #     self.corr = cov_matrix
-        # else:
-        #     self.corr = torch.cat([self.corr, cov_matrix], dim=0)
-            
-        # print(self.corr.shape)
-        
-        return cov_matrix
+        return corr_column, variable_names
+    
+    def output_keys(self):
+        return ['corr_column', 'var_names']
 
     # def forward(self, sample):
     #     z_temperature = standardize(sample['2m_temperature']).flatten()

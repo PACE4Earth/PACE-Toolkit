@@ -87,7 +87,8 @@ class MetricHandler(nn.Module):
             try:
                 module = METRIC_MODULES[metric_name](grid)
                 module.to(os.getenv('DEVICE'))
-            except:
+            except Exception as e:
+                print(e)
                 module = lambda tau: 0
 
             # Get authoritative key order from module, or fallback
