@@ -78,56 +78,62 @@ def main():
         ref_store, _, ref_ds = open_xarray_zarr(ref_path)
 
     # --- HISTOGRAM visualization ---
-    if is_viz_enabled(config, "histogram"):
-        print("Running histogram visualization...")
-        from utils.plot_utils import histogram  
-        bin_config = histogram.BIN_CONFIG
+    try:
+        if is_viz_enabled(config, "histogram"):
+            print("Running histogram visualization...")
+            from utils.plot_utils import histogram  
+            bin_config = histogram.BIN_CONFIG
 
-        _, model_hist = histogram.compute_histograms(
-            model_store, selected_leadtimes=model_leadtimes, bin_config=bin_config
-        )
+            _, model_hist = histogram.compute_histograms(
+                model_store, selected_leadtimes=model_leadtimes, bin_config=bin_config
+            )
 
-        _, ref_hist = histogram.compute_histograms(
-            ref_store, selected_leadtimes=None, bin_config=bin_config
-        ) if ref_store else ({}, {})
+            _, ref_hist = histogram.compute_histograms(
+                ref_store, selected_leadtimes=None, bin_config=bin_config
+            ) if ref_store else ({}, {})
 
-        histogram.plot_hist(model_hist, ref_hist, plots_dir, bin_config, model_name, ref_name)
-    else:
-        print("Histogram visualization disabled in config.\n")
+            histogram.plot_hist(model_hist, ref_hist, plots_dir, bin_config, model_name, ref_name)
+        else:
+            print("Histogram visualization disabled in config.\n")
+    except Exception as e:
+        print(e)
 
     # --- VERTICAL PROFILE visualization ---
-    if is_viz_enabled(config, "vertical_profile"):
-        print("\nRunning vertical profile visualization...")
-        from utils.plot_utils import vertical_profile
+    try:
+        if is_viz_enabled(config, "vertical_profile"):
+            print("\nRunning vertical profile visualization...")
+            from utils.plot_utils import vertical_profile
 
-        summary_stats = config.get("visualization", {}).get("summary_stats", ["mean"])
+            summary_stats = config.get("visualization", {}).get("summary_stats", ["mean"])
 
-        profiles = vertical_profile.compute_summary_stats(
-            model_store,
-            coords['lat'],
-            selected_leadtimes=model_leadtimes,
-            summary_stats=summary_stats,
-        )
-        ref_profiles = vertical_profile.compute_summary_stats(
-            ref_store,
-            coords['lat'] if coords.get('lat') is not None else None,
-            selected_leadtimes=None,
-            summary_stats=summary_stats,
-        ) if ref_store else {}
+            profiles = vertical_profile.compute_summary_stats(
+                model_store,
+                coords['lat'],
+                selected_leadtimes=model_leadtimes,
+                summary_stats=summary_stats,
+            )
+            ref_profiles = vertical_profile.compute_summary_stats(
+                ref_store,
+                coords['lat'] if coords.get('lat') is not None else None,
+                selected_leadtimes=None,
+                summary_stats=summary_stats,
+            ) if ref_store else {}
 
-        vertical_profile.plot_profiles(
-            profiles,
-            ref_profiles,
-            coords.get('level'),
-            plots_dir,
-            summary_stats,
-            model_name,
-            ref_name,
-            model_leadtimes
-        )
-    else:
-        print("Vertical profile visualization disabled in config.\n")
-
+            vertical_profile.plot_profiles(
+                profiles,
+                ref_profiles,
+                coords.get('level'),
+                plots_dir,
+                summary_stats,
+                model_name,
+                ref_name,
+                model_leadtimes
+            )
+        else:
+            print("Vertical profile visualization disabled in config.\n")
+    except Exception as e:
+        print(e)
+        
     # # --- SPATIAL SLICE visualization ---
     # if is_viz_enabled(config, "spatial_slice"):
     #     from utils.plot_utils import spatial_slice

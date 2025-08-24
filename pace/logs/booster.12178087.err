@@ -1,0 +1,128 @@
+
+  [01;33mThis stage is deprecated. Please consider moving to a new stage (2025
+or newer)[0m
+
+srun: Setting --cpu-bind=threads as a default of --threads-per-core use
+srun: defined options
+srun: -------------------- --------------------
+srun: (null)              : jwb[0096,1020]
+srun: gpus-per-node       : 4
+srun: jobid               : 12178087
+srun: job-name            : run_booster.sbatch
+srun: licenses            : home@just,project1@just,scratch@just
+srun: mpi                 : pspmix
+srun: nodes               : 2
+srun: ntasks              : 8
+srun: ntasks-per-node     : 4
+srun: threads-per-core    : 1
+srun: verbose             : 1
+srun: -------------------- --------------------
+srun: end of defined options
+srun: jobid 12178087: nodes(2):`jwb[0096,1020]', cpu counts: 48(x2)
+srun: CpuBindType=threads
+srun: launching StepId=12178087.0 on host jwb0096, 4 tasks: [0-3]
+srun: launching StepId=12178087.0 on host jwb1020, 4 tasks: [4-7]
+srun: topology/tree: init: topology tree plugin loaded
+srun: Node jwb0096, 4 tasks started
+srun: Node jwb1020, 4 tasks started
+[W socket.cpp:436] [c10d] The server socket cannot be initialized on [::]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket cannot be initialized to connect to [jwb0096.juwels]:18087 (errno: 97 - Address family not supported by protocol).
+[W socket.cpp:663] [c10d] The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+[E socket.cpp:719] [c10d] The client socket has failed to connect to any network address of (jwb0096, 18087).
+[W socket.cpp:663] [c10d] The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+[E socket.cpp:719] [c10d] The client socket has failed to connect to any network address of (jwb0096, 18087).
+[W socket.cpp:663] [c10d] The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+[E socket.cpp:719] [c10d] The client socket has failed to connect to any network address of (jwb0096, 18087).
+[W socket.cpp:663] [c10d] The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+[E socket.cpp:719] [c10d] The client socket has failed to connect to any network address of (jwb0096, 18087).
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 261, in <module>
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 261, in <module>
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 261, in <module>
+    main()
+    main()
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 67, in main
+Traceback (most recent call last):
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 261, in <module>
+    main()
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 67, in main
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 67, in main
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/evaluator.py", line 67, in main
+    rank, world_size = setup(comm=comm, distributed=distributed)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 116, in setup
+    rank, world_size = setup(comm=comm, distributed=distributed)
+    rank, world_size = setup(comm=comm, distributed=distributed)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 116, in setup
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 116, in setup
+    rank, world_size = setup(comm=comm, distributed=distributed)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/utils/functions.py", line 116, in setup
+    dist.init_process_group(
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/c10d_logger.py", line 74, in wrapper
+    dist.init_process_group(
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/c10d_logger.py", line 74, in wrapper
+    dist.init_process_group(
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/c10d_logger.py", line 74, in wrapper
+    dist.init_process_group(
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/c10d_logger.py", line 74, in wrapper
+    func_return = func(*args, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1141, in init_process_group
+    func_return = func(*args, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1141, in init_process_group
+    func_return = func(*args, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1141, in init_process_group
+    func_return = func(*args, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1141, in init_process_group
+    store, rank, world_size = next(rendezvous_iterator)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 196, in _tcp_rendezvous_handler
+    store, rank, world_size = next(rendezvous_iterator)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 196, in _tcp_rendezvous_handler
+    store, rank, world_size = next(rendezvous_iterator)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 196, in _tcp_rendezvous_handler
+    store, rank, world_size = next(rendezvous_iterator)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 196, in _tcp_rendezvous_handler
+    store = _create_c10d_store(result.hostname, result.port, rank, world_size, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    store = _create_c10d_store(result.hostname, result.port, rank, world_size, timeout)
+    store = _create_c10d_store(result.hostname, result.port, rank, world_size, timeout)
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 172, in _create_c10d_store
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 172, in _create_c10d_store
+    store = _create_c10d_store(result.hostname, result.port, rank, world_size, timeout)
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 172, in _create_c10d_store
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/p/software/juwelsbooster/stages/2024/software/PyTorch/2.1.2-gcccoreflexiblas-12.3.0-3.3.1/lib/python3.11/site-packages/torch/distributed/rendezvous.py", line 172, in _create_c10d_store
+    return TCPStore(
+           ^^^^^^^^^
+RuntimeError: The client socket has failed to connect to any network address of (jwb0096, 18087). The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+    return TCPStore(
+           ^^^^^^^^^
+RuntimeError: The client socket has failed to connect to any network address of (jwb0096, 18087). The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+    return TCPStore(
+           ^^^^^^^^^
+RuntimeError: The client socket has failed to connect to any network address of (jwb0096, 18087). The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
+    return TCPStore(
+           ^^^^^^^^^
+RuntimeError: The client socket has failed to connect to any network address of (jwb0096, 18087). The client socket has failed to connect to jwb0096.juwels:18087 (errno: 113 - No route to host).
