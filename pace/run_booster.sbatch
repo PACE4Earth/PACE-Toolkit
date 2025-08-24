@@ -20,13 +20,13 @@ export NCCL_DEBUG=INFO
 export OUTPUT_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_booster"
 mkdir -p "$OUTPUT_DIR_PATH"
 
-# export DATASET_CONFIG_PATH="/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/config_devel.json"
+export DATASET_CONFIG_PATH="/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/config_devel_g.json"
 
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 
 # ?
-# export GLOO_SOCKET_IFNAME=ib0
+export GLOO_SOCKET_IFNAME=ib0
 
 # Run the training script
 srun --verbose python evaluator.py
