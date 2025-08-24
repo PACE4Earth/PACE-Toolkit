@@ -1,9 +1,6 @@
 import torch
 import torch.nn as nn
 
-#Energz conservations modelu metric for pace
-#2025-08-14     MP      First attempt   
-#2025-08-18     MP      Smoothing code  
 
 class EnergyConservation(nn.Module):
     """
@@ -21,7 +18,7 @@ class EnergyConservation(nn.Module):
         self.p_levels = grid.get('pressure_levels', None)
 
         if self.p_levels is not None:
-            self.p_levels = self.p_levels.float() * 100.0  # hPa → Pa
+            self.p_levels = self.p_levels.float() * 100.0
 
     def compute_total_energy(self, T, u, v, q):
         """
@@ -59,14 +56,13 @@ class EnergyConservation(nn.Module):
         Outputs:
             dict with energy fields (total energy or total energy per column)
         """
-        T = sample['temperature']
-        u = sample['u']
-        v = sample['v']
-        q = sample['q']
+        T = sample['temperature']                       
+        u = sample['u_component_of_wind']               
+        v = sample['v_component_of_wind']               
+        q = sample['specific_humidity'] 
 
         # Compute total energy
         E_total = self.compute_total_energy(T, u, v, q)
-
         outputs = {'total_energy': E_total}
 
         # Column-integrated
@@ -96,3 +92,24 @@ class EnergyConservation(nn.Module):
         if self.p_levels is not None:
             keys.append('total_energy_column')
         return keys
+
+"""
+Notes:
+------
+- To postprocessing : temporal tendency and RMSE
+
+## Column-integrated
+    #    E_column = self.vertical_integrate(E_total)  # [B,H,W]
+    #
+    #    # Temporal tendency if 'time' dimension exists
+    #    if 'time' in sample:
+    #        dt = sample['time'][1] - sample['time'][0]  # assume scalar
+    #        dE_dt = (E_column[1:] - E_column[:-1]) / dt
+    #    else:
+    #        dE_dt = torch.zeros_like(E_column)
+    #
+    #    # RMSE over B,H,W
+    #    rmse = torch.sqrt((dE_dt**2).mean(dim=(0,1,2), keepdim=True))  # scalar [1,1,1]
+    #
+    #    return E_column, dE_dt, rmse
+"""    
