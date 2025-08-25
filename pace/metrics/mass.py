@@ -114,21 +114,41 @@ class MassConservation(nn.Module):
         
     def output_keys(self):
         return ["surface_mass_divergence", "mean_sea_level_pressure"]
+
+    def evaluate(self, outputs, rank=0):
+        """
+        Optional post-batch evaluation.
+        Time derivative (pressure tendency) can be computed downstream.
+        """
+        if rank != 0:
+            return  # Only rank 0 handles evaluation
+
+        # Simple example: compute batch mean divergence for logging
+        mean_div = torch.mean(outputs["surface_mass_divergence"]).item()
+
+        # Could extend: compute maps, histograms, other diagnostics
+        return {"mean_surface_divergence": mean_div}
 """
 Notes:
 ------
 - Time tendency ∂p/∂t for postproccessing
 
-# def compute_pressure_tendency(sample_t, sample_t_minus, dt_hours=6.0):
-#     dt_seconds = dt_hours * 3600.0
-#     p_t = sample_t["mean_sea_level_pressure"]
-#     p_tm = sample_t_minus["mean_sea_level_pressure"]
-#     tendency = (p_t - p_tm) / dt_seconds
-#     return tendency
+ def compute_pressure_tendency(mslp_t, mslp_t_minus, dt_hours=6.0):
+     dt_seconds = dt_hours * 3600.0
+     tendency = (mslp_t - mslp_t_minus) / dt_seconds
+    return tendency
 
-# def evaluate_mass_consistency(divergence, pressure_tendency):
-#     g = 9.80665
-#     residual = pressure_tendency + g * divergence
-#     l2_score = torch.sqrt((residual**2).mean())
-#     return residual, l2_score
+ def evaluate_mass_consistency(divergence, pressure_tendency):
+     g = 9.80665
+     residual = pressure_tendency + g * divergence
+     l2_score = torch.sqrt((residual**2).mean())
+     return residual, l2_score
+
+def spatial_rmse(field):
+    """
+    Compute RMSE over spatial dimensions (H, W) for each batch
+    """
+    mse = torch.mean(field ** 2, dim=(-2, -1))
+    rmse = torch.sqrt(mse)
+    return rmse
 """    
