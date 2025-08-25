@@ -111,6 +111,9 @@ class MassConservation(nn.Module):
         outputs["mean_sea_level_pressure"] = sample["mean_sea_level_pressure"]
 
         return outputs
+        
+    def output_keys(self):
+        return ["surface_mass_divergence", "mean_sea_level_pressure"]
 """
 Notes:
 ------
