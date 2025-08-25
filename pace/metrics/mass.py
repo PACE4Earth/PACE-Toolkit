@@ -39,6 +39,13 @@ class MassConservation(nn.Module):
             self.pad = (1, 2, 1, 2)
             self.register_buffer('smoothing_kernel', get_uniform_kernel(kernel_size=4))
 
+    def output_keys(self):
+        """
+        Defines which variables will be stored in the final xarray.Dataset.
+        """
+        keys = ["surface_mass_divergence", "mean_sea_level_pressure"]
+        return keys
+
     def compute_surface_divergence(self, rho, u, v):
         """
         Compute ∇·(ρ*v) at the surface.
@@ -81,7 +88,7 @@ class MassConservation(nn.Module):
             - 'mean_sea_level_pressure': mean sea level pressure
             - optionally 'q': specific_humidity
         Returns:
-            dict with 'surface_mass_divergence': [B,1,H,W]
+            dict with 'surface_mass_divergence' + 'mean_sea_level_pressure'
         """
         outputs = {}
 
@@ -99,7 +106,9 @@ class MassConservation(nn.Module):
                 p = sample["mean_sea_level_pressure"]
                 rho = p / (R_d * T * (1 + 0.61*qv))
 
-            outputs["surface_mass_divergence"] = self.compute_surface_divergence(rho, u, v)  
+            outputs["surface_mass_divergence"] = self.compute_surface_divergence(rho, u, v) 
+
+        outputs["mean_sea_level_pressure"] = sample["mean_sea_level_pressure"]
 
         return outputs
 """
