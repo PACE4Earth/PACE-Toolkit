@@ -2,6 +2,7 @@ import os
 import json
 import numpy as np
 from pathlib import Path
+import argparse
 import time
 import xarray as xr
 
@@ -49,15 +50,27 @@ def main():
         return
     
     time_start = time.perf_counter()
-    try:
-        config_path = Path(os.environ['DATASET_CONFIG_PATH'])
-    except:
-        config_path = Path(__file__).resolve().parent / "configs" / "config_devel_g.json"
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DEFAULT_CONFIG_PATH = Path(os.path.join(BASE_DIR, 'configs', 'config_template.json'))
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", help="Path to JSON config file (overrides env var and default)")
+    args = parser.parse_args()
+
+    if args.config is not None:
+        config_path = Path(args.config)
+    elif "CONFIG_PATH" in os.environ:
+        config_path = Path(os.environ["CONFIG_PATH"])
+    else:
+        config_path = DEFAULT_CONFIG_PATH
+
+    config_path = config_path.expanduser().resolve()
     with open(config_path, "r") as f:
         config = json.load(f)
 
     try:
-        outputs_dir = Path(os.environ['OUTPUT_DIR_PATH'])
+        outputs_dir = Path(os.environ['OUTPUTS_DIR_PATH'])
     except:
         outputs_dir = Path(os.path.expandvars(config.get("outputs_dir", "")))
     if not outputs_dir.exists():

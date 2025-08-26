@@ -3,14 +3,14 @@
   "datasets": {
     "model": {
       "name": "graphcast",
-      "path": "/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
+      "path": "${GRAPHCAST_PATH}"
     },
     "reference": {
       "name": "era5",
-      "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
+      "path": "${ERA5_PATH}"
     }
   },
-  "outputs_dir": "/p/project/hclimrep/vas1/PACE-Toolkit/pace/outputs",
+  "outputs_dir": "${OUTPUTS_DIR_PATH}",
   "metrics": {
     "geostrophic_balance": ["geostrophic_wind_ratio"],
     "hydrostatic_balance": ["all"],
@@ -30,12 +30,12 @@
     "num_lead_times": 5, 
     "stride_hours": 6,
     "sample_percent": 10,
-    "custom_times": {"enabled": false, "times": ["20210402_12"]}
+    "custom_times": {"enabled": false, "times": ["20210402_12", "20210403_00"]}
   },
   "visualization": {
-    "plots_dir": null,
-    "histogram": true,
-    "vertical_profile": true,
+    "plots_dir": "${PLOTS_DIR_PATH}",
+    "histogram": false,
+    "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"],
     "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
   }

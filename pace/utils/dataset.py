@@ -109,7 +109,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         with open(aliases_path, "r") as f:
             self.aliases = json.load(f)
 
-        config_path = Path(config_path) if config_path else Path(__file__).resolve().parent.parent / "configs" / "config.json"
+        config_path = Path(config_path) if config_path else Path(__file__).resolve().parent.parent / "configs" / "config_template.json"
         with open(config_path, "r") as f:
             self.config = json.load(f)
 
@@ -127,8 +127,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
         dataset_config = self.config["datasets"].get(dataset_key, {})
         self.name = dataset_config.get("name", dataset_key)
         self.is_model_dataset = dataset_key == 'model'
-        self.path = dataset_config.get("path", "")
-
+        
+        try:
+            self.path = os.environ[f"{self.name.upper()}_PATH"]
+        except:
+            self.path = dataset_config.get("path", "")
+        
         self.spatial_config = self.config.get("spatial", {})
         lat_range = self.spatial_config.get("lat_range", "all")
         lon_range = self.spatial_config.get("lon_range", "all")

@@ -5,6 +5,7 @@ from mpi4py import MPI
 from collections import defaultdict
 import time
 from pathlib import Path
+import argparse
 
 import numpy as np
 import xarray as xr
@@ -29,8 +30,6 @@ from utils.functions import (
     get_final_dataset,
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_CONFIG_PATH_DEFAULT = os.path.join(BASE_DIR, 'configs', 'config_graphcast.json')
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 if torch.cuda.is_available():
@@ -44,19 +43,28 @@ def main(distributed=False):
         
     time_start = time.perf_counter()
     
-    try:
-        DATASET_CONFIG_PATH = Path(os.environ['DATASET_CONFIG_PATH'])
-    except:
-        DATASET_CONFIG_PATH = DATASET_CONFIG_PATH_DEFAULT
-        
-    with open(DATASET_CONFIG_PATH, 'r') as f:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DEFAULT_CONFIG_PATH = Path(os.path.join(BASE_DIR, 'configs', 'config_template.json'))
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", help="Path to JSON config file (overrides env var and default)")
+    args = parser.parse_args()
+
+    if args.config is not None:
+        config_path = Path(args.config)
+    elif "CONFIG_PATH" in os.environ:
+        config_path = Path(os.environ["CONFIG_PATH"])
+    else:
+        config_path = DEFAULT_CONFIG_PATH
+
+    config_path = config_path.expanduser().resolve()
+    with open(config_path, "r") as f:
         config = json.load(f)
-            
-    
+
     distributed = config.get("distributed", distributed)
     
     try:
-        outputs_dir = os.environ['OUTPUT_DIR_PATH']
+        outputs_dir = os.environ['OUTPUTS_DIR_PATH']
     except:
         outputs_dir = config.get("outputs_dir", None)
     
@@ -66,7 +74,7 @@ def main(distributed=False):
     
     rank, world_size = setup(comm=comm, distributed=distributed)
     if rank == 0:
-        print('ds_config_path:', DATASET_CONFIG_PATH)
+        print('ds_config_path:', config_path)
         print('output dir:', outputs_dir)
         print(f"DEBUG: rank={rank}, world_size={world_size}, comm_size={comm.Get_size()}, comm_rank={comm.Get_rank()}")
     # assert world_size == comm.Get_size()
@@ -82,7 +90,7 @@ def main(distributed=False):
 
     # RANK 0 builds the full dataset and sample list
     if rank == 0:
-        model_info = build_dataset_info(DATASET_CONFIG_PATH, dataset_key="model")
+        model_info = build_dataset_info(config_path, dataset_key="model")
     else:
         model_info = None
 
@@ -103,7 +111,7 @@ def main(distributed=False):
         metrics=model_info["metrics"],
         requested_names=model_info["requested_names"],
         canonical_names=model_info["canonical_names"],
-        config_path=DATASET_CONFIG_PATH,
+        config_path=config_path,
         dataset_key="model",
         index_map=model_info["index_map"]
     )
@@ -112,7 +120,7 @@ def main(distributed=False):
     if "reference" in config.get("datasets", {}):
         if rank == 0:
             ref_info = build_dataset_info(
-                DATASET_CONFIG_PATH, dataset_key="reference",
+                config_path, dataset_key="reference",
                 shared_valid_times=model_info["chosen_valid_times"]
             )
         else:
@@ -126,7 +134,7 @@ def main(distributed=False):
             metrics=ref_info["metrics"],
             requested_names=ref_info["requested_names"],
             canonical_names=ref_info["canonical_names"],
-            config_path=DATASET_CONFIG_PATH,
+            config_path=config_path,
             dataset_key="reference",
             index_map=ref_info["index_map"]
         )
@@ -158,7 +166,7 @@ def main(distributed=False):
     metric_handler = MetricHandler(
         metrics=list(model_dataset.metrics.keys()),
         grid=model_dataset.grid,
-        config_path=DATASET_CONFIG_PATH,
+        config_path=config_path,
     )
 
     comm.Barrier()
