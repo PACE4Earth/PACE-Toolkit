@@ -1,0 +1,199 @@
+ds_config_path: /p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/config_devel_g.json
+output dir: /p/scratch/hclimrep/vozar2/outputs_cluster
+DEBUG: rank=0, world_size=8, comm_size=8, comm_rank=0
+Preparing files for graphcast...
+Done. Found 60 usable files (2021-06-01 00:00:00 -- 2021-06-30 23:59:00).
+
+Static fields setup... Done
+Checking required field for metrics...
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 294 samples for graphcast.
+---------------------------------------------
+
+Index map:  294
+294
+Preparing files for era5...
+Done. Found 30 usable files (2021-06-01 00:00:00 -- 2021-06-30 23:59:00).
+
+Static fields setup... Done
+Checking required field for metrics...
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 119 samples for era5.
+---------------------------------------------
+
+Index map:  119
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs_cluster/graphcast.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+Rank 0: Initializing Zarr archive and index at /p/scratch/hclimrep/vozar2/outputs_cluster/era5.zarr
+All 8 ranks have opened the synchronized Zarr archive.
+0: Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs_cluster/graphcast.zarr
+294
+294
+294
+294
+294
+294
+294
+correlation_map success
+Rank 7 processed 36 samples.
+Rank 7 waiting at barrier.
+Rank 7 passed barrier.
+correlation_map success
+Rank 4 processed 37 samples.
+Rank 4 waiting at barrier.
+Rank 4 passed barrier.
+correlation_map success
+Rank 5 processed 37 samples.
+Rank 5 waiting at barrier.
+Rank 5 passed barrier.
+correlation_map success
+Rank 6 processed 36 samples.
+Rank 6 waiting at barrier.
+Rank 6 passed barrier.
+correlation_map success
+Rank 2 processed 37 samples.
+Rank 2 waiting at barrier.
+Rank 2 passed barrier.
+correlation_map success
+Rank 3 processed 37 samples.
+Rank 3 waiting at barrier.
+Rank 3 passed barrier.
+correlation_map success
+Rank 1 processed 37 samples.
+Rank 1 waiting at barrier.
+Rank 1 passed barrier.
+correlation 'GenericHistogram' object has no attribute 'evaluate'
+Rank 0 is aggregating results from all ranks...
+Aggregation complete. Total count: 885
+torch.Size([3, 3, 721, 1440]) torch.Size([3, 3, 721, 1440])
+torch.Size([3, 3, 721, 1440])
+correlation_map success
+Rank 0 processed 37 samples.
+Rank 0 waiting at barrier.
+Rank 0 passed barrier.
+Passed barrier after graphcast.
+0: Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs_cluster/era5.zarr
+correlation_map success
+Rank 4 processed 15 samples.
+Rank 4 waiting at barrier.
+correlation_map success
+Rank 7 processed 14 samples.
+Rank 7 waiting at barrier.
+correlation_map success
+Rank 6 processed 15 samples.
+Rank 6 waiting at barrier.
+correlation_map success
+Rank 5 processed 15 samples.
+Rank 5 waiting at barrier.
+correlation_map success
+Rank 3 processed 15 samples.
+Rank 3 waiting at barrier.
+correlation_map success
+Rank 2 processed 15 samples.
+Rank 2 waiting at barrier.
+correlation_map success
+Rank 1 processed 15 samples.
+Rank 1 waiting at barrier.
+correlation 'GenericHistogram' object has no attribute 'evaluate'
+Rank 0 is aggregating results from all ranks...
+Aggregation complete. Total count: 2016
+torch.Size([3, 3, 721, 1440]) torch.Size([3, 3, 721, 1440])
+torch.Size([3, 3, 721, 1440])
+correlation_map success
+Rank 0 processed 15 samples.
+Rank 0 waiting at barrier.
+Passed barrier after era5.
+Reconsolidating metadata...
+Done.
+
+--- All ranks finished writing. Now performing final check. ---
+<zarr.core.Array '/idx' (294,) int64 read-only>
+[  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17
+  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35
+  36  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53
+  54  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71
+  72  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89
+  90  91  92  93  94  95  96  97  98  99 100 101 102 103 104 105 106 107
+ 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125
+ 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
+ 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161
+ 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179
+ 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197
+ 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215
+ 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233
+ 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251
+ 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269
+ 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287
+ 288 289 290 291 292 293]
+/
+ ├── base_time (294,) datetime64[ns]
+ ├── corr_column (294, 3, 3) float32
+ ├── corr_map_rank_0
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_1
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_2
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_3
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_4
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_5
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_6
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── corr_map_rank_7
+ │   ├── count () int64
+ │   ├── sum_c (1, 3, 721, 1440) float32
+ │   ├── sum_c_sq (1, 3, 721, 1440) float32
+ │   └── sum_cc (3, 3, 721, 1440) float32
+ ├── correlation_map (3, 3, 721, 1440) float32
+ ├── idx (294,) int64
+ ├── lat (721,) float32
+ ├── lead_time (294,) timedelta64[h]
+ ├── level (37,) int32
+ ├── lon (1440,) float32
+ ├── var_1 (3,) object
+ └── var_2 (3,) object
+Opened using xarray.
+<xarray.Dataset>
+Dimensions:          (idx: 294, var_1: 3, var_2: 3, lat: 721, lon: 1440,
+                      level: 37)
+Coordinates:
+    base_time        (idx) datetime64[ns] ...
+  * idx              (idx) float64 0.0 1.0 2.0 3.0 ... 290.0 291.0 292.0 293.0
+  * lat              (lat) float32 -90.0 -89.75 -89.5 -89.25 ... 89.5 89.75 90.0
+    lead_time        (idx) timedelta64[h] ...
+  * level            (level) float64 1.0 2.0 3.0 5.0 ... 925.0 950.0 975.0 1e+03
+  * lon              (lon) float32 nan 0.25 0.5 0.75 ... 359.0 359.2 359.5 359.8
+  * var_1            (var_1) object '2m_temperature' ... '10m_v_component_of_...
+  * var_2            (var_2) object '2m_temperature' ... '10m_v_component_of_...
+Data variables:
+    corr_column      (idx, var_1, var_2) float32 ...
+    correlation_map  (var_1, var_2, lat, lon) float32 ...
+Elapsed time: 46.58 s
