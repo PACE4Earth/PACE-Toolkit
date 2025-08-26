@@ -228,6 +228,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
                 self.samples.append((file_path, base_time, lead_idx, lead_times, opener_kwargs))
                 self.valid_times_for_samples.append(valid_time)  
 
+        print('DEBUG', len(self.valid_times_for_samples))
         self.valid_times = sorted(set(self.valid_times_for_samples))
 
         # Select custom or random valid times
