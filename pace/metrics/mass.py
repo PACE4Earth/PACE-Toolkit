@@ -115,19 +115,32 @@ class MassConservation(nn.Module):
     def output_keys(self):
         return ["surface_mass_divergence", "mean_sea_level_pressure"]
 
-    def evaluate(self, outputs, rank=0):
+    def evaluate(self, all_outputs, rank=0):
         """
-        Optional post-batch evaluation.
-        Time derivative (pressure tendency) can be computed downstream.
+        Aggregate over time:
+        - compute MSLP series
+        - compute time tendency (primary)
+        - optionally keep divergence series (secondary)
         """
         if rank != 0:
-            return  # Only rank 0 handles evaluation
+            return
 
-        # Simple example: compute batch mean divergence for logging
-        mean_div = torch.mean(outputs["surface_mass_divergence"]).item()
+        # Stack along time
+        mslp_series = torch.stack([o["mean_sea_level_pressure"] for o in all_outputs], dim=0)  # [time, B, H, W]
+        dt_seconds = 6.0 * 3600.0
+        mslp_tendency = (mslp_series[1:] - mslp_series[:-1]) / dt_seconds  # [time-1, B, H, W]
 
-        # Could extend: compute maps, histograms, other diagnostics
-        return {"mean_surface_divergence": mean_div}
+        if "surface_mass_divergence" in all_outputs[0]:
+            divergence_series = torch.stack([o["surface_mass_divergence"] for o in all_outputs], dim=0)
+        else:
+            divergence_series = None
+
+        return {
+            "mslp_series": mslp_series,
+            "mslp_tendency": mslp_tendency,
+            "divergence_series": divergence_series
+        }
+
 """
 Notes:
 ------
