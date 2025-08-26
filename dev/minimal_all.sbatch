@@ -31,5 +31,5 @@ export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export GLOO_SOCKET_IFNAME=ib0
 
 # Run the training script
-srun --verbose python evaluator.py
-srun --verbose python -u postprocess.py
+srun --verbose python ../pace/evaluator.py
+srun --verbose python -u ../pace/postprocess.py

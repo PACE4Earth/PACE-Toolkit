@@ -83,9 +83,7 @@ Notes:
 ------
 
 def spatial_rmse(field):
-    """
     Compute RMSE over spatial dimensions (H, W) for each batch
-    """
     mse = torch.mean(field ** 2, dim=(-2, -1))
     rmse = torch.sqrt(mse)
     return rmse
