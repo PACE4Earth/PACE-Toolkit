@@ -17,7 +17,7 @@
   },
   "time": {
     "start": "20210601",
-    "end": "20210630",
+    "end": "20210602",
     "num_lead_times": 40, 
     "stride_hours": 6,
     "sample_percent": 100,
@@ -27,6 +27,8 @@
     "plots_dir": null,
     "histogram": true,
     "vertical_profile": true,
+    "correlation": true,
+    "correlation_map": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
     "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
   }

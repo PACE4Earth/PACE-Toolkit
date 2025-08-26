@@ -5,6 +5,8 @@ from pathlib import Path
 import time
 import xarray as xr
 
+from mpi4py import MPI
+
 
 def is_viz_enabled(config: dict, key: str) -> bool:
     return bool(config.get("visualization", {}).get(key, False))
@@ -40,11 +42,17 @@ def select_sample_leadtimes(ds, max_leadtimes: int = 5):
 
 
 def main():
+    
+    comm = MPI.COMM_WORLD
+    
+    if comm.Get_rank() != 0:
+        return
+    
     time_start = time.perf_counter()
     try:
         config_path = Path(os.environ['DATASET_CONFIG_PATH'])
     except:
-        config_path = Path(__file__).resolve().parent / "configs" / "config_graphcast.json"
+        config_path = Path(__file__).resolve().parent / "configs" / "config_devel_g.json"
     with open(config_path, "r") as f:
         config = json.load(f)
 
@@ -134,43 +142,67 @@ def main():
     except Exception as e:
         print(e)
         
-    # # --- SPATIAL SLICE visualization ---
-    # if is_viz_enabled(config, "spatial_slice"):
-    #     from utils.plot_utils import spatial_slice
-    #     print("\nRunning spatial slice visualization...")
+    try:
+        if is_viz_enabled(config, "correlation"):
+            print("\nRunning correlation visualization...")
+            
+            from utils.plot_utils import correlation
+            
+            correlation.plot_corr_time_series(
+                model_ds=model_ds,
+                ref_ds=ref_ds,
+                model_name=model_name,
+                ref_name=ref_name,
+                plots_dir=plots_dir,
+            )
+            
 
-    #     spatial_cfg = config["visualization"]["spatial_slice"]
-    #     variable = spatial_cfg.get("variable", "temperature")
-    #     level = spatial_cfg.get("level", 850)  # hPa
-    #     samples = spatial_cfg.get("samples", 1)
-    #     geopotential_level = spatial_cfg.get("geopotential_level", None)
+        else:
+            print("Correlation visualization disabled in config.\n")
+    except Exception as e:
+        print(e)
+        
+    # --- SPATIAL SLICE visualization ---
+    try:
+        if is_viz_enabled(config, "spatial_slice"):
+            from utils.plot_utils import spatial_slice
+            print("\nRunning spatial slice visualization...")
 
-    #     spatial_slice.plot_spatial_slice(
-    #         model_store,
-    #         coords,
-    #         variable=variable,
-    #         level=level,
-    #         samples=samples,
-    #         geopotential=model_store if "geopotential" in model_store else None,
-    #         geopotential_level=geopotential_level,
-    #         save_dir=str(plots_dir),
-    #         dataset_name=model_name,
-    #     )
+            spatial_cfg = config["visualization"]["spatial_slice"]
+            variable = spatial_cfg.get("variable", "temperature")
+            level = spatial_cfg.get("level", 850)  # hPa
+            samples = spatial_cfg.get("samples", 1)
+            geopotential_level = spatial_cfg.get("geopotential_level", None)
 
-    #     if ref_store:
-    #         spatial_slice.plot_spatial_slice(
-    #             ref_store,
-    #             coords,
-    #             variable=variable,
-    #             level=level,
-    #             samples=samples,
-    #             geopotential=ref_store if "geopotential" in ref_store else None,
-    #             geopotential_level=geopotential_level,
-    #             save_dir=str(plots_dir),
-    #             dataset_name=ref_name,
-    #         )
-    # else:
-    #     print("Spatial slice visualization disabled in config.\n")
+            spatial_slice.plot_spatial_slice(
+                model_store,
+                coords,
+                variable=variable,
+                level=level,
+                samples=samples,
+                geopotential=model_store if "geopotential" in model_store else None,
+                geopotential_level=geopotential_level,
+                save_dir=str(plots_dir),
+                dataset_name=model_name,
+            )
+
+            if ref_store:
+                spatial_slice.plot_spatial_slice(
+                    ref_store,
+                    coords,
+                    variable=variable,
+                    level=level,
+                    samples=samples,
+                    geopotential=ref_store if "geopotential" in ref_store else None,
+                    geopotential_level=geopotential_level,
+                    save_dir=str(plots_dir),
+                    dataset_name=ref_name,
+                )
+        else:
+            print("Spatial slice visualization disabled in config.\n")
+
+    except Exception as e:
+        print(e)
 
     time_end = time.perf_counter()
     print(f"\nElapsed time: {time_end - time_start:.2f} s")
