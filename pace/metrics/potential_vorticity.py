@@ -52,7 +52,7 @@ class PotentialVorticity(nn.Module):
         # numerator: theta[i+1] - theta[i-1]
         # denominator: dp[i+1] - dp[i-1]
         dtheta = theta[:, 2:] - theta[:, :-2]           # [B, L-2, H, W]
-        dp_mid = dp[2:] - dp[:-2]                        # [L-2]
+        dp_mid = dp[2:] - dp[:-2]                       # [L-2]
         dtheta_dp[:, 1:-1] = dtheta / dp_mid.view(1, -1, 1, 1)
 
         return dtheta_dp
@@ -115,20 +115,20 @@ class PotentialVorticity(nn.Module):
         theta = self.compute_potential_temperature(T, p_levels)  # [B, L, H, W]
 
         # Vertical gradient ∂θ/∂p
-        dtheta_dp = self.compute_vertical_gradient(theta)         # [B, L, H, W]
+        dtheta_dp = self.compute_vertical_gradient(theta)        # [B, L, H, W]
 
         # Relative vorticity ζ
-        zeta = self.compute_relative_vorticity(u, v)              # [B, L, H, W]
+        zeta = self.compute_relative_vorticity(u, v)             # [B, L, H, W]
 
         # Total vorticity η = f + ζ
-        f = self.f.to(T.device).unsqueeze(0).unsqueeze(0)         # [1, 1, H, W]
-        eta = f + zeta                                             # [B, L, H, W]
+        f = self.f.to(T.device).unsqueeze(0).unsqueeze(0)        # [1, 1, H, W]
+        eta = f + zeta                                           # [B, L, H, W]
 
         # PV = -g * η * ∂θ/∂p
-        pv = -self.g * eta * dtheta_dp                             # [B, L, H, W]
+        pv = -self.g * eta * dtheta_dp                           # [B, L, H, W]
 
         # Convert to PVU
-        pv_pvu = pv * 1e6                                          # [B, L, H, W]
+        pv_pvu = pv * 1e6                                        # [B, L, H, W]
 
         # Mask top and bottom vertical levels as NaN (unreliable)
         pv_pvu[:, 0] = float('nan')
