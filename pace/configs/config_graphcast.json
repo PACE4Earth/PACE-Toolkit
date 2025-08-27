@@ -26,8 +26,8 @@
   },
   "time": {
     "start": "20210601",
-    "end": "20210602",
-    "num_lead_times": 40, 
+    "end": "20210610",
+    "num_lead_times": 5, 
     "stride_hours": 6,
     "sample_percent": 100,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}

@@ -224,19 +224,23 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.valid_times_for_samples = []
 
         for file_path, base_time, lead_times, opener_kwargs in self.files:
+            # Pair with global indices
             lt_vt_pairs = [(i, lt, base_time + lt) for i, lt in enumerate(lead_times)]
+            
+            # Apply max_lead first (crop to first N original indices if model dataset)
+            if self.is_model_dataset:
+                lt_vt_pairs = [(i, lt, vt) for i, lt, vt in lt_vt_pairs if i < self.max_lead]
+
+            # Apply time filter afterwards
             lt_vt_pairs = [(i, lt, vt) for i, lt, vt in lt_vt_pairs if self.start_dt <= vt <= self.end_dt]
 
-            max_lead_idx = min(self.max_lead, len(lt_vt_pairs)) if self.is_model_dataset else len(lt_vt_pairs)
-
-            for j in range(max_lead_idx):
-                global_lead_idx, lead_time, valid_time = lt_vt_pairs[j]
-                # keep global_lead_idx for ds.isel
-                self.samples.append((file_path, base_time, global_lead_idx, lead_time, opener_kwargs))
+            for i, lead_time, valid_time in lt_vt_pairs:
+                self.samples.append((file_path, base_time, i, lead_time, opener_kwargs))
                 self.valid_times_for_samples.append(valid_time)
 
         print("DEBUG", len(self.valid_times_for_samples))
         self.valid_times = sorted(set(self.valid_times_for_samples))
+
 
         # Select custom or random valid times
         if self.custom_times_enabled:
@@ -367,7 +371,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
 def main():
     start_time = time.perf_counter()
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_corrdiff.json"
+    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_graphcast.json"
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
