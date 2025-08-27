@@ -257,7 +257,7 @@ def main(distributed=False):
             print('Opened using xarray.')
         except Exception as e:
             print(e)
-            final_dataset = get_final_dataset(outputs_dir, model_name)
+            # final_dataset = get_final_dataset(outputs_dir, model_name)
             
         print(final_dataset)
         

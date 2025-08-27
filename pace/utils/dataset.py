@@ -221,18 +221,21 @@ class UnifiedDataset(torch.utils.data.Dataset):
         self.requested_names = list(dict.fromkeys([v for d in self.metrics.values() for v in d.values()]))
 
         self.samples = []
-        self.valid_times_for_samples = []  # list parallel to self.samples
+        self.valid_times_for_samples = []
+
         for file_path, base_time, lead_times, opener_kwargs in self.files:
-            valid_times = [base_time + lt for lt in lead_times]
-            valid_times = [vt for vt in valid_times if self.start_dt <= vt <= self.end_dt]
+            lt_vt_pairs = [(i, lt, base_time + lt) for i, lt in enumerate(lead_times)]
+            lt_vt_pairs = [(i, lt, vt) for i, lt, vt in lt_vt_pairs if self.start_dt <= vt <= self.end_dt]
 
-            max_lead_idx = min(self.max_lead, len(valid_times)) if self.is_model_dataset else len(valid_times)
-            for lead_idx in range(max_lead_idx):
-                valid_time = valid_times[lead_idx]
-                self.samples.append((file_path, base_time, lead_idx, lead_times, opener_kwargs))
-                self.valid_times_for_samples.append(valid_time)  
+            max_lead_idx = min(self.max_lead, len(lt_vt_pairs)) if self.is_model_dataset else len(lt_vt_pairs)
 
-        print('DEBUG', len(self.valid_times_for_samples))
+            for j in range(max_lead_idx):
+                global_lead_idx, lead_time, valid_time = lt_vt_pairs[j]
+                # keep global_lead_idx for ds.isel
+                self.samples.append((file_path, base_time, global_lead_idx, lead_time, opener_kwargs))
+                self.valid_times_for_samples.append(valid_time)
+
+        print("DEBUG", len(self.valid_times_for_samples))
         self.valid_times = sorted(set(self.valid_times_for_samples))
 
         # Select custom or random valid times
@@ -262,8 +265,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
         self.index_map = {}
         count = 0
-        for (file_path, base_time, lead_idx, lead_times, opener_kwargs) in self.samples:
-            lead_time = lead_times[lead_idx]
+        for (file_path, base_time, lead_idx, lead_time, opener_kwargs) in self.samples:
             self.index_map[(base_time, lead_time)] = count
             count = count + 1
         
@@ -274,8 +276,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        file_path, base_time, lead_idx, lead_times, opener_kwargs = self.samples[idx]
-        lead_time = lead_times[lead_idx]
+        file_path, base_time, lead_idx, lead_time, opener_kwargs = self.samples[idx]
         
         global_idx = self.index_map[(base_time, lead_time)]
         
@@ -366,7 +367,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
 
 def main():
     start_time = time.perf_counter()
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_graphcast.json"
+    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_corrdiff.json"
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
     reference_dataset = UnifiedDataset(config_path, dataset_key="reference", shared_valid_times=model_dataset.chosen_valid_times) if "reference" in model_dataset.config.get("datasets", {}) else None
     print(f"len model: {model_dataset.__len__()}")
@@ -387,9 +388,9 @@ def main():
         sample = model_dataset[i]
         print("  base_time:", sample['base_time'])
         print("  lead_time:", sample['lead_time'])
-        var_keys = [k for k in sample.keys() if k not in ['base_time', 'lead_time', 'idx']]
-        for k in var_keys:
-            print(f"  {k}: shape {sample[k].shape}")
+        # var_keys = [k for k in sample.keys() if k not in ['base_time', 'lead_time', 'idx']]
+        # for k in var_keys:
+        #     print(f"  {k}: shape {sample[k].shape}")
 
     # if reference_dataset:
     #     print("\nReference valid times:", reference_dataset.valid_times)

@@ -25,12 +25,12 @@
     "lon_range": [45, 50]
   },
   "time": {
-    "start": "20210401",
-    "end": "20210404",
-    "num_lead_times": 5, 
+    "start": "20210601",
+    "end": "20210602",
+    "num_lead_times": 40, 
     "stride_hours": 6,
-    "sample_percent": 10,
-    "custom_times": {"enabled": false, "times": ["20210402_12"]}
+    "sample_percent": 100,
+    "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {
     "plots_dir": null,
