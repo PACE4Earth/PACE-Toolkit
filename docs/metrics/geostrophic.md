@@ -1,126 +1,100 @@
-### **1\. Objective**
+# Geostrophic Wind Metric
 
-This workflow aims to evaluate the physical consistency of GraphCast ML model outputs by examining geostrophic balance. Specifically, we assess how well the model-reconstructed wind field aligns with the theoretical geostrophic wind derived from pressure gradients.
+### 1. Objective
 
-The method will later be adapted for other ML models (e.g., CorrDiff), but GraphCast is used for the initial implementation and validation.
+This module evaluates geostrophic balance in atmospheric fields by comparing model winds with geostrophic winds derived from geopotential gradients.  
+The metric is expressed as the **ratio of ageostrophic to geostrophic wind magnitude**, smoothed to suppress grid-scale noise.  
+A ratio close to zero indicates near-geostrophic flow, while higher ratios highlight stronger ageostrophic contributions.
 
-###
+---
 
-### **2\. Theoretical Background**
+### 2. Theoretical Background
 
-Geostrophic balance assumes equilibrium between the Coriolis force and pressure gradient force, valid for large-scale, slowly varying atmospheric motions.
+Geostrophic balance describes large-scale midlatitude flow where the Coriolis force balances the horizontal pressure gradient force.  
 
-In pressure coordinates:
+In pressure coordinates, the geostrophic wind components are:
 
 $$
-u_g=-\frac{1}{f} \frac{\partial \Phi}{\partial y}, \quad v_g=\frac{1}{f} \frac{\partial \Phi}{\partial x}
+u_g = -\frac{1}{f}\frac{\partial \Phi}{\partial y}, \quad v_g = \frac{1}{f}\frac{\partial \Phi}{\partial x}
 $$
 
-Where:
-- $\Phi=g z$ is the geopotential
-- $f=2 \Omega \sin (\phi)$ is the Coriolis parameter
-- $x, y$ are spatial coordinates in Cartesian space (converted from lat/lon)
+where:  
+- $\Phi$ = geopotential $\,[m^2 s^{-2}]$  
+- $f = 2 \Omega \sin(\phi)$ = Coriolis parameter at latitude $\phi$  
+- $x, y$ = horizontal Cartesian coordinates derived from grid spacing  
 
-### **3\. Input data**
+The ageostrophic wind is defined as the residual:
 
-**GraphCast Outputs Required (as Input):**
+$$
+u_{ag} = u - u_g, \quad v_{ag} = v - v_g
+$$
 
-| **Variable Type** | **Variable Name** | **Pressure Levels (hPa)** |
-| --- | --- | --- |
-| Geopotential | z   | 850 (later 500–925) |
-| U wind component | u   | 850 |
-| V wind component | v   | 850 |
-| Latitude, Longitude | lat, lon | —   |
+and the evaluated metric is the ratio:
 
-Latitude range: 30°N to 80°N and 30°S to 80°S
+$$
+r = \frac{|\vec{v}_{ag}|}{|\vec{v}_g| + \epsilon}
+$$
 
-Longitude range: Global (0° to 360°)
+where $\epsilon$ is a small constant to avoid division by zero.
 
-850 hPa is chosen as a mid-tropospheric level, commonly used for geostrophic wind analysis.
+---
 
-**All Graphcast Outputs**
-![alt text](../../assets/Graphcast_variables.png)
+### 3. Input Data
 
-**Spatial Resolution Considerations:**
+The metric requires model output fields on a latitude–longitude pressure grid:
 
-- Geostrophic balance reflects large-scale atmospheric flow and may not hold at high resolutions where mesoscale features dominate. Since GraphCast outputs have a ~25 km resolution, spatial smoothing (e.g., to 0.5°) may be applied to better assess geostrophic balance. The need for and extent of smoothing will be evaluated as part of the framework design.
+| Variable           | Name in sample dict        | Dimensions   |
+|--------------------|----------------------------|--------------|
+| Geopotential       | `"geopotential"`           | [B, L, H, W] |
+| U wind component   | `"u_component_of_wind"`    | [B, L, H, W] |
+| V wind component   | `"v_component_of_wind"`    | [B, L, H, W] |
 
-###
+Additional grid metadata is supplied separately:
+- $f$: Coriolis parameter $\,[1/s]$  
+- $dx, dy$: grid spacing in $x/y \,[m]$  
+- $lat$: latitude array [degrees]  
 
-### **4\. Workflow Steps**
+**Latitude mask:** The ratio is only evaluated for $30^\circ–80^\circ$ N/S, where geostrophic balance is valid. Outside this range, results are masked with NaN.
 
-#### **Step 1: Compute Geopotential Gradients and Calculate Geostrophic Wind**
+---
 
-- Work directly on the native lat/lon grid to avoid regridding errors
-- Use metpy.calc.geospatial_gradient, which accounts for spherical geometry
-- Compute the Coriolis parameter from latitude
-- Apply geostrophic wind equations using the calculated gradients
+### 4. Workflow in Code
 
+1. **Geopotential gradients**  
+   - Gradients $\partial \Phi/\partial x, \partial \Phi/\partial y$ are computed using Sobel filters with finite-difference padding.  
+   - Grid spacing ($dx, dy$) scales the derivatives.
 
-#### **Step 2: Extract Actual Wind**
+2. **Geostrophic wind**  
+   - Computed directly from gradients using the balance equations.  
+   - Latitude mask applied ($30^\circ–80^\circ$ N/S).
 
-- Extract u and v wind components at 850 hPa from GraphCast output
-- Interpolate or align spatial resolution if necessary
+3. **Ageostrophic wind**  
+   - Defined as residual of actual wind minus geostrophic wind.  
 
-#### **Step 3: Compute Deviations**
+4. **Ratio calculation**  
+   - Ratio of magnitudes computed elementwise.  
+   - $\epsilon$ prevents division by zero.
 
-$\Delta u = u - u_g,\quad \Delta v = v - v_g$
+5. **Smoothing**  
+   - Final ratio field smoothed with a selectable kernel:  
+     - `"uniform"` (default): $4\times4$ averaging  
+     - `"gaussian"`: $9\times9$ with $\sigma=1.25$  
+   - Hard-coded kernel sizes correspond to $\sim 0.25^\circ \to 2^\circ$ effective resolution.
 
-$\text{RMSE}_u = \sqrt{\frac{1}{N} \sum (\Delta u)^2},\quad \text{RMSE}_v = \sqrt{\frac{1}{N} \sum (\Delta v)^2}$ 
+---
 
-$\text{RMSE}_{\text{wind}} = \sqrt{\frac{1}{N} \sum \left[(u - u_g)^2 + (v - v_g)^2\right]}$
+### 5. Outputs
 
+- **Primary output:**  
+  `"geostrophic_wind_ratio"` → Tensor [B, L, H, W]  
+  Smoothed ratio field of ageostrophic to geostrophic wind magnitude.  
 
-Also use relative metrics - ratio of the ageostrophic component to the geostrophic wind:
+---
 
-$r=\frac{\left|\vec{v}_{a g}\right|}{\left|\vec{v}_g\right|}$
+### 6. Interpretation
 
+- **$r \approx 0$:** Flow close to geostrophic balance.  
+- **Large $r$:** Strong ageostrophic contribution (e.g., near fronts, cyclones, or jet streams).  
+- **Masked (NaN):** Outside valid latitude range.
 
-#### **Step 4: Compare to ERA5 Baseline**
-
-- Apply the same geostrophic wind computation to ERA5 geopotential and wind data
-- Compute RMSE for ERA5
-- Define skill score:
-
-$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
-
-+1 = perfect prediction (zero error)   
-0 = same as ERA5  
-–1 = very poor (RMSE much higher than baseline)
-
-
-#### **Step 5: Mask Dynamically Active Regions (Optional)**
-
-- Compute vorticity or geopotential height gradients
-- Define a threshold to mask high-dynamic regions (e.g., near jet streams, fronts)
-- Evaluate metrics separately for active regions
-
-#### **Step 6: Visualization and Diagnostics**
-
-- Plot spatial difference maps
-- Histograms of errors (by latitude, season, etc.)
-- Scatter plot (eg. geostrophic vs actual wind - should be near 1:1 line)
-- Optional: spectral analysis of wind field
-
-###
-
-### **5\. Results (Planned Output)**
-
-- Skill score values compared to ERA5 (later comparison also with other models, as in Weather Bench 2)
-- RMSE variation across pressure levels (when implemented)
-- Visuals: difference maps, scatter plots, histograms, etc.
-
-### **6\. Future Extensions and Ideas**
-
-- Apply to additional pressure levels. Final framework should allow testing across 500–925 hPa
-- Extend to other ML models
-- Define acceptable spatial resolution thresholds
-- Explore balance metrics during extreme events (e.g., deep cyclones, storms, fronts)
-- In addition to RMSE, consider including complementary metrics such as MAE, bias, spread, realative metrics, ...
-
-### Tools and Libraries
-
-- **xarray, numpy, dask, pytorch** – data handling and computing
-- **metpy** – gradient, Coriolis parameter
-- **matplotlib** – plotting and mapping
-- **cdsapi** – data access (ERA5)
+---

@@ -1,127 +1,108 @@
-### **1\. Objective**
+# Potential Vorticity Metric
 
-This workflow aims to evaluate the physical consistency of GraphCast ML model outputs by calculating Ertel’s potential vorticity (PV) and comparing it against theoretical expectations and reanalysis data (e.g., ERA5). PV consistency is a strong indicator of dynamic and thermodynamic coherence in model fields and helps diagnose imbalances, especially in dynamically active regions such as jet streams, cyclones, and fronts.
+### 1. Objective
 
-The method will later be extended to other ML models (e.g., CorrDiff), but GraphCast serves as the initial implementation baseline.
+This module evaluates **Ertel's potential vorticity (PV)** in atmospheric fields, assessing the physical consistency of ML model outputs (GraphCast) with theoretical expectations and ERA5 reanalysis.  
+PV consistency is a strong indicator of **dynamic and thermodynamic coherence**, highlighting imbalances in jet streams, cyclones, tropopause folds, and frontal zones.
 
-###
+---
 
-### **2\. Theoretical Background**
+### 2. Theoretical Background
 
-Ertel's Potential Vorticity (PV) in pressure coordinates is given by:
+Ertel's PV in pressure coordinates is:
 
 $$
-P V=-g\left(\zeta_\theta+f\right) \cdot \nabla_p \theta
+PV = -g \, (\zeta + f) \, \frac{\partial \theta}{\partial p}
 $$
 
-Where:
-- $g$ : gravitational acceleration
-- $\boldsymbol{\zeta}_{\boldsymbol{\theta}}$ : relative vorticity on isentropic surfaces
-- $f$ : Coriolis parameter
-- $\theta$ : potential temperature
-- $\nabla_p \theta$ : gradient of potential temperature in pressure coordinates
+where:  
 
+- $g$ — gravitational acceleration [m/s²]  
+- $\zeta$ — relative vorticity [1/s] computed from horizontal winds  
+- $f$ — Coriolis parameter [1/s]  
+- $\theta$ — potential temperature [K]  
 
-###
+Potential temperature is computed as:
 
-Under adiabatic and frictionless conditions, PV is conserved. Therefore, significant deviations in PV fields may indicate inconsistencies between wind, temperature, and pressure fields.
+$$
+\theta = T \left(\frac{p_0}{p}\right)^{R_d/c_p}, \quad R_d/c_p \approx 0.286
+$$
 
-### **3\. Input data**
+with $p_0 = 1000$ hPa.  
 
-**GraphCast Outputs Required (as Input):**
+Relative vorticity is calculated from wind components:
 
-| **Variable Type** | **Variable Name** | **Pressure Levels (hPa)** |
-| --- | --- | --- |
-| Temperature | t   | 100 to 1000 (preferably ≤50 hPa spacing) |
-| U wind component | u   | 100 to 1000 |
-| V wind component | v   | 100 to 1000 |
-| Geopotential | z   | 100 to 1000 |
-| Latitude, Longitude | lat, lon | —   |
+$$
+\zeta = \frac{\partial v}{\partial x} - \frac{\partial u}{\partial y}
+$$
 
-Lat, Lon range: Global (0° to 360°)
+PV is **conserved in adiabatic, frictionless flow**, so deviations indicate inconsistencies between wind, temperature, and pressure fields.
 
-**Spatial and Vertical Resolution Requirements:**
+---
 
-- Horizontal resolution: ≤50 km recommended (GraphCast provides ~25 km) to resolve PV anomalies like tropopause folds and streamers.
-- Vertical resolution: Fine spacing (≤50 hPa) is required, especially near upper troposphere/lower stratosphere (~300–100 hPa) where sharp gradients occur.
+### 3. Input Data
 
-### **4\. Workflow Steps**
+| Variable           | Name in sample dict           | Dimensions    |
+|--------------------|------------------------------|---------------|
+| Temperature        | `"temperature"`              | [B, L, H, W] |
+| U wind component   | `"u_component_of_wind"`      | [B, L, H, W] |
+| V wind component   | `"v_component_of_wind"`      | [B, L, H, W] |
+| Geopotential       | `"geopotential"`             | [B, L, H, W] |
 
-#### **Step 1: Compute Potential Temperature**
+**Grid metadata (separately supplied):**
 
-$\theta = T\left(\dfrac{1000}{p}\right)^\kappa,\qquad \kappa=\dfrac{R_d}{c_p} \approx 0.286$
+- `dx, dy` — grid spacing [m]  
+- `f` — Coriolis parameter [1/s]  
+- `pressure_levels` — [Pa]  
+- Latitude / longitude arrays  
 
-#### **Step 2: Compute PV**
+**Domain and resolution requirements:**
 
-Calculate:
+- Horizontal: ≤50 km (~GraphCast ~25 km)  
+- Vertical: ≤50 hPa spacing (especially 300–100 hPa)  
+- Lat/Lon: global recommended  
 
-- Relative vorticity from wind fields
+---
 
-    $\zeta=\dfrac{\partial v}{\partial x} - \dfrac{\partial u}{\partial y}$
+### 4. Workflow in Code
 
-- Gradient of θ in pressure coordinates
+1. **Potential Temperature**  
+   - Compute $\theta = T (p_0/p)^{R_d/c_p}$  
+   - Top-to-bottom ordering enforced for pressure levels.
 
-Use the Ertel PV equation (in pressure coordinates):
+2. **Vertical Gradient**  
+   - Compute $\partial \theta / \partial p$ using:  
+     - Forward difference at top level  
+     - Backward difference at bottom level  
+     - Central difference in interior levels
 
-$PV=-g(\zeta + f) \cdot \nabla_p \theta$
+3. **Relative Vorticity**  
+   - $\zeta = dv/dx - du/dy$  
+   - Handles global longitude wraparound if domain is periodic  
+   - Forward/backward differences at edges, central inside
 
-Tools: metpy.calc.relative_vorticity
+4. **Total Vorticity**  
+   - $\eta = f + \zeta$  
 
-#### **Step 3: Compare to ERA5 PV Baseline**
+5. **Compute PV**  
+   - $PV = -g \, \eta \, \partial \theta / \partial p$  
+   - Converted to PVU: $1 \, \text{PVU} = 10^{-6} \, \text{K m²/(kg s)}$  
+   - Top and bottom levels masked as NaN due to unreliable boundaries
 
-Compute PV using ERA5 reanalysis fields (same method)
+---
 
-Calculate:
+### 5. Outputs
 
-- RMSE between GraphCast and ERA5 PV
-- Skill Score 
+- **Primary output:**  
+  `"potential_vorticity"` → Tensor [B, L, H, W]  
+  - PV in PVU  
+  - Top/bottom levels set to NaN  
 
-$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
+---
 
-+1 = perfect prediction (zero error)   
-0 = same as ERA5  
-–1 = very poor (RMSE much higher than baseline)
+### 6. Interpretation
 
-#### **Step 4: Flag Physically Unrealistic Values and Outliers**
+- **PV structure consistent with dynamics:** fields show smooth jet streams, tropopause folds, frontal zones  
+- **Deviations from reference dataset or extreme values:** may indicate numerical instability or physical imbalance 
 
-Identify and flag PV values outside expected ranges using
-
-- Empirical distributions from PV climatology (eg. from ERA)
-
-- Level-dependent bounds (e.g., PV > 5 PVU at 900 hPa is unlikely)
-
-- Latitude-based expectations (PV generally increases toward the poles)
-
-#### **Step 5: Visualization and Diagnostics**
-
-Global Scale
-
-- Zonal mean cross-sections (latitude vs. pressure) of PV
-- Maps of PV at specific levels (e.g., 300, 500, 850 hPa)
-- Difference maps: GraphCast PV – ERA5 PV
-- PV anomaly plots
-
-Local Scale
-
-- Identify sharp PV gradients (e.g., along tropopause)
-- Check for realistic structure of jet streams (PV streaks, frontal zones)
-- Use scatter plots of GraphCast vs. ERA5 PV (expect 1:1 alignment)
-
-### **5\. Results (Planned Output)**
-
-- Skill score and RMSE maps for PV at different pressure levels
-- Detection of PV anomalies (in space and time) relative to ERA5 and climatology
-- Visual comparison of PV structures (maps, sections, scatter plots)
-
-### **6\. Future Extensions and Ideas**
-
-- Apply to other ML models (e.g., CorrDiff)
-- Evaluate across all pressure levels (100–1000 hPa)
-- Track PV conservation over time in forecasts
-
-### **Tools and Libraries**
-
-- **xarray, numpy, dask, pytorch** – data handling and computing
-- **metpy** – PV calculations
-- **matplotlib** – plotting and mapping
-- **cdsapi** – data access (ERA5)
+---

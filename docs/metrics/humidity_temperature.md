@@ -1,97 +1,98 @@
-### **1\. Objective**
+# Relative Humidity Consistency Metric
 
-This workflow aims to assess the physical consistency of ML model outputs by evaluating the relationship between specific humidity and temperature. We compare the ML-generated moisture variations with theoretical expectations given by the Clausius-Clapeyron equation, to detect unrealistic moisture–temperature relationships.
+### 1. Objective
 
-###
+This module evaluates the physical consistency of ML model outputs by comparing **specific humidity** with **temperature-dependent saturation values** derived from the Clausius–Clapeyron relation.  
+The metric outputs **relative humidity (RH, %)** and highlights unrealistic moisture–temperature relationships such as supersaturation or negative humidity.
 
-### **2\. Theoretical Background**
+---
 
-The Clausius-Clapeyron equation describes the equilibrium vapor pressure ($e_s$​) dependence on temperature (T):
+### 2. Theoretical Background
+
+The Clausius–Clapeyron equation describes the exponential dependence of saturation vapor pressure $e_s$ on temperature $T$:
 
 $$
-\frac{d e_s}{d T}=\frac{L_v e_s}{R_v T^2}
+\frac{d e_s}{d T} = \frac{L_v e_s}{R_v T^2}
 $$
 
-Where:
-- $L_v=$ latent heat of vaporization $\left(\approx 2.5 \times 10^6 \mathrm{~J} / \mathrm{kg}\right)$
-- $R_v=$ gas constant for water vapor ( $\approx 461 \mathrm{~J} / \mathrm{kg} \cdot \mathrm{K}$ )
-- $T=$ absolute temperature (K)
-- $e_s=$ saturation vapor pressure (Pa)
+where:
+- $L_v \approx 2.5 \times 10^6 \,\text{J kg}^{-1}$ = latent heat of vaporization  
+- $R_v \approx 461 \,\text{J kg}^{-1}\,\text{K}^{-1}$ = gas constant for water vapor  
+- $T$ = absolute temperature [K]  
+- $e_s$ = saturation vapor pressure [Pa]  
 
-###
+Using an integrated form, the saturation vapor pressure is:
 
-Specific humidity (q) should vary in a physically consistent manner with temperature, roughly following Clausius-Clapeyron scaling for saturation vapor pressure and relative humidity.
+$$
+e_s(T) = e_0 \, \exp \!\left( \frac{L_v}{R_v}\left(\frac{1}{T_0} - \frac{1}{T}\right) \right)
+$$
 
-### **3\. Input data**
+with $e_0 = 611.2 \,\text{Pa}$ at $T_0 = 273.15 \,\text{K}$.
 
-**GraphCast Outputs Required (as Input):**
+From $e_s$, the saturation specific humidity $q_s$ is computed as:
 
-| **Variable Type** | **Variable Name** | **Pressure Levels (hPa)** |
-| --- | --- | --- |
-| Temperature | T   | 500, 600, 700, 850, 925, etc. |
-| Specific Humidity | q   | 500, 600, 700, 850, 925, etc. |
-| Latitude, Longitude | lat, lon | —   |
+$$
+q_s(T,p) = \frac{\epsilon \, e_s}{p - (1 - \epsilon) e_s}
+$$
 
-**Domain**
+where $\epsilon = 0.622$ and $p$ is pressure [Pa].
 
-Pressure levels: 1000 to 500 hPa (excluding upper-level low humidity levels)
+Relative humidity is then defined as:
 
-Lat, Lon range: Global (0° to 360°)
+$$
+RH = \frac{q}{q_s} \times 100
+$$
 
-Use same spatial resolution as GraphCast (~25 km)
+---
 
-### **4\. Workflow Steps**
+### 3. Input Data
 
-#### **Step 1: Compute Saturation Vapor Pressure $e_s$ from Temperature**
+The metric requires model outputs on a latitude–longitude pressure grid:
 
-$e_s(T)=e_0 \cdot \exp \left(\frac{L_v}{R_v}\left(\frac{1}{T_0}-\frac{1}{T}\right)\right)$
+| Variable           | Name in sample dict     | Dimensions   |
+|--------------------|-------------------------|--------------|
+| Temperature        | `"temperature"`         | [B, L, H, W] |
+| Specific Humidity  | `"specific_humidity"`   | [B, L, H, W] |
 
-Where:
-- $e_0=$ reference vapor pressure (e.g., 611 Pa at 273.15 K)
-- $T_0=$ reference temperature (e.g., 273.15 K)
+Additional grid metadata:
+- `pressure_levels`: pressure levels in hPa (converted to Pa internally)  
 
-#### **Step 2: Estimate Expected Specific Humidity $q_s$**
+**Domain:**  
+- Pressure levels: 1000–500 hPa (low–mid troposphere)  
+- Global coverage at model resolution (~25 km for GraphCast)  
 
-Assuming relative humidity RH≈1 for upper bound consistency:
+---
 
-$q_s(T)=0.622 \cdot \dfrac{e_s}{p-e_s}$
+### 4. Workflow in Code
 
-Where $p$ is atmospheric pressure at the level.
+1. **Compute $e_s(T)$**  
+   - From Clausius–Clapeyron exponential formulation.  
+   - Constants: $L_v, R_v, e_0, T_0$.  
 
-#### **Step 3: Compare ML Output Specific Humidity $q_{ML}$​ to Theoretical Expectation $q_s$**
+2. **Compute $q_s(T,p)$**  
+   - Using definition above with pressure at each level.  
 
-- Calculate the relative humidity estimate from model outputs:
+3. **Compute relative humidity**  
+   - $RH = (q / q_s) \times 100$  
+   - Small $\epsilon$ constant avoids division by zero.  
 
-$RH_{ML}=\dfrac{q_{ML}}{q_s}$
+4. **Output**  
+   - Field of relative humidity [%], dimension [B, L, H, W].  
 
-- Flag unrealistic values where:
+---
 
-$RH_{ML} > 1.2$ (supersaturation beyond physical plausibility)  
-$RH_{ML} < 0$ (negative humidity)
+### 5. Outputs
 
-#### **Step 4: Calculate Consistency Metrics**
-- RMSE, MAE, bias between $q_{ML} \text{ and } {q_s}$
-- Compare with baseline, as in previous workflows
+- **Primary output:**  
+  `"relative_humidity"` → Tensor [B, L, H, W]  
+  Relative humidity in percent (%).  
 
-#### **Step 5: Visualization and Diagnostics**
+---
 
-- Scatter plots of $q_{ML}$​ vs. $q_s$​, ideally clustered near 1:1 line.
-- Histograms of relative humidity and error distributions.
-- Spatial maps highlighting flagged regions of inconsistent moisture–temperature behavior.
+### 6. Interpretation
 
-### **5\. Results (Planned Output)**
+- **$RH \approx 40–80\%$:** Typical free-tropospheric range.  
+- **$RH > 100\%$:** Supersaturation → physically unrealistic, should be flagged.  
+- **$RH < 0$:** Negative humidity → invalid, indicates model inconsistency.  
 
-- Quantitative skill scores (MAE, RMSE, bias) for humidity consistency relative to Clausius-Clapeyron expectation and to baseline nwp model
-- Visualizations as described above
-
-### **6\. Future Extensions and Ideas**
-
-- Apply across multiple pressure levels (e.g., 500–925 hPa)
-- Investigate temporal variability and extreme event cases
-
-### **Tools and Libraries**
-
-- **xarray, numpy, dask, pytorch** – data handling and computing
-- **metpy** – Thermodynamic calculations (e.g., saturation vapor pressure)
-- **matplotlib** – plotting and mapping
-- **cdsapi** – data access (ERA5)
+---

@@ -102,7 +102,7 @@ class GeostrophicWind(nn.Module):
         )[..., 1:-1, 1:-1] / self.dy
 
         # Geostrophic balance equations
-        u_g = dphi_dy / self.f
+        u_g = - dphi_dy / self.f
         v_g = dphi_dx / self.f
 
         # Apply latitude mask: only valid in midlatitudes (30°–80° N/S)

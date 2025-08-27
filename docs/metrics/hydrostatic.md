@@ -1,137 +1,128 @@
-### **1\. Objective**
+### **Hydrostatic Balance Diagnostics**
 
-This workflow evaluates the physical consistency of ML model outputs (starting with GraphCast) by testing for hydrostatic balance — the equilibrium between the vertical pressure gradient and gravitational force. The goal is to quantify how much and where the model deviates from this fundamental assumption of large-scale atmospheric dynamics.
+---
 
-###
+### **1. Objective**
 
-### **2\. Theoretical Background**
+This workflow evaluates the physical consistency of ML model outputs by testing for **hydrostatic balance** — the equilibrium between the vertical pressure gradient and gravitational force.  
+
+The goal is to quantify **how much the model deviates** from this fundamental assumption of large-scale atmospheric dynamics, including the effects of moisture through virtual temperature.
+
+---
+
+### **2. Theoretical Background**
 
 Hydrostatic balance is defined by:
 
 $$
-\frac{\partial \Phi}{\partial p}=-\frac{R_d T}{p}
+\frac{\partial \Phi}{\partial p}=-\frac{R_d T_v}{p}
 $$
 
 Where:
-- $\Phi=g z=$ geopotential
-- $\boldsymbol{p}=$ pressure level (Pa)
-- $R_d=$ dry air gas constant $(\sim 287 \mathrm{~J} / \mathrm{kg} \cdot \mathrm{K})$
-- $T=$ temperature (K)
 
-Rewriting for vertical derivative of geopotential between pressure levels:
+- $\Phi = g z$ — geopotential \($[m^2/s^2]$\)  
+- $p$ — pressure (Pa)  
+- $R_d$ — gas constant for dry air ($\sim 287$ J/(kg·K))  
+- $T_v$ — **virtual temperature**, accounting for moisture:  
 
-$\Delta \Phi = -\displaystyle \int_{p_1}^{p_2} \dfrac{R_d T}{p} \, dp$
+$$
+T_v = T \cdot (1 + 0.61 \, q)
+$$
 
-Assuming discrete levels, this can be approximated as:
+with $q$ being the specific humidity (kg/kg).
 
-$\Phi_{p_2}-\Phi_{p_1} \approx-R_d \cdot \bar{T} \cdot \ln \left(\frac{p_2}{p_1}\right)$
+For discrete levels, the geopotential difference is approximated as:
 
-Where:
-- $\bar{T}=$ average temperature between $p_1$ and $p_2$
+$$
+\Delta \Phi_{\text{hydro}} = -R_d \cdot \bar{T_v} \cdot \ln\frac{p_2}{p_1}
+$$
 
-This gives the theoretical hydrostatic geopotential difference.
+where $\bar{T_v}$ is the mean virtual temperature between pressure levels $p_1$ and $p_2$.  
 
-We will compare this to the actual geopotential difference:
+The actual geopotential difference is:
 
-$\Delta \Phi_{\text {actual }}=\Phi\left(p_2\right)-\Phi\left(p_1\right)$
+$$
+\Delta \Phi_{\text{actual}} = \Phi(p_2) - \Phi(p_1)
+$$
 
-### **3\. Input data**
+---
 
-**GraphCast Outputs Required (as Input):**
+### **3. Input Data**
 
-| **Variable Type** | **Variable Name** | **Pressure Levels (hPa)** |
-| --- | --- | --- |
-| Geopotential | z   | 850, 700 |
-| Temperature | t   | 850, 700 |
-| Latitude, Longitude | lat, lon | —   |
+The metric requires model output fields on a latitude–longitude pressure grid:
 
-**Domain**
+| Variable       | Name in sample dict          | Dimensions |
+|-------------------|---------------------|----------------------|
+| Geopotential       | `geopotential`       | [B, L, H, W]   |
+| Temperature        | `temperature`        | [B, L, H, W]         |
+| Specific Humidity  | `specific_humidity`  | [B, L, H, W]         |
 
-Pressure levels: Apply from ~1000 (900) to 100 hPa (excluding near-surface and stratospheric extremes)
+**Domain Considerations:**
 
-Vertical resolution: At least ~25–50 hPa spacing for meaningful evaluation
+- Vertical resolution: ~25–50 hPa spacing  
+- Spatial resolution: hydrostatic balance is meaningful at synoptic scales (~25 km or coarser)  
 
-Lat, Lon range: Global (0° to 360°)
+---
 
-**Spatial Resolution Considerations:**
+### **4. Workflow Steps**
 
-- Hydrostatic balance holds best on synoptic scales; model resolution of ~25 km is generally suitable.
-- Gradients may be noisy at high resolution; smoothing or averaging over gridboxes may be tested.
+#### **Step 1: Compute Virtual Temperature**
 
-### **4\. Workflow Steps**
+From temperature and specific humidity:
 
-#### **Step 1: Compute Theoretical Geopotential Difference**
+$$
+T_v = T \cdot (1 + 0.61 \, q)
+$$
 
-Use hydrostatic equation to compute:
+#### **Step 2: Compute Hydrostatic Geopotential Differences**
 
-$\Delta \Phi_{\mathrm{hydro}}=-R_d \cdot \bar{T} \cdot \ln \left(\frac{p_2}{p_1}\right)$
+For each adjacent level pair:
 
-#### **Step 2: Compute Actual Geopotential Difference**
+$$
+\Delta \Phi_{\text{hydro}} = -R_d \cdot \bar{T_v} \cdot \ln\frac{p_{i+1}}{p_i}
+$$
 
-$\Delta \Phi_{\text {actual }}=\Phi\left(p_2\right)-\Phi\left(p_1\right)$
+- $\bar{T_v} = 0.5 \, (T_{v,i} + T_{v,i+1})$  
+- Levels are assumed **top-to-bottom**; if input is bottom-to-top, the code flips arrays.
 
-#### **Step 3: Calculate errors**
+#### **Step 3: Compute Actual Geopotential Differences**
 
-Absolute Error:  
-$\Delta \Phi_{\text {error }}=\Delta \Phi_{\text {actual }}-\Delta \Phi_{\text {hydro }}$
+$$
+\Delta \Phi_{\text{actual}} = \Phi_{i+1} - \Phi_i
+$$
 
-RMSE across all gridpoints:  
-$RMSE=\sqrt{\dfrac{1}{N} \sum\left(\Delta \Phi_{\mathrm{error}}\right)^2}$
+#### **Step 4: Calculate Errors**
 
-Relative Error:  
+- **Absolute error per level:**
 
-$\text{RelError} =\dfrac{\Delta \Phi_{\text {error }}}{\Delta \Phi_{\text {hydro }}}$
+$$
+\Delta \Phi_{\text{error}} = \Delta \Phi_{\text{actual}} - \Delta \Phi_{\text{hydro}}
+$$
 
-#### **Step 4: Compare to ERA5 Baseline**
+- **Relative error per level:**
 
-- Apply the same computation to ERA5 geopotential and temperature
-- Compute RMSE for ERA5
-- Define skill score:
+$$
+\text{RelError} = \frac{|\Delta \Phi_{\text{error}}|}{|\Delta \Phi_{\text{hydro}}| + \epsilon}
+$$
 
-$\text{Skill}=\frac{RMSE_{\text{ERA5}}-RMSE_{\text{GraphCast}}}{RMSE_{\text{ERA5}}+RMSE_{\text{GraphCast}}}$
+with $\epsilon = 10^{-5}$ to avoid division by zero.
 
-+1 = perfect prediction (zero error)   
-0 = same as ERA5  
-–1 = very poor (RMSE much higher than baseline)
+- **RMSE aggregated over levels (keep H, W):**
 
-####
+$$
+\text{RMSE}_{H,W} = \sqrt{\frac{1}{L-1} \sum_{i=1}^{L-1} (\Delta \Phi_{\text{error},i})^2 }
+$$
 
-####
+- Absolute and relative errors are **padded with NaN** to match the original level dimension.
 
-#### **Step 5: Detect Physically Unrealistic Values and Outliers**
 
-To enhance diagnostic accuracy, flag data points that violate known physical relationships or exhibit statistically extreme behavior:
+---
 
-- Physically implausible values (e.g., unrealistic temperature, pressure gradients, or geopotential changes) will be detected using empirically derived or literature-based thresholds.
-- Outliers will be identified using statistical methods such as z-scores or interquartile range (IQR), based on the distributions of errors.
+### **5. Outputs**
 
-#### **Step 6: Visualization and Diagnostics**
+- `hydrostatic_abs_error` — absolute deviation per level [B, L, H, W]  
+- `hydrostatic_rel_error` — relative deviation per level [B, L, H, W]  
+- `hydrostatic_rmse` — RMSE aggregated over levels [B, 1, H, W]  
+- Maps, plots, and summary statistics  
 
-- Skill scores
-- Maps of
-$\Delta \Phi_{\text {error }}$
-- Histogram of errors and relative error
-- Scatter plots:  
-$\Delta \Phi_{\text {hydro }} \text {vs } \Delta \Phi_{\text {actual }}$
-- Spatial frequency map of flagged imbalanced points
-
-### **5\. Results (Planned Output)**
-
-- RMSE and Skill Score between actual and hydrostatic geopotential differences
-- % of points exceeding hydrostatic imbalance thresholds
-- Error patterns across latitude, seasons, and levels
-- Visuals: spatial error maps, scatter plots, histograms
-
-### **6\. Future Extensions and Ideas**
-
-- Extend to multiple / all level pairs (e.g., 925–850, 700–500, 300–200)
-- Apply to other ML models, if vertical resolution allows
-- Define typical RMSE ranges across pressure levels
-- Explore additional metrics: MAE, bias, relative error
-
-### **Tools and Libraries**
-
-- **xarray, numpy, dask, pytorch** – data handling and computing
-- **metpy** – gradient, Coriolis parameter, projections
-- **matplotlib** – plotting and mapping
-- **cdsapi** – data access (ERA5)
+---
