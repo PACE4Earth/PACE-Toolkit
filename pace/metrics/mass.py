@@ -12,10 +12,12 @@ from .operators import (
 class MassConservation(nn.Module):
     """
     Mass consistency metric (surface divergence)
-    Primary focus: compute MSLP series and its global integral over time
+    Computes tendency and global integral of surface pressure (derived from MSLP, geopotential, 2m temp) using barometric formula
     """
     def __init__(self, grid, smoothing='uniform', compute_divergence=True):
         super().__init__()
+        self.g = 9.80665
+        self.R = 287.05  # J/(kg·K)
 
         # Optionally, precompute area weights if grid info is available (to think about it????)
         if grid is not None and "area_weights" in grid:
@@ -35,46 +37,47 @@ class MassConservation(nn.Module):
     def forward(self, sample):
         """
         Inputs (sample dict):
-            - 'mean_sea_level_pressure': mean sea level pressure
+            - 'mean_sea_level_pressure': MSLP [Pa]
+            - 'temperature_2m': 2m temperature [K]
+            - 'geopotential': geopotential [m^2/s^2]
             
         Returns:
-            dict with 'mean_sea_level_pressure'
+            dict with 'surface_pressure' [Pa]
         """
-        outputs = {}
-        outputs["mean_sea_level_pressure"] = sample["mean_sea_level_pressure"]
+        p_msl = sample["mean_sea_level_pressure"]
+        T2m = sample["2m_temperature"]
+        phi = sample["geopotential"]
 
-        return outputs
+        # Compute surface height
+        h = phi / self.g
+
+        # Barometric equation: ps = p_msl * exp(g*h/(R*T))
+        ps = p_msl * torch.exp(self.g * h / (self.R * T2m))
+
+        return {"surface_pressure": ps}
         
     def output_keys(self):
-        return ["mean_sea_level_pressure"]
+        return ["surface_pressure"]
 
     def evaluate(self, all_outputs, rank=0):
-        """
-        Aggregate over time:
-        - compute MSLP series
-        - compute time tendency (primary)
-        - compute global integral of MSLP (mass conservation diagnostic)
-        """
         if rank != 0:
             return
 
         # Stack along time
-        mslp_series = torch.stack([o["mean_sea_level_pressure"] for o in all_outputs], dim=0)  # [time, B, H, W]
+        ps_series = torch.stack([o["surface_pressure"] for o in all_outputs], dim=0)  # [time, B, H, W]
         dt_seconds = 6.0 * 3600.0
-        mslp_tendency = (mslp_series[1:] - mslp_series[:-1]) / dt_seconds  # [time-1, B, H, W]
+        ps_tendency = (ps_series[1:] - ps_series[:-1]) / dt_seconds  # [time-1, B, H, W]
 
-        # Compute global surface integral of MSLP (proxy for atmospheric mass)
-        # use equal-area assumption or precomputed area weights
         if hasattr(self, "area_weights") and self.area_weights is not None:
-            weights = self.area_weights  # [H, W]
+            weights = self.area_weights
         else:
-            weights = torch.ones_like(mslp_series[0, 0])
+            weights = torch.ones_like(ps_series[0, 0])
 
-        global_mass_series = (mslp_series * weights).sum(dim=(-2, -1))  # [time, B]
+        global_mass_series = (ps_series * weights).sum(dim=(-2, -1))  # [time, B]
 
         return {
-            "mslp_series": mslp_series,
-            "mslp_tendency": mslp_tendency,
+            "ps_series": ps_series,
+            "ps_tendency": ps_tendency,
             "global_mass_series": global_mass_series
         }
 
