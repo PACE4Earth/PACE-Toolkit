@@ -57,31 +57,4 @@ def parse_directory_groups(base_dir, start=None, end=None):
         if parsed is not None:
             results.extend(parsed)
                 
-    print(len(results), "files parsed from directory:", base_dir)
-    
     return results
-
-if __name__ == "__main__":
-    
-    path = Path("/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/corrdiff_output_ensemble_18h.nc")
-    
-    results = parse_file(path)
-    
-    print(len(results))
-    
-    def make_hashable_row(row):
-        """Converts a row into a fully hashable tuple."""
-        new_row = []
-        for element in row:
-            if isinstance(element, list):
-                new_row.append(tuple(element))
-            elif isinstance(element, dict):
-                new_row.append(tuple(sorted(element.items())))
-            else:
-                new_row.append(element)
-        return tuple(new_row)
-
-    unique_items = {make_hashable_row(row) for row in results}
-    unique_count = len(unique_items)
-
-    print(f"The count of unique items is: {unique_count}")
