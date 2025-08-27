@@ -300,7 +300,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
             lon_range=None if self.lon_min is None else [self.lon_min, self.lon_max],
             pressure_levels=self.pressure_levels
         )
-        print('Done')
+        print('Done.')
 
         # Check required fields for metrics
         print('Checking required fields for metrics...')

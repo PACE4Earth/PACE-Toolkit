@@ -20,7 +20,7 @@
     "humidity_temperature": ["all"]
   },
   "spatial": {
-    "pressure_levels": 37,
+    "pressure_levels": 3,
     "lat_range": [45, 50],
     "lon_range": [45, 50]
   },
@@ -29,7 +29,7 @@
     "end": "20210610",
     "num_lead_times": 5, 
     "stride_hours": 6,
-    "sample_percent": 100,
+    "sample_percent": 10,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {

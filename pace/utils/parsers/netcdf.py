@@ -92,21 +92,21 @@ def parse_directory(base_dir, start=None, end=None):
 
             path = Path(root) / file
 
-            # # Optional quick filtering by start/end date strings
-            # if start and end:
-            #     try:
-            #         candidates = [path.stem, path.parent.name, path.parent.parent.name]
-            #         keep = False
-            #         for c in candidates:
-            #             if len(c) >= 8 and c[:8].isdigit():
-            #                 if ((start is None or c[:8] >= start[:8]) and
-            #                     (end is None or c[:8] <= end[:8])):
-            #                     keep = True
-            #                     break
-            #         if not keep:
-            #             continue
-            #     except Exception:
-            #         pass  # ignore filtering errors
+            # Optional quick filtering by start/end date strings
+            if start and end:
+                try:
+                    candidates = [path.stem, path.parent.name, path.parent.parent.name]
+                    keep = False
+                    for c in candidates:
+                        if len(c) >= 8 and c[:8].isdigit():
+                            if ((start is None or c[:8] >= start[:8]) and
+                                (end is None or c[:8] <= end[:8])):
+                                keep = True
+                                break
+                    if not keep:
+                        continue
+                except Exception:
+                    pass  # ignore filtering errors
 
             parsed = parse_file(path)
             if parsed is not None:
