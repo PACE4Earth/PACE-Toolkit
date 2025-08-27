@@ -110,8 +110,9 @@ with $\epsilon = 10^{-5}$ to avoid division by zero.
 - **RMSE aggregated over levels (keep H, W):**
 
 $$
-\text{RMSE}_{H,W} = \sqrt{\frac{1}{L-1} \sum_{i=1}^{L-1} (\Delta \Phi_{\text{error},i})^2 }
+RMSE_{H,W} = \sqrt{\frac{1}{L-1} \sum_{i=1}^{L-1} (\Delta \Phi_{error,i})^2 }
 $$
+
 
 - Absolute and relative errors are **padded with NaN** to match the original level dimension.
 
