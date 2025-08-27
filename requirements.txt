@@ -1,15 +1,15 @@
 # Core scientific computing
-numpy              # Fast array computations
-scipy              # Scientific functions and statistical tools
+numpy              
+scipy             
 
 # Data structures for labeled multi-dimensional arrays
-xarray             # Ideal for handling NetCDF/climate model outputs
-netCDF4            # Appears to be necessary for engine=netcdf4 xarray backend
+xarray             
+netCDF4            
 zarr
 mpi4py
 
 # Machine learning framework
-torch>=2.0         # PyTorch: deep learning and numerical modeling backend
+torch>=2.0         
 
 # Visualization
-matplotlib         # Basic plotting (maps, diagnostics, metrics)
+matplotlib         
