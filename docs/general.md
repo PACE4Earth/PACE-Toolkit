@@ -55,10 +55,10 @@ srun python pace/postprocess.py
 The workflow is controlled by environment variables set within the `.slurm` script:
 
 * `CONFIG_PATH`: **(Required)** Path to the main JSON configuration file that defines the run. Can be also specified as a CLI argument: `--config path/to/config` 
-* `OUTPUT_DIR_PATH`: **(Required)** Directory where the output Zarr datasets will be saved.
+* `OUTPUTS_DIR_PATH`: **(Required)** Directory where the output Zarr datasets will be saved.
 * `PLOTS_DIR_PATH`: Directory for saving plots generated during post-processing.
 
-Note: Paths can be also specified directly in the config
+Note: Paths can be also specified directly in the config.
 
 
 ## 3. Directory Structure
