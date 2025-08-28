@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class EnergyConservation(nn.Module):
     """
-    Compute column-integrated total energy (internal + kinetic + latent).
+    Compute column-integrated total energy (internal + kinetic + latent + potential).
     """
     def __init__(self, grid):
         super().__init__()
