@@ -61,8 +61,7 @@ Example configuration:
       "enabled": true,
       "variable": "geostrophic_wind_ratio",
       "level": 500,
-      "samples": 3,
-      "geopotential_level": 500
+      "samples": 3
     }
   }
 }
@@ -172,7 +171,6 @@ Configures postprocessing and plotting.
 | `spatial_slice.variable`           | string       | Variable to plot.                                                      | *(required if enabled)* |
 | `spatial_slice.level`              | int          | Pressure level (hPa) for slice.                                        | *(required if enabled)* |
 | `spatial_slice.samples`            | int          | Number of random samples to plot.                                      | *(required if enabled)* |
-| `spatial_slice.geopotential_level` | int          | Geopotential level for visualization.                                  | *(optional)*            |
 
 ---
 
