@@ -102,7 +102,7 @@ class GeostrophicWind(nn.Module):
         )[..., 1:-1, 1:-1] / self.dy
 
         # Geostrophic balance equations
-        u_g = - dphi_dy / self.f
+        u_g = dphi_dy / self.f
         v_g = dphi_dx / self.f
 
         # Apply latitude mask: only valid in midlatitudes (30°–80° N/S)
@@ -141,6 +141,8 @@ class GeostrophicWind(nn.Module):
         kernel = self.smoothing_kernel.repeat(ratio.shape[-3], 1, 1, 1).to(ratio.dtype)
         ratio = F.pad(ratio, self.pad, "replicate")
         ratio = F.conv2d(ratio, kernel, groups=ratio.shape[-3], padding=0)
+
+        ratio = ratio.masked_fill((ratio < 0) | (ratio > 2), torch.nan)  # physically bound values
 
         return ratio
 

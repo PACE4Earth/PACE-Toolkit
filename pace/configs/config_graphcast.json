@@ -35,9 +35,9 @@
   "visualization": {
     "plots_dir": null,
     "histogram": false,
-    "vertical_profile": true,
+    "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3},
+    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 2},
     "spatial_average": false
   }
 }

@@ -31,10 +31,10 @@ PROFILE_CONFIG = {
         "max": {"xmin": 0, "xmax": 120, "scale": "linear"},
     },
     "potential_vorticity": {
-        "mean": {"xmin": 1e-1, "xmax": 1e1, "scale": "log"},
-        "stdev": {"xmin": 1e-1, "xmax": 1e1, "scale": "log"},
-        "max": {"xmin": 1e-1, "xmax": 1e3, "scale": "log"},
-        "min": {"xmin": 1e-4, "xmax": 1e1, "scale": "log"},
+        "mean": {"xmin": -5, "xmax": 20, "scale": "linear"},
+        "stdev": {"xmin": -5, "xmax": 20, "scale": "linear"},
+        "max": {"xmin": -5, "xmax": 20, "scale": "linear"},
+        "min": {"xmin": -5, "xmax": 20, "scale": "linear"},
     },
     # Add more variables here with per-stat configs as needed
 }
@@ -208,8 +208,20 @@ def plot_profiles(
             palette = sns.color_palette("tab10", n_colors=len(leadtimes))
 
             for i, lt in enumerate(leadtimes):
+                prof = data_model[i]
+
+                cfg = PROFILE_CONFIG.get(var_name, {}).get(stat, {})
+                xmin, xmax = cfg.get("xmin", None), cfg.get("xmax", None)
+
+                # Mask values outside allowed range
+                mask = ~np.isnan(prof)
+                if xmin is not None:
+                    mask &= prof >= xmin
+                if xmax is not None:
+                    mask &= prof <= xmax
+
                 plt.plot(
-                    data_model[i], pressure_levels,
+                    prof[mask], pressure_levels[mask],
                     label=f"{model_name}: Lt {lt}",
                     color=palette[i % len(palette)],
                     linewidth=1.8,
@@ -217,16 +229,18 @@ def plot_profiles(
 
             if results_ref and var_name in results_ref and stat in results_ref[var_name]:
                 data_ref = results_ref[var_name][stat]
-                if data_ref.shape[0] == n_levels:
-                    plt.plot(
-                        data_ref, pressure_levels,
-                        label=f"{ref_name}",
-                        color='black',
-                        linewidth=2.5,
-                        linestyle='--',
-                    )
-                else:
-                    print(f"Reference data shape mismatch for {var_name} {stat}: {data_ref.shape} vs {n_levels}")
+                mask_ref = ~np.isnan(data_ref)
+                if xmin is not None:
+                    mask_ref &= data_ref >= xmin
+                if xmax is not None:
+                    mask_ref &= data_ref <= xmax
+                plt.plot(
+                    data_ref[mask_ref], pressure_levels[mask_ref],
+                    label=f"{ref_name}",
+                    color="black",
+                    linewidth=2.5,
+                    linestyle="--",
+                )
 
             ax = plt.gca()
             ax.invert_yaxis()

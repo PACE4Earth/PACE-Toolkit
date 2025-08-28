@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import xarray as xr
+import pandas as pd
 
 
 def plot_spatial_slice(
@@ -66,8 +67,22 @@ def plot_spatial_slice(
 
     for i in idxs:
         slice_data = da_level.sel(idx=i).values  # shape (lat, lon)
-        base_time = coords["base_time"][int(i)] if "base_time" in coords else None
-        lead_time = coords["lead_time"][int(i)] if "lead_time" in coords else None
+
+        base_time = da_level.sel(idx=i)["base_time"].values
+        lead_time = da_level.sel(idx=i)["lead_time"].values
+
+        # Convert safely
+        if base_time is not None:
+            base_time = pd.to_datetime(base_time).to_pydatetime()
+            base_time_str = base_time.strftime("%Y-%m-%d %H:%M")
+        else:
+            base_time_str = "N/A"
+
+        if lead_time is not None:
+            lead_time = pd.to_timedelta(lead_time).to_pytimedelta()
+            lead_hours = int(lead_time.total_seconds() // 3600)
+        else:
+            lead_hours = -1
 
         fig, ax = plt.subplots(figsize=(12, 6))
         pcm = ax.pcolormesh(
@@ -75,21 +90,10 @@ def plot_spatial_slice(
             Lat,
             slice_data,
             cmap="viridis",
-            norm=colors.LogNorm(vmin=1e-3, vmax=np.nanmax(slice_data)),
+            norm=colors.LogNorm(vmin=np.nanmin(slice_data), vmax=np.nanmax(slice_data)),
         )
         cbar = fig.colorbar(pcm, ax=ax, pad=0.02)
         cbar.set_label(variable.replace("_", " ").capitalize(), fontsize=14)
-
-        # Format title
-        if base_time is not None:
-            base_time_str = np.datetime_as_string(base_time, unit="m")
-        else:
-            base_time_str = "N/A"
-
-        if lead_time is not None:
-            lead_hours =  lead_time.astype('timedelta64[h]').astype(int)
-        else:
-            lead_hours = -1
 
         ax.set_title(
             f"{dataset_name.capitalize()}: {variable.replace('_', ' ').capitalize()} | "
@@ -107,10 +111,18 @@ def plot_spatial_slice(
         ax.set_yticklabels(add_degree_symbols(ax.get_yticks()))
 
         plt.tight_layout()
+        # Compute valid time
+        if base_time is not None and lead_time is not None:
+            valid_time = base_time + lead_time
+            valid_str = valid_time.strftime("%Y%m%d_%H%M")
+        else:
+            valid_str = "NA"
+
+        # Use valid time in filename
         filename = (
-            f"{dataset_name}_{variable}_level{int(selected_level)}_"
-            f"lead{lead_hours}h.png"
+            f"{dataset_name}_{variable}_level{int(selected_level)}_valid{valid_str}.png"
         )
+
         path = os.path.join(out_dir, filename)
         plt.savefig(path, dpi=300)
         plt.close()

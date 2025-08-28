@@ -134,6 +134,8 @@ class PotentialVorticity(nn.Module):
         pv_pvu[:, 0] = float('nan')
         pv_pvu[:, -1] = float('nan')
 
+        pv_pvu =  pv_pvu.masked_fill((pv_pvu < -20) | (pv_pvu > 50), torch.nan)  # physical bounds
+
         return pv_pvu
 
     def output_keys(self):
