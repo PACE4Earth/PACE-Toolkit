@@ -9,7 +9,7 @@ class EnergyConservation(nn.Module):
     def __init__(self, grid):
         super().__init__()
         self.cpd = 1005.0  # J/(kg·K), cp dry air
-        self.cpv = 1952.0  # J/(kg·K), cp water vapor
+        self.cpv = 1855.0  # J/(kg·K), cp water vapor
         self.L_v = 2.5e6  # J/kg, latent heat of vaporization     
         self.g = 9.81     # m/s²
 
