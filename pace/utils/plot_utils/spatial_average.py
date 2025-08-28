@@ -45,12 +45,23 @@ def plot_spatial_averages(
         field = da_mean.values
 
         fig, ax = plt.subplots(figsize=(12, 6))
+        
+        # Compute min and max for the field
+        data_min = np.nanmin(field)
+        data_max = np.nanmax(field)
+
+        # Decide if log scale is possible
+        if data_min > 0 and data_max / data_min > 100:  # threshold for log scale
+            norm = colors.LogNorm(vmin=data_min, vmax=data_max)
+        else:
+            norm = None  # default linear scale
+
         pcm = ax.pcolormesh(
             Lon,
             Lat,
             field,
             cmap="viridis",
-            norm=colors.LogNorm(vmin=1e-3, vmax=np.nanmax(field)),
+            norm=norm,
         )
         cbar = fig.colorbar(pcm, ax=ax, pad=0.02)
         cbar.set_label(variable.replace("_", " ").capitalize(), fontsize=14)

@@ -41,7 +41,6 @@ PROFILE_CONFIG = {
 
 use_weights = True  # Set to False to disable latitude weighting
 
-
 def compute_summary_stats(
     store: Dict[str, xr.DataArray],
     latitudes: np.ndarray,
@@ -65,33 +64,37 @@ def compute_summary_stats(
         - np.ndarray shape [num_levels] for reference
     """
 
-    # Precompute weights
+    # --- Prepare weighting ---
     if use_weights:
         lat_radians = np.deg2rad(latitudes)
-        weights_1d = np.cos(lat_radians)
-        weights_1d = np.clip(weights_1d, 0, None)
-        weights_1d = weights_1d / np.sum(weights_1d)  # normalized
+        lat_weights = np.cos(lat_radians)  # shape [lat]
+        lat_weights = np.clip(lat_weights, 0, None)
 
         def weighted_mean(data: np.ndarray) -> np.ndarray:
-            w2d = weights_1d[None, :, None]  # broadcast to lat/lon
-            return np.nansum(data * w2d, axis=(-2, -1)) / np.nansum(w2d)
+            # data: [samples, level, lat, lon]
+            # apply lat weights across latitude axis only
+            w = lat_weights[None, None, :, None]  # broadcast to [1,1,lat,1]
+            weighted_sum = np.nansum(data * w, axis=2)  # sum over lat
+            sum_w = np.nansum(w, axis=2)  # sum weights over lat
+            return np.nanmean(weighted_sum / sum_w, axis=(0, -1))  # mean over samples & lon
 
         def weighted_stdev(data: np.ndarray, mean: np.ndarray) -> np.ndarray:
-            w2d = weights_1d[None, :, None]
-            var = np.nansum(((data - mean[:, None, None]) ** 2) * w2d, axis=(-2, -1)) / np.nansum(w2d)
-            return np.sqrt(var)
+            w = lat_weights[None, None, :, None]
+            mean_exp = mean[None, :, None, None]
+            var_lat = np.nansum(w * (data - mean_exp)**2, axis=2) / np.nansum(w, axis=2)
+            return np.sqrt(np.nanmean(var_lat, axis=(0, -1)))  # mean over samples & lon
     else:
         def weighted_mean(data: np.ndarray) -> np.ndarray:
-            return np.nanmean(data, axis=(-2, -1))
+            return np.nanmean(data, axis=(0, -2, -1))
 
         def weighted_stdev(data: np.ndarray, mean: np.ndarray) -> np.ndarray:
-            return np.nanstd(data, axis=(-2, -1))
+            return np.nanstd(data, axis=(0, -2, -1))
 
     def nan_min(data: np.ndarray) -> np.ndarray:
-        return np.nanmin(data, axis=(-2, -1))
+        return np.nanmin(data, axis=(0, -2, -1))
 
     def nan_max(data: np.ndarray) -> np.ndarray:
-        return np.nanmax(data, axis=(-2, -1))
+        return np.nanmax(data, axis=(0, -2, -1))
 
     stat_funcs = {
         "mean": weighted_mean,
@@ -102,7 +105,6 @@ def compute_summary_stats(
 
     results: Dict[str, Dict[str, np.ndarray]] = {}
 
-    # Only compute variables defined in PROFILE_CONFIG
     for var_name, arr in store.items():
         if var_name not in PROFILE_CONFIG:
             continue
@@ -121,14 +123,14 @@ def compute_summary_stats(
 
             for lt in leadtimes_sorted:
                 idx_mask = (lt_hours_all == lt)
-                subset = arr.isel(idx=np.where(idx_mask)[0]).values  # shape [n_samples, level, lat, lon]
+                subset = arr.isel(idx=np.where(idx_mask)[0]).values  # [n_samples, level, lat, lon]
                 if subset.size == 0:
                     continue
 
-                mean_val = stat_funcs["mean"](subset)
+                mean_val = weighted_mean(subset)
                 for stat in summary_stats:
                     if stat == "stdev":
-                        val = stat_funcs["stdev"](subset, mean_val)
+                        val = weighted_stdev(subset, mean_val)
                     elif stat == "mean":
                         val = mean_val
                     elif stat == "min":
@@ -139,7 +141,7 @@ def compute_summary_stats(
                         continue
                     stat_per_lt[stat].append(val)
 
-            # Stack per-leadtime
+            # Stack per-leadtime → shape (num_leadtimes, n_levels)
             for stat in summary_stats:
                 if stat_per_lt[stat]:
                     results[var_name][stat] = np.stack(stat_per_lt[stat], axis=0)
@@ -147,14 +149,14 @@ def compute_summary_stats(
         # --- REFERENCE: collapse all leadtimes ---
         else:
             results[var_name] = {}
-            subset = arr.values  # [idx, level, lat, lon]
+            subset = arr.values  # [n_samples, level, lat, lon]
             if subset.size == 0:
                 continue
 
-            mean_val = stat_funcs["mean"](subset)
+            mean_val = weighted_mean(subset)
             for stat in summary_stats:
                 if stat == "stdev":
-                    val = stat_funcs["stdev"](subset, mean_val)
+                    val = weighted_stdev(subset, mean_val)
                 elif stat == "mean":
                     val = mean_val
                 elif stat == "min":
@@ -163,12 +165,11 @@ def compute_summary_stats(
                     val = nan_max(subset)
                 else:
                     continue
-                results[var_name][stat] = val  # shape [levels]
+                results[var_name][stat] = val  # shape [n_levels]
 
     return results
 
 
-# plot_profiles remains unchanged
 def plot_profiles(
     results_model: Dict[str, Dict[str, np.ndarray]],
     results_ref: Optional[Dict[str, Dict[str, np.ndarray]]],

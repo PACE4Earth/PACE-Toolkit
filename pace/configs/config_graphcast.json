@@ -29,15 +29,15 @@
     "end": "20210612",
     "num_lead_times": 40, 
     "stride_hours": 6,
-    "sample_percent": 1,
+    "sample_percent": 50,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {
     "plots_dir": null,
-    "histogram": true,
+    "histogram": false,
     "vertical_profile": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3},
-    "spatial_average": true
+    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3},
+    "spatial_average": false
   }
 }

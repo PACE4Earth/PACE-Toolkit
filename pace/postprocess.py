@@ -90,7 +90,7 @@ def main():
     model_name = config['datasets']['model']['name']
     model_path = outputs_dir / f"{model_name}.zarr"
     model_store, coords, model_ds = open_xarray_zarr(model_path)
-    model_leadtimes = select_sample_leadtimes(model_ds, max_leadtimes=config["time"]["num_lead_times"])
+    model_leadtimes = select_sample_leadtimes(model_ds, max_leadtimes=5)
 
     # --- REFERENCE dataset ---
     ref_name = None
