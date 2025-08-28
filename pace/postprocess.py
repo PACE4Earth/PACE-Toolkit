@@ -10,7 +10,10 @@ from mpi4py import MPI
 
 
 def is_viz_enabled(config: dict, key: str) -> bool:
-    return bool(config.get("visualization", {}).get(key, False))
+    value = config.get("visualization", {}).get(key, False)
+    if isinstance(value, dict):
+        return value.get("enabled", False)
+    return bool(value)
 
 
 def open_xarray_zarr(zarr_path):
@@ -22,7 +25,7 @@ def open_xarray_zarr(zarr_path):
         coords: dict of coordinates (numpy arrays)
         ds: full xarray.Dataset (lazy)
     """
-    ds = xr.open_zarr(zarr_path, consolidated=True)  # lazy loading
+    ds = xr.open_zarr(zarr_path)  # lazy loading
     var_store = {var: ds[var] for var in ds.data_vars}
 
     coords = {name: ds.coords[name].values for name in ['lat', 'lon', 'level', 'base_time', 'lead_time'] if name in ds.coords}
@@ -182,10 +185,9 @@ def main():
             print("\nRunning spatial slice visualization...")
 
             spatial_cfg = config["visualization"]["spatial_slice"]
-            variable = spatial_cfg.get("variable", "temperature")
+            variable = spatial_cfg.get("variable", "")
             level = spatial_cfg.get("level", 850)  # hPa
             samples = spatial_cfg.get("samples", 1)
-            geopotential_level = spatial_cfg.get("geopotential_level", None)
 
             spatial_slice.plot_spatial_slice(
                 model_store,
@@ -193,8 +195,6 @@ def main():
                 variable=variable,
                 level=level,
                 samples=samples,
-                geopotential=model_store if "geopotential" in model_store else None,
-                geopotential_level=geopotential_level,
                 save_dir=str(plots_dir),
                 dataset_name=model_name,
             )
@@ -206,8 +206,6 @@ def main():
                     variable=variable,
                     level=level,
                     samples=samples,
-                    geopotential=ref_store if "geopotential" in ref_store else None,
-                    geopotential_level=geopotential_level,
                     save_dir=str(plots_dir),
                     dataset_name=ref_name,
                 )
@@ -216,6 +214,34 @@ def main():
 
     except Exception as e:
         print(e)
+
+
+    # --- SPATIAL AVERAGE visualization ---
+    try:
+        if is_viz_enabled(config, "spatial_average"):
+            from utils.plot_utils import spatial_average
+            print("\nRunning spatial average visualization...")
+
+            spatial_average.plot_spatial_averages(
+                model_store,
+                coords,
+                save_dir=str(plots_dir),
+                dataset_name=model_name,
+            )
+
+            if ref_store:
+                spatial_average.plot_spatial_averages(
+                    ref_store,
+                    coords,
+                    save_dir=str(plots_dir),
+                    dataset_name=ref_name,
+                )
+        else:
+            print("Spatial average visualization disabled in config.\n")
+
+    except Exception as e:
+        print(e)
+
 
     time_end = time.perf_counter()
     print(f"\nElapsed time: {time_end - time_start:.2f} s")

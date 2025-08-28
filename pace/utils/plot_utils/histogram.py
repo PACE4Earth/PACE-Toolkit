@@ -5,6 +5,8 @@ from typing import List, Dict, Tuple, Optional
 import seaborn as sns
 import xarray as xr
 
+# Configuration for histogram binning of each variable.
+# Each entry specifies the min/max values and whether to use linear or log scaling.
 BIN_CONFIG = {
     "geostrophic_wind_ratio": {"vmin": 0, "vmax": 2, "scale": "linear"},
     "hydrostatic_abs_error": {"vmin": 1e-3, "vmax": 1e4, "scale": "log"},
@@ -19,7 +21,27 @@ BIN_CONFIG = {
 def get_bins_for_variable(
     var_name: str, vmin: float, vmax: float, bins: int, scale: str
 ) -> np.ndarray:
-    """Return bin edges array based on scale type."""
+    """
+    Generate bin edges for histogram computation.
+
+    Parameters
+    ----------
+    var_name : str
+        Name of the variable.
+    vmin : float
+        Minimum value of the range.
+    vmax : float
+        Maximum value of the range.
+    bins : int
+        Number of bins to create.
+    scale : str
+        Scale type: "linear" or "log".
+
+    Returns
+    -------
+    np.ndarray
+        Array of bin edges.
+    """
     if scale == "log":
         epsilon = 1e-10  # small offset to avoid log(0)
         if vmin <= 0:
@@ -37,16 +59,32 @@ def compute_histograms(
     bin_config: Dict[str, Dict] = None,
 ) -> Tuple[Dict[str, Dict], Dict[str, Dict[int, Tuple[np.ndarray, np.ndarray]]]]:
     """
-    Compute histograms only for variables defined in bin_config and present in store.
-    Skips variables that have no data.
+    Compute normalized histograms for variables defined in bin_config and present in store.
 
-    `store` is expected to be {var_name: DataArray}.
-    Here, `lead_time` is a coordinate (on dimension `idx`), NOT a dim itself.
+    Parameters
+    ----------
+    store : dict
+        Dictionary mapping variable names to xarray.DataArray objects.
+        Each DataArray may include coordinate `lead_time` (aligned along dimension `idx`).
+    selected_leadtimes : list of int, optional
+        Specific lead times (in hours) to compute histograms for.
+        If None, all available lead times are used.
+    bins : int
+        Number of histogram bins.
+    bin_config : dict
+        Configuration mapping variable names to {"vmin", "vmax", "scale"}.
+
+    Returns
+    -------
+    filtered_bin_config : dict
+        Subset of bin_config containing only variables present in store.
+    hist_result : dict
+        {var_name: {lead_time: (bin_centers, normalized_counts)}}
     """
     if bin_config is None:
         raise ValueError("bin_config must be provided with variable bin specifications")
 
-    # Precompute bin edges for variables in config
+    # Precompute bin edges for all variables
     bin_edges_map = {
         var_name: get_bins_for_variable(
             var_name,
@@ -65,12 +103,13 @@ def compute_histograms(
             continue
 
         if ("idx" in arr.dims) and ("lead_time" in arr.coords):
-            # lead_time is a coordinate aligned along idx
+            # Case: data with lead_time coordinate
             lt_hours_all = np.array(arr.coords["lead_time"].values, dtype="timedelta64[h]").astype(int)
+
+            # Select lead times
             if selected_leadtimes is None:
                 leadtimes_to_use = np.unique(lt_hours_all)
             else:
-                # intersect with what actually exists in this array
                 leadtimes_to_use = [lt for lt in selected_leadtimes if np.any(lt_hours_all == lt)]
 
             for lt_hours in leadtimes_to_use:
@@ -78,7 +117,7 @@ def compute_histograms(
                 if not np.any(idx_mask_np):
                     continue
 
-                # Build an xarray mask on the idx dimension and drop others
+                # Subset values for this lead time
                 idx_mask = xr.DataArray(idx_mask_np, dims=("idx",), coords={"idx": arr["idx"]})
                 subset = arr.where(idx_mask, drop=True).values
 
@@ -89,6 +128,7 @@ def compute_histograms(
                 values = subset[mask].ravel()
                 counts, _ = np.histogram(values, bins=bin_edges_map[var_name])
 
+                # Accumulate counts
                 if var_name not in hist_data:
                     hist_data[var_name] = {}
                 if lt_hours in hist_data[var_name]:
@@ -96,7 +136,7 @@ def compute_histograms(
                 else:
                     hist_data[var_name][lt_hours] = counts
         else:
-            # No lead_time coordinate to split by: aggregate all samples
+            # Case: no lead_time coordinate → aggregate all values
             data = arr.values
             mask = ~np.isnan(data)
             if not np.any(mask):
@@ -107,15 +147,15 @@ def compute_histograms(
 
             if var_name not in hist_data:
                 hist_data[var_name] = {}
-            hist_data[var_name][0] = counts  # dummy lead time
+            hist_data[var_name][0] = counts  # dummy lead time (0)
 
-    # Convert to normalized histograms with bin centers
+    # Normalize histograms and compute bin centers
     hist_result: Dict[str, Dict[int, Tuple[np.ndarray, np.ndarray]]] = {}
     filtered_bin_config: Dict[str, Dict] = {}
 
     for var_name, lt_dict in hist_data.items():
         bin_edges = bin_edges_map[var_name]
-        centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+        centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])  # midpoints
         hist_result[var_name] = {}
         for lt, counts in lt_dict.items():
             total = counts.sum()
@@ -136,17 +176,37 @@ def plot_hist(
     model_name: str = "Model",
     ref_name: str = "Reference"
 ):
+    """
+    Plot and save histograms for model and reference data.
+
+    Parameters
+    ----------
+    model_hist : dict
+        Histogram results for the model
+        {var_name: {lead_time: (centers, normalized_counts)}}.
+    ref_hist : dict
+        Histogram results for the reference data
+        {var_name: {lead_time: (centers, normalized_counts)}}.
+    output_dir : Path
+        Directory where plots will be saved (inside a "histograms" subfolder).
+    bin_config : dict, optional
+        Configuration of variables (used to determine log/linear axis scaling).
+    model_name : str
+        Label for the model in the legend.
+    ref_name : str
+        Label for the reference in the legend.
+    """
     sns.set_style("whitegrid")
     out_dir = output_dir / "histograms"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # color count = number of lead times in the first metric
+    # Choose color palette: one color per lead time
     palette = sns.color_palette("tab10", n_colors=len(next(iter(model_hist.values()))))
 
     for metric in model_hist.keys():
         plt.figure(figsize=(8, 6))
 
-        # Plot model histograms with colors
+        # Plot model histograms, separated by lead time
         for i, (lt, (centers, counts)) in enumerate(sorted(model_hist[metric].items(), key=lambda x: x[0])):
             plt.plot(
                 centers, counts,
@@ -155,7 +215,7 @@ def plot_hist(
                 color=palette[i % len(palette)],
             )
 
-        # Plot reference histogram aggregated over lead times
+        # Plot reference histogram as an aggregate (summed over lead times)
         if metric in ref_hist and ref_hist[metric]:
             total_counts = None
             centers = None
@@ -172,6 +232,7 @@ def plot_hist(
                     color="black",
                 )
 
+        # Axis labels and formatting
         plt.title(f"Histogram - {metric.replace('_', ' ').capitalize()}", fontsize=16, weight="bold")
         plt.xlabel(f"{metric.replace('_', ' ').capitalize()}", fontsize=14)
         plt.ylabel("Probability Density", fontsize=14)
@@ -185,13 +246,16 @@ def plot_hist(
 
         plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=1)
 
+        # Apply log scale if requested
         if bin_config and metric in bin_config:
             if bin_config[metric].get("scale", "linear") == "log":
                 plt.xscale("log")
 
+        # Legend styling
         leg = plt.legend(frameon=True, fontsize=12, loc="best", edgecolor="black", fancybox=True)
         leg.get_frame().set_alpha(0.9)
 
+        # Save figure
         plt.tight_layout()
         plt.savefig(out_dir / f"{metric}.png", dpi=300)
         print(f"Saved: {out_dir}/{metric}.png")

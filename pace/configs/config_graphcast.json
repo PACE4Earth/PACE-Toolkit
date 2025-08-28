@@ -20,16 +20,16 @@
     "humidity_temperature": ["all"]
   },
   "spatial": {
-    "pressure_levels": 3,
-    "lat_range": [45, 50],
-    "lon_range": [45, 50]
+    "pressure_levels": 37,
+    "lat_range": [40, 60],
+    "lon_range": [40, 60]
   },
   "time": {
     "start": "20210601",
-    "end": "20210610",
-    "num_lead_times": 5, 
+    "end": "20210612",
+    "num_lead_times": 40, 
     "stride_hours": 6,
-    "sample_percent": 10,
+    "sample_percent": 25,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {
@@ -37,6 +37,7 @@
     "histogram": true,
     "vertical_profile": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
+    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3},
+    "spatial_average": true
   }
 }
