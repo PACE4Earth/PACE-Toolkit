@@ -33,7 +33,10 @@ def plot_corr_time_series(
     
         
     model_data = model_ds['correlation_map'].values
-    ref_data = ref_ds['correlation_map'].values 
+    if ref_ds == None:
+        ref_data = np.zeros_like(model_data)
+    else:
+        ref_data = ref_ds['correlation_map'].values 
     
     _, c, _, _ = model_data.shape
     rows, cols = np.triu_indices(c, k=1)
@@ -54,6 +57,6 @@ def plot_corr_time_series(
         plt.colorbar(im, ax=axs[i])
   
     plt.tight_layout()
-    plt.savefig(os.path.join(plots_dir, f'correlation_map.png'))
+    plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))
     
     return

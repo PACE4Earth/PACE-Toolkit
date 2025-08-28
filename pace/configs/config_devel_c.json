@@ -13,7 +13,11 @@
   },
   "time": {
     "start": "20130601",
-    "end": "20130630",
+    "end": "20130604",
     "sample_percent": 100
+  },
+  "visualization": {
+    "correlation": true,
+    "correlation_map": true
   }
 }
