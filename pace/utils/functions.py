@@ -67,8 +67,8 @@ def evaluate_accumulated(logger, metric_handler, dataset_name, comm):
             module.evaluate(logger, comm)
             # print(metric, 'success')
         except Exception as e:
-            # if comm.Get_rank() == 0:
-                # print(metric, e)
+            if comm.Get_rank() == 0:
+                print(metric, e)
                 pass
     
     return None

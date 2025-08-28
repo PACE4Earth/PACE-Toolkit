@@ -26,13 +26,13 @@ def plot_corr_time_series(
     
     for it, (name, ds) in enumerate(zip(names, dss)):
                            
-        ds = ds.where(ds.lead_time==np.timedelta64(24, 'h'))
+        # ds = ds.where(ds.lead_time==np.timedelta64(24, 'h'))
 
         valid_times = ds['base_time'].values + ds['lead_time'].values
         
-        print('DEBUG___________________________________________')
-        for bt, lt in zip(ds['base_time'].values, ds['lead_time'].values):
-            print('valid_time <- base_time + lead_time', bt+lt, bt, lt)
+        # print('DEBUG___________________________________________')
+        # for bt, lt in zip(ds['base_time'].values, ds['lead_time'].values):
+        #     print('valid_time <- base_time + lead_time', bt+lt, bt, lt)
         
         sample = ds['corr_column']
         data = sample.values

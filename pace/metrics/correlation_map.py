@@ -9,6 +9,8 @@ from torch.nn import functional as F
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
+from .operators import standardize
+
 VARIABLES = [
     '2m_temperature',
     '10m_u_component_of_wind',
@@ -75,9 +77,12 @@ class CorrelationMap(nn.Module):
                     
         data = torch.stack(processed_tensors, dim=0).contiguous()
         c, n, h, w = data.shape
+        
+        # for di in data:
+        #     print(di.min(), di.max())
 
         with torch.no_grad():
-            self.count += data.shape[0]
+            self.count += 1 # data.shape[1]
             self.sum_c += torch.sum(data, dim=0, keepdim=True)
             self.sum_c_sq += torch.sum(data**2, dim=0, keepdim=True)
             self.sum_cc += torch.einsum('bchw,bdhw->cdhw', data, data)
@@ -147,6 +152,31 @@ class CorrelationMap(nn.Module):
         4.  Rank 0 computes the final correlation map and returns it.
         5.  Other ranks return None.
         """
+    
+        # correlation_map = self.compute_correlation().squeeze(0)
+        
+        # print(correlation_map.shape)
+        
+        # output_zarr_path = logger.path
+    
+        
+        # # === Part 1: Reduction Logic (executed by ALL ranks) ===
+        # zarr_path = logger.path
+        # synchronizer = zarr.ProcessSynchronizer(f'{zarr_path}.sync')
+        # store = zarr.DirectoryStore(zarr_path)
+        # root = zarr.group(store=store, synchronizer=synchronizer, overwrite=False)
+
+        # # 3. Write the data variables and link them to coordinates via attributes
+        # corr_arr = root.create_dataset(
+        #     'correlation_map',
+        #     data=correlation_map.numpy(),
+        #     dtype='f4'
+        # )
+        # corr_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
+
+        # print('Correlation map computed and saved.')
+        
+        
         rank = comm.Get_rank()
         size = comm.Get_size()
         zarr_path = logger.path
@@ -167,6 +197,7 @@ class CorrelationMap(nn.Module):
         comm.Barrier()
 
         # === Part 2: Aggregation & Calculation (executed ONLY by rank 0) ===
+        print(rank)
         if rank == 0:
             print("Rank 0 is aggregating results from all ranks...")
             # Initialize with its own data
@@ -185,19 +216,41 @@ class CorrelationMap(nn.Module):
 
             print(f"Aggregation complete. Total count: {global_count}")
 
-                # --- Correlation Calculation ---
-            global_sum_c_prod = global_sum_c * global_sum_c.transpose(1, 0)
-            numerator = global_count * global_sum_cc - global_sum_c_prod
+            # ... (aggregation as before) ...
             
-            var_term = global_count * global_sum_c_sq - global_sum_c_sq
-            denominator_sq = var_term*var_term.transpose(1,0)
+            N = global_count
+            
+            # --- Correlation Calculation (using a more stable formula) ---
+            
+            # Numerator: N * sum(XY) - sum(X) * sum(Y)
+            sum_x = global_sum_c.squeeze(0)
+            sum_y = global_sum_c.squeeze(0) # for the correlation, this is the same tensor
+            
+            # The numerator's cross-product term is a bit tricky
+            sum_x_sum_y = torch.einsum('chw,dhw->cdhw', sum_x, sum_y)
+            numerator = N * global_sum_cc - sum_x_sum_y
+
+            # Denominator: sqrt((N * sum(X^2) - sum(X)^2) * (N * sum(Y^2) - sum(Y)^2))
+            sum_x_sq = global_sum_c_sq.squeeze(0)
+            sum_y_sq = global_sum_c_sq.squeeze(0) # same tensor
+
+            # The variance terms
+            var_x_term = N * sum_x_sq - sum_x**2
+            var_y_term = N * sum_y_sq - sum_y**2
+            
+            # Clamp for numerical stability
+            var_x_term = torch.clamp(var_x_term, min=0)
+            var_y_term = torch.clamp(var_y_term, min=0)
+
+            # The full denominator
+            denominator_sq = torch.einsum('chw,dhw->cdhw', var_x_term, var_y_term)
             denominator = torch.sqrt(denominator_sq + 1e-6)
+
+            # Final correlation map
+            correlation_map = numerator / (denominator + 1e-6)
+
             
-            print(numerator.shape, denominator.shape)
-            
-            correlation_map = numerator / denominator
-            
-            print(correlation_map.shape)
+            print(correlation_map.shape, correlation_map.min(), correlation_map.max())
             
             output_zarr_path = logger.path
         
@@ -209,35 +262,8 @@ class CorrelationMap(nn.Module):
             )
             corr_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
 
-            # gsc_arr = root.create_dataset(
-            #     'global_sum_c', 
-            #     data=global_sum_c.numpy(), 
-            #     dtype='f4',
-            # )
-            # gsc_arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var', 'lat', 'lon']
-            
-            # gscs_arr = root.create_dataset('global_sum_c_sq', data=global_sum_c_sq.numpy(), dtype='f4')
-            # gscs_arr.attrs['_ARRAY_DIMENSIONS'] = ['idx', 'var', 'lat', 'lon']
+            print('Correlation map computed and saved.')
 
-            # gscc_arr = root.create_dataset('global_sum_cc', data=global_sum_cc.numpy(), dtype='f4')
-            # gscc_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
-
-            # root.create_dataset('global_count', data=global_count)
-        # --- END OF MODIFIED SECTION ---
-            
-            # if output_zarr_path:
-            
-            #     print(f"Rank 0 writing correlation map to: {output_zarr_path}")
-            #     output_root = zarr.open_group(output_zarr_path, mode='w')
-            #     corr_arr = output_root.create_dataset(
-            #         'correlation_map',
-            #         shape=correlation_map.shape,
-            #         dtype='f4',
-            #         data=correlation_map.numpy(),
-            #     )
-            #     corr_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
-            #     corr_arr.attrs['variable_names'] = self.variables
-                
             return correlation_map
         else:
             return None

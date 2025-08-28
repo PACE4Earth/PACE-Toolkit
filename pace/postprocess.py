@@ -172,9 +172,29 @@ def main():
                 plots_dir=plots_dir,
             )
             
-
         else:
             print("Correlation visualization disabled in config.\n")
+    except Exception as e:
+        print(e)
+        
+    
+    try:
+        if is_viz_enabled(config, "correlation_map"):
+            print("\nRunning correlation map visualization...")
+            
+            from utils.plot_utils import correlation_map
+            
+            correlation_map.plot_corr_time_series(
+                model_ds=model_ds,
+                ref_ds=ref_ds,
+                model_name=model_name,
+                ref_name=ref_name,
+                plots_dir=plots_dir,
+                coords=coords,
+            )
+            
+        else:
+            print("Correlation map visualization disabled in config.\n")
     except Exception as e:
         print(e)
         
