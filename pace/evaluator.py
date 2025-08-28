@@ -221,6 +221,7 @@ def main(distributed=False):
             if os.path.exists(lockfile):
                 shutil.rmtree(lockfile)
             # Consolidate Zarr metadata for multi-rank access
+            grp = zarr.open_group(store_path, mode="r")
             zarr.consolidate_metadata(store_path)
         print("Metadata consolidation complete.\n")
 

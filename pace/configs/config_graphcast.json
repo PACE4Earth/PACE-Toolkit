@@ -29,7 +29,7 @@
     "end": "20210612",
     "num_lead_times": 40, 
     "stride_hours": 6,
-    "sample_percent": 25,
+    "sample_percent": 1,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {
