@@ -14,6 +14,7 @@ BIN_CONFIG = {
     "hydrostatic_rmse": {"vmin": 1e1, "vmax": 1e4, "scale": "log"},
     "relative_humidity": {"vmin": 5, "vmax": 105, "scale": "linear"},
     "potential_vorticity": {"vmin": 1e-1, "vmax": 1e1, "scale": "log"},
+    "total_energy": {"vmin": 300000, "vmax": 400000, "scale": "linear"},
     # Add more variables here as needed
 }
 

@@ -69,15 +69,15 @@ class EnergyConservation(nn.Module):
         outputs = {'total_energy': E_total}
 
         # Column-integrated
-        if self.p_levels is not None:
-            outputs['total_energy_column'] = self.vertical_integrate(E_total)
+        # if self.p_levels is not None:
+        #     outputs['total_energy_column'] = self.vertical_integrate(E_total)
 
         return outputs
 
     def output_keys(self):
         keys = ['total_energy']
-        if self.p_levels is not None:
-            keys.append('total_energy_column')
+        # if self.p_levels is not None:
+        #     keys.append('total_energy_column')
         return keys
 
 """

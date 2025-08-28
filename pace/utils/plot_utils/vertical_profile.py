@@ -36,6 +36,12 @@ PROFILE_CONFIG = {
         "max": {"xmin": -5, "xmax": 20, "scale": "linear"},
         "min": {"xmin": -5, "xmax": 20, "scale": "linear"},
     },
+    "total_energy": {
+        "mean": {"xmin": 300000, "xmax": 400000, "scale": "linear"},
+        "stdev": {"xmin": 0, "xmax": 15000, "scale": "linear"},
+        "max": {"xmin": 300000, "xmax": 400000, "scale": "linear"},
+        "min": {"xmin": 280000, "xmax": 380000, "scale": "linear"},
+    },
     # Add more variables here with per-stat configs as needed
 }
 

@@ -14,10 +14,9 @@
   "metrics": {
     "geostrophic_balance": ["geostrophic_wind_ratio"],
     "hydrostatic_balance": ["all"],
-    "correlation": ["all"],
-    "correlation_map": ["all"],
     "potential_vorticity": ["all"],
-    "humidity_temperature": ["all"]
+    "humidity_temperature": ["all"],
+    "energy_conservation": ["all"]
   },
   "spatial": {
     "pressure_levels": 37,
@@ -27,17 +26,17 @@
   "time": {
     "start": "20210601",
     "end": "20210612",
-    "num_lead_times": 40, 
+    "num_lead_times": 10, 
     "stride_hours": 6,
-    "sample_percent": 50,
+    "sample_percent": 10,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {
     "plots_dir": null,
-    "histogram": false,
-    "vertical_profile": false,
+    "histogram": true,
+    "vertical_profile": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
     "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 2},
-    "spatial_average": false
+    "spatial_average": true
   }
 }
