@@ -16,8 +16,8 @@
     "correlation_map": ["all"]
   },
   "time": {
-    "start": "20210601",
-    "end": "20210604",
+    "start": "20210906",
+    "end": "202109008",
     "num_lead_times": 40, 
     "stride_hours": 6,
     "sample_percent": 100,

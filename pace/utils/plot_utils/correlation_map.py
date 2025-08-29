@@ -52,11 +52,16 @@ def plot_corr_time_series(
         im = axs[i].pcolormesh(
             Lon,
             Lat,
-            model_tri_data[i]-ref_tri_data[i],
+            (model_tri_data[i]-ref_tri_data[i])/(h*w),
+            # model_data[i, i]
         )
         plt.colorbar(im, ax=axs[i])
   
     plt.tight_layout()
-    plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))
+    # plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))
+    # plt.savefig(os.path.join(plots_dir, f'correlation_map_rea2.png'))
+    plt.savefig(os.path.join(plots_dir, f'correlation_map_exp.png'))
+    
+    print()
     
     return

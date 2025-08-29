@@ -176,6 +176,7 @@ class CorrelationMap(nn.Module):
 
         # print('Correlation map computed and saved.')
         
+        # return correlation_map
         
         rank = comm.Get_rank()
         size = comm.Get_size()
@@ -239,8 +240,8 @@ class CorrelationMap(nn.Module):
             var_y_term = N * sum_y_sq - sum_y**2
             
             # Clamp for numerical stability
-            var_x_term = torch.clamp(var_x_term, min=0)
-            var_y_term = torch.clamp(var_y_term, min=0)
+            var_x_term = torch.clamp(var_x_term, min=1e-4)
+            var_y_term = torch.clamp(var_y_term, min=1e-4)
 
             # The full denominator
             denominator_sq = torch.einsum('chw,dhw->cdhw', var_x_term, var_y_term)
