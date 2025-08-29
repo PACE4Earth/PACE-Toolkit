@@ -84,10 +84,12 @@ class MPIZarrSaver:
         """
 
         # Coordinate datasets
-        arr = self.root.create_dataset('lat', data=np.array(self.lat), dtype='f4', overwrite=True)
+        arr = self.root.create_dataset('lat', shape=(len(self.lat),), chunks=(1,), dtype='f4', fill_value=np.nan, overwrite=True)
+        arr[:] = np.array(self.lat, dtype='f4')  # fill explicitly
         arr.attrs['_ARRAY_DIMENSIONS'] = ['lat']
 
-        arr = self.root.create_dataset('lon', data=np.array(self.lon), dtype='f4', overwrite=True)
+        arr = self.root.create_dataset('lon', shape=(len(self.lon),), chunks=(1,), dtype='f4', fill_value=np.nan, overwrite=True)
+        arr[:] = np.array(self.lon, dtype='f4')  # fill explicitly
         arr.attrs['_ARRAY_DIMENSIONS'] = ['lon']
 
         if self.level is not None:

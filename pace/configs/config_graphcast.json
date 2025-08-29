@@ -15,16 +15,16 @@
     "mass_conservation": ["all"]
   },
   "spatial": {
-    "pressure_levels": 37,
-    "lat_range": "all",
-    "lon_range": "all"
+    "pressure_levels": 2,
+    "lat_range": [0, 10],
+    "lon_range": [0, 10]
   },
   "time": {
     "start": "20210601",
     "end": "20210610",
     "num_lead_times": 5, 
     "stride_hours": 6,
-    "sample_percent": 100,
+    "sample_percent": 10,
     "custom_times": {"enabled": false, "times": ["20210605_12"]}
   },
   "visualization": {
