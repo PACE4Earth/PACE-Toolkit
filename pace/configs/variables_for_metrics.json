@@ -21,7 +21,9 @@
     "specific_humidity"
   ],
   "mass_conservation": [
-    "mean_sea_level_pressure"
+    "mean_sea_level_pressure",
+    "temperature", 
+    "geopotential"
   ],
   "potential_vorticity": [
     "temperature", 
