@@ -10,27 +10,27 @@
       "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
     }
   },
-  "outputs_dir": "/p/project/hclimrep/vas1/PACE-Toolkit/pace/outputs",
-  "metrics": {
+  "outputs_dir": "/p/scratch/hclimrep/vozar2/outputs_cluster",
+   "metrics": {
     "correlation": ["all"],
     "correlation_map": ["all"]
   },
+  "spatial": {
+    "pressure_levels": 3,
+    "lat_range": [45, 57],
+    "lon_range": [0, 18]
+  },
   "time": {
     "start": "20210906",
-    "end": "202109008",
-    "num_lead_times": 40, 
+    "end": "20210907",
+    "num_lead_times": 5, 
     "stride_hours": 6,
     "sample_percent": 100,
     "custom_times": {"enabled": false, "times": ["20210615_12"]}
   },
   "visualization": {
-    "plots_dir": null,
-    "histogram": false,
-    "vertical_profile": false,
+    "plots_dir": "/p/scratch/hclimrep/vozar2/outputs_cluster/plots",
     "correlation": true,
-    "correlation_map": true,
-    "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3},
-    "spatial_average": false
+    "correlation_map": true
   }
 }

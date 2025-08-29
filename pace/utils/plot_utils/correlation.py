@@ -58,6 +58,6 @@ def plot_corr_time_series(
         ax.legend(title='Matrix Indices (i, j)', loc='upper left')
     
     plt.tight_layout()
-    plt.savefig(os.path.join(plots_dir, f'correlation.png'))
+    plt.savefig(os.path.join(plots_dir, f'correlation_{model_name}.png'))
     
     return

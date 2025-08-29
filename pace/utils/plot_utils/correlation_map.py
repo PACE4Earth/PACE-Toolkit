@@ -104,10 +104,18 @@ def plot_map(
         im = axs[i, 1].pcolormesh(Lon, Lat, ref_tri_data[i], cmap='coolwarm', vmin=-1, vmax=1)
         im = axs[i, 2].pcolormesh(Lon, Lat, (model_tri_data[i] - ref_tri_data[i]), cmap='coolwarm', vmin=-1, vmax=1)
   
+        divider = make_axes_locatable(axs[i, 2])
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+
+        # Add the colorbar to the new axes
+        fig.colorbar(im, cax=cax)
+  
+    print(plots_dir)
+  
     plt.tight_layout()
     # plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))
     # plt.savefig(os.path.join(plots_dir, f'correlation_map_rea2.png'))
-    plt.savefig(os.path.join(plots_dir, f'correlation_map_exp.png'))
+    plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))
     
     print()
     
