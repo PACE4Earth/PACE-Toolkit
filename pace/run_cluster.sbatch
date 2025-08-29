@@ -21,7 +21,7 @@ export PLOTS_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster/plots"
 mkdir -p "$OUTPUTS_DIR_PATH"
 mkdir -p "$PLOTS_DIR_PATH"
 
-export CONFIG_PATH="/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/config_devel_g.json"
+export CONFIG_PATH="/p/project1/hclimrep/vozar2/PACE-Toolkit/pace/configs/config_devel_c.json"
 
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)

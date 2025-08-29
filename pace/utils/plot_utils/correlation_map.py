@@ -3,11 +3,12 @@ import os
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from typing import List, Dict, Tuple, Optional
 import seaborn as sns
 import xarray as xr
 
-def plot_corr_time_series(
+def plot_map(
         model_ds=None,
         ref_ds=None,
         model_name=None,
@@ -16,9 +17,7 @@ def plot_corr_time_series(
         coords=None,
     ):
 
-    fig, axs = plt.subplots(ncols=1, nrows=3, figsize=(6,9), sharex=True, sharey=True)
-    
-    fig.suptitle(f'corr({model_name}) - corr({ref_name})')
+    fig, axs = plt.subplots(ncols=3, nrows=3, figsize=(9,9), sharex=True, sharey=True)
     
     lats = coords["lat"]
     lons = coords["lon"]
@@ -33,10 +32,7 @@ def plot_corr_time_series(
     
         
     model_data = model_ds['correlation_map'].values
-    if ref_ds == None:
-        ref_data = np.zeros_like(model_data)
-    else:
-        ref_data = ref_ds['correlation_map'].values 
+    ref_data = ref_ds['correlation_map'].values 
     
     _, c, _, _ = model_data.shape
     rows, cols = np.triu_indices(c, k=1)
@@ -46,16 +42,67 @@ def plot_corr_time_series(
     # print(model_tri_data.shape)
     
     v, h, w = model_tri_data.shape
+
+    # fig.suptitle(f'corr({model_name}) - corr({ref_name})')
+    # axs[0, 0].set_title(model_name)
+    # axs[0, 1].set_title(ref_name)
+    # axs[0, 2].set_title(model_name, '-', ref_name)
     
+    # for i in range(v):
+    #     axs[i, 0].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
+    #     im = axs[i, 0].pcolormesh(
+    #         Lon,
+    #         Lat,
+    #         model_tri_data[i],
+    #         cmap='coolwarm',
+    #         vmin=-1,
+    #         vmax=1,
+    #     )
+    #     axs[i, 1].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
+    #     im = axs[i, 1].pcolormesh(
+    #         Lon,
+    #         Lat,
+    #         ref_tri_data[i],
+    #         cmap='coolwarm',
+    #         vmin=-1,
+    #         vmax=1,
+    #     )
+    #     axs[i, 2].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
+    #     im = axs[i, 2].pcolormesh(
+    #         Lon,
+    #         Lat,
+    #         (model_tri_data[i]-ref_tri_data[i]),
+    #         cmap='coolwarm',
+    #         vmin=-1,
+    #         vmax=1,
+    #     )
+        # plt.colorbar(im, ax=axs[i, 2])
+        
+    # Set the titles for the first row only
+    axs[0, 0].set_title(model_name)
+    axs[0, 1].set_title(ref_name)
+    axs[0, 2].set_title(f"{model_name}-{ref_name}")
+
+    # Now, loop through all rows to set the variable titles and plot the data
     for i in range(v):
-        axs[i].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
-        im = axs[i].pcolormesh(
-            Lon,
-            Lat,
-            (model_tri_data[i]-ref_tri_data[i])/(h*w),
-            # model_data[i, i]
-        )
-        plt.colorbar(im, ax=axs[i])
+        new_title_row = f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}'
+
+        # For the first row, append the variable info to the existing titles
+        if i == 0:
+            axs[i, 0].set_title(f'{axs[i, 0].get_title()}\n{new_title_row}')
+            axs[i, 1].set_title(f'{axs[i, 1].get_title()}\n{new_title_row}')
+            axs[i, 2].set_title(f'{axs[i, 2].get_title()}\n{new_title_row}')
+        
+        # For all other rows, just set the variable title (no model/ref name)
+        else:
+            axs[i, 0].set_title(new_title_row)
+            axs[i, 1].set_title(new_title_row)
+            axs[i, 2].set_title(new_title_row)
+
+        # Plotting code remains the same
+        im = axs[i, 0].pcolormesh(Lon, Lat, model_tri_data[i], cmap='coolwarm', vmin=-1, vmax=1)
+        im = axs[i, 1].pcolormesh(Lon, Lat, ref_tri_data[i], cmap='coolwarm', vmin=-1, vmax=1)
+        im = axs[i, 2].pcolormesh(Lon, Lat, (model_tri_data[i] - ref_tri_data[i]), cmap='coolwarm', vmin=-1, vmax=1)
   
     plt.tight_layout()
     # plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))

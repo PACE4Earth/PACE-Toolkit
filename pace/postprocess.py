@@ -184,7 +184,10 @@ def main():
             
             from utils.plot_utils import correlation_map
             
-            correlation_map.plot_corr_time_series(
+            print(model_ds)
+            print(ref_ds)
+            
+            correlation_map.plot_map(
                 model_ds=model_ds,
                 ref_ds=ref_ds,
                 model_name=model_name,

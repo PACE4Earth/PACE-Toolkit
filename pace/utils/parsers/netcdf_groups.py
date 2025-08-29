@@ -7,9 +7,9 @@ import xarray as xr
 from datetime import timedelta
 
 # GROUP_NAMES = ["truth", "prediction", "input"]
-GROUP_NAMES = ["truth"]
+# GROUP_NAMES = ["prediction"]
 
-def parse_file(file_path: Path):
+def parse_file(file_path: Path, group: str):
     """
     Parses a single NetCDF file with groups.
     Returns a list of tuples:
@@ -30,19 +30,19 @@ def parse_file(file_path: Path):
         return results
 
     # For each group, append tuples
-    for group in GROUP_NAMES:
-        opener_kwargs = {"engine": "netcdf4", "group": group}
-        try:
-            with xr.open_dataset(file_path, **opener_kwargs) as ds_group:
-                for bt in base_times:
-                    results.append((file_path, bt, [lead_time], opener_kwargs))
-        except Exception as e:
-            print(e)
-            continue
+    # for group in GROUP_NAMES:
+    opener_kwargs = {"engine": "netcdf4", "group": group}
+    try:
+        with xr.open_dataset(file_path, **opener_kwargs) as ds_group:
+            for bt in base_times:
+                results.append((file_path, bt, [lead_time], opener_kwargs))
+    except Exception as e:
+        print(e)
+        # continue
     
     return results
 
-def parse_directory_groups(base_dir, start=None, end=None):
+def parse_directory_groups(base_dir, start=None, end=None, group="prediction"):
     """
     Walks a directory tree and returns a list of all NetCDF files
     successfully parsed. Each entry is (file_path, base_time, lead_times, opener_kwargs).
@@ -53,7 +53,7 @@ def parse_directory_groups(base_dir, start=None, end=None):
             continue
 
         path = Path(base_dir) / file
-        parsed = parse_file(path)
+        parsed = parse_file(path, group=group)
         if parsed is not None:
             results.extend(parsed)
                 

@@ -267,8 +267,12 @@ class UnifiedDataset(torch.utils.data.Dataset):
         # Selecting correct parser
         if ("graphcast" in self.name) or ("era" in self.name):
             candidate_files = parse_directory(self.path, self.start, self.end)
-        elif self.name == "corrdiff":
-            candidate_files = parse_directory_groups(self.path, self.start, self.end)
+        elif ("corrdiff" in self.name) or ("rea" in self.name):
+            if "corrdiff" in self.name:
+                group = "prediction"
+            elif "rea" in self.name:
+                group = "truth"
+            candidate_files = parse_directory_groups(self.path, self.start, self.end, group=group)
 
         # File filtering based on valid range
         self.files = []

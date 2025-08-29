@@ -69,13 +69,13 @@ class CorrelationMap(nn.Module):
                 if tensor.ndim == 2:
                     tensor = tensor.unsqueeze(0)
                 elif tensor.ndim == 4:
-                ############################################# this
+                ############################################# this, the [0] index chooses ensemble member
                     tensor = tensor[0, [0]]
                 
-                processed_tensors.append(tensor)
+                processed_tensors.append(standardize(tensor))
                 variable_names.append(name)
                     
-        data = torch.stack(processed_tensors, dim=0).contiguous()
+        data = torch.stack(processed_tensors, dim=1).contiguous()
         c, n, h, w = data.shape
         
         # for di in data:
@@ -245,10 +245,10 @@ class CorrelationMap(nn.Module):
 
             # The full denominator
             denominator_sq = torch.einsum('chw,dhw->cdhw', var_x_term, var_y_term)
-            denominator = torch.sqrt(denominator_sq + 1e-6)
+            denominator = torch.sqrt(denominator_sq + 1e-4)
 
             # Final correlation map
-            correlation_map = numerator / (denominator + 1e-6)
+            correlation_map = numerator / (denominator + 1e-4)
 
             
             print(correlation_map.shape, correlation_map.min(), correlation_map.max())
