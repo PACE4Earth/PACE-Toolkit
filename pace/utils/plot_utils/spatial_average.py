@@ -1,30 +1,14 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import xarray as xr
+import gc
 
 
-def plot_spatial_averages(
-    var_store: dict,
-    coords: dict,
-    save_dir: str = ".",
-    dataset_name: str = "model",
-):
+def plot_spatial_averages(var_store: dict, coords: dict, save_dir: str = ".", dataset_name: str = "model"):
     """
-    Plot spatial averages (mean over idx and level) for all variables
-    with dims ['idx', 'level', 'lat', 'lon'].
-
-    Parameters
-    ----------
-    var_store : dict
-        Dictionary {var_name: xr.DataArray} with dims ['idx','level','lat','lon'].
-    coords : dict
-        Dictionary with arrays for ['lat','lon','level','base_time','lead_time'].
-    save_dir : str, default="."
-        Directory to save plots.
-    dataset_name : str, default="model"
-        Used in filenames and figure titles.
+    Memory-efficient plotting of spatial averages (mean over idx and level) for all variables
+    with dims ['idx','level','lat','lon'] by computing mean incrementally.
     """
 
     out_dir = os.path.join(save_dir, "spatial_averages")
@@ -32,57 +16,62 @@ def plot_spatial_averages(
 
     lats = coords["lat"]
     lons = coords["lon"]
-    Lon, Lat = np.meshgrid(lons, lats)
 
     for variable, da in var_store.items():
-        # Skip variables not matching required dims
         if not all(dim in da.dims for dim in ["idx", "level", "lat", "lon"]):
             print(f"Skipping '{variable}' (dims: {list(da.dims)})")
             continue
 
-        # Mean over idx and level → dims (lat, lon)
-        da_mean = da.mean(dim=["idx", "level"], skipna=True)
-        field = da_mean.values
+        # Compute mean over idx incrementally to save memory
+        n_idx = da.sizes["idx"]
+        mean_accum = np.zeros((da.sizes["level"], da.sizes["lat"], da.sizes["lon"]), dtype=np.float64)
+        count_accum = np.zeros_like(mean_accum)
 
+        for i in range(n_idx):
+            slice_i = da.isel(idx=i)
+            valid_mask = ~np.isnan(slice_i.values)
+            mean_accum[valid_mask] += slice_i.values[valid_mask]
+            count_accum[valid_mask] += 1
+
+        # Avoid division by zero
+        count_accum[count_accum == 0] = np.nan
+        mean_over_idx = mean_accum / count_accum
+
+        # Mean over level
+        mean_field = np.nanmean(mean_over_idx, axis=0)  # dims (lat, lon)
+
+        # Downcast to float32 to save memory
+        mean_field = mean_field.astype(np.float32)
+
+        # Plot
         fig, ax = plt.subplots(figsize=(12, 6))
-        
-        # Compute min and max for the field
-        data_min = np.nanmin(field)
-        data_max = np.nanmax(field)
-
-        # Decide if log scale is possible
-        if data_min > 0 and data_max / data_min > 100:  # threshold for log scale
-            norm = colors.LogNorm(vmin=data_min, vmax=data_max)
-        else:
-            norm = None  # default linear scale
-
-        pcm = ax.pcolormesh(
-            Lon,
-            Lat,
-            field,
+        im = ax.imshow(
+            mean_field,
+            origin="lower",
             cmap="viridis",
-            norm=norm,
+            interpolation="none",
+            extent=[np.nanmin(lons), np.nanmax(lons), lats.min(), lats.max()],
         )
-        cbar = fig.colorbar(pcm, ax=ax, pad=0.02)
-        cbar.set_label(variable.replace("_", " ").capitalize(), fontsize=14)
+        cbar = fig.colorbar(im, ax=ax, shrink=0.5)
+        cbar.set_label(variable)
 
         ax.set_title(
-            f"{dataset_name.capitalize()}: {variable.replace('_', ' ').capitalize()} "
-            f"(Mean over time + levels)",
+            f"{dataset_name.capitalize()}: {variable.replace('_',' ').capitalize()} (Mean over time + levels)",
             fontsize=16,
         )
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
-
-        def add_degree_symbols(ticks):
-            return [f"{tick:.1f}°" for tick in ticks]
-
-        ax.set_xticklabels(add_degree_symbols(ax.get_xticks()))
-        ax.set_yticklabels(add_degree_symbols(ax.get_yticks()))
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda val, _: f"{val:.1f}°"))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, _: f"{val:.1f}°"))
 
         plt.tight_layout()
         filename = f"{dataset_name}_{variable}.png"
         path = os.path.join(out_dir, filename)
         plt.savefig(path, dpi=300)
-        plt.close()
+        plt.close(fig)
+
+        # Free memory explicitly
+        del mean_accum, count_accum, mean_over_idx, mean_field
+        gc.collect()
+
         print(f"Saved: {path}")

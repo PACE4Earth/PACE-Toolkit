@@ -262,6 +262,30 @@ def main():
     except Exception as e:
         print(e)
 
+    # --- TIME SERIES visualization ---
+    try:
+        if is_viz_enabled(config, "time_series"):
+            print("Running time series visualization...")
+            from utils.plot_utils import time_series
+
+            # Prepare model
+            model_ts = time_series.prepare_time_series(
+                model_store, selected_leadtimes=model_leadtimes
+            )
+
+            # Prepare reference (all lead times)
+            ref_ts = time_series.prepare_time_series(
+                ref_store, selected_leadtimes=None
+            ) if ref_store else None
+
+            time_series.plot_time_series(
+                model_ts, ref_ts, plots_dir, model_name=model_name, ref_name=ref_name
+            )
+        else:
+            print("Time series visualization disabled in config.\n")
+    except Exception as e:
+        print(e)
+
 
     time_end = time.perf_counter()
     print(f"\nElapsed time: {time_end - time_start:.2f} s")

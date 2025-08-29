@@ -22,7 +22,7 @@ PROFILE_CONFIG = {
         "mean": {"xmin": 1e-4, "xmax": 1e-1, "scale": "log"},
         "stdev": {"xmin": 1e-4, "xmax": 1e-1, "scale": "log"},
         "max": {"xmin": 1e-3, "xmax": 0.5, "scale": "log"},
-        "min": {"xmin": 1e-10, "xmax": 1e-6, "scale": "log"},
+        "min": {"xmin": 1e-5, "xmax": 1e-2, "scale": "log"},
     },
     "relative_humidity": {
         "mean": {"xmin": 0, "xmax": 80, "scale": "linear"},
@@ -36,11 +36,11 @@ PROFILE_CONFIG = {
         "max": {"xmin": -5, "xmax": 20, "scale": "linear"},
         "min": {"xmin": -5, "xmax": 20, "scale": "linear"},
     },
-    "total_energy": {
+    "energy": {
         "mean": {"xmin": 300000, "xmax": 400000, "scale": "linear"},
-        "stdev": {"xmin": 0, "xmax": 15000, "scale": "linear"},
+        "stdev": {"xmin": 0, "xmax": 20000, "scale": "linear"},
         "max": {"xmin": 300000, "xmax": 400000, "scale": "linear"},
-        "min": {"xmin": 280000, "xmax": 380000, "scale": "linear"},
+        "min": {"xmin": 200000, "xmax": 400000, "scale": "linear"},
     },
     # Add more variables here with per-stat configs as needed
 }

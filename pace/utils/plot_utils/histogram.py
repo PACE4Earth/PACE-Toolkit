@@ -14,7 +14,7 @@ BIN_CONFIG = {
     "hydrostatic_rmse": {"vmin": 1e1, "vmax": 1e4, "scale": "log"},
     "relative_humidity": {"vmin": 5, "vmax": 105, "scale": "linear"},
     "potential_vorticity": {"vmin": 1e-1, "vmax": 1e1, "scale": "log"},
-    "total_energy": {"vmin": 300000, "vmax": 400000, "scale": "linear"},
+    "energy": {"vmin": 250000, "vmax": 400000, "scale": "linear"},
     # Add more variables here as needed
 }
 
@@ -207,6 +207,9 @@ def plot_hist(
     for metric in model_hist.keys():
         plt.figure(figsize=(8, 6))
 
+        # Collect exceedance ratios for annotation
+        exceedance_texts = []
+
         # Plot model histograms, separated by lead time
         for i, (lt, (centers, counts)) in enumerate(sorted(model_hist[metric].items(), key=lambda x: x[0])):
             plt.plot(
@@ -215,6 +218,11 @@ def plot_hist(
                 linewidth=1.8,
                 color=palette[i % len(palette)],
             )
+            # Exceedance ratio for relative humidity
+            if metric == "relative_humidity":
+                mask_exceed = centers > 100
+                ratio = counts[mask_exceed].sum()
+                exceedance_texts.append(f"{model_name} Lt {lt}h: {ratio:.2%}")
 
         # Plot reference histogram as an aggregate (summed over lead times)
         if metric in ref_hist and ref_hist[metric]:
@@ -232,6 +240,11 @@ def plot_hist(
                     linestyle="--",
                     color="black",
                 )
+                # Exceedance ratio for reference
+                if metric == "relative_humidity":
+                    mask_exceed = centers > 100
+                    ratio_ref = total_counts[mask_exceed].sum()
+                    exceedance_texts.append(f"{ref_name}: {ratio_ref:.2%}")
 
         # Axis labels and formatting
         plt.title(f"Histogram - {metric.replace('_', ' ').capitalize()}", fontsize=16, weight="bold")
@@ -255,6 +268,16 @@ def plot_hist(
         # Legend styling
         leg = plt.legend(frameon=True, fontsize=12, loc="best", edgecolor="black", fancybox=True)
         leg.get_frame().set_alpha(0.9)
+
+        # Add exceedance ratios next to legend
+        if metric == "relative_humidity" and exceedance_texts:
+            text_str = "Exceedance ratio (>100%):\n" + "\n".join(exceedance_texts)
+            plt.gcf().text(
+                0.7, 0.4, text_str,
+                fontsize=10,
+                va="center", ha="right",
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="black")
+            )
 
         # Save figure
         plt.tight_layout()

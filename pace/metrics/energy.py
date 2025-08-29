@@ -10,29 +10,26 @@ class EnergyConservation(nn.Module):
         super().__init__()
         self.cpd = 1005.0  # J/(kg·K), cp dry air
         self.cpv = 1855.0  # J/(kg·K), cp water vapor
-        self.L_v = 2.5e6  # J/kg, latent heat of vaporization     
-        self.g = 9.81     # m/s²
+        self.L_v = 2.5e6   # J/kg, latent heat of vaporization     
+        self.g = 9.81      # m/s²
 
         self.p_levels = grid.get('pressure_levels', None)
 
         if self.p_levels is not None:
-            self.p_levels = self.p_levels.float() * 100.0
+            self.p_levels = self.p_levels.float() * 100.0  # Pa
 
     def compute_total_energy(self, T, u, v, q, z):
         """
         T: [B, L, H, W] in K
         u, v: [B, L, H, W] in m/s
         q: [B, L, H, W] specific humidity in kg/kg
-        z: [B,L,H,W] geopotential (m^2/s^2)
+        z: [B, L, H, W] geopotential (m^2/s^2)
         """
         c_moist = (1 - q) * self.cpd + q * self.cpv
 
-        E_int = c_moist * T #entalpy
-
+        E_int = c_moist * T  # enthalpy
         E_kin = 0.5 * (u**2 + v**2)
-
         E_lat = self.L_v * q
-
         E_pot = z
 
         return E_int + E_kin + E_lat + E_pot  # [B, L, H, W]
@@ -56,7 +53,10 @@ class EnergyConservation(nn.Module):
             'geopotential': [B,L,H,W]
         
         Outputs:
-            dict with energy fields (total energy or total energy per column)
+            dict with:
+                - total_energy: [B,L,H,W]
+                - total_energy_column: [B,H,W] (if p_levels provided)
+                - total_energy_domain: [B] (scalar per batch, if p_levels provided)
         """
         T = sample['temperature']                       
         u = sample['u_component_of_wind']               
@@ -64,21 +64,22 @@ class EnergyConservation(nn.Module):
         q = sample['specific_humidity'] 
         z = sample['geopotential']
 
-        # Compute total energy
+        # Compute level energy
         E_total = self.compute_total_energy(T, u, v, q, z)
-        outputs = {'total_energy': E_total}
 
-        # Column-integrated
-        # if self.p_levels is not None:
-        #     outputs['total_energy_column'] = self.vertical_integrate(E_total)
+        if self.p_levels is not None:
+            # Column-integrated energy per grid point
+            E_col = self.vertical_integrate(E_total)  # [B, H, W]
+            # outputs['total_energy_column'] = E_col
 
-        return outputs
+            # Domain-total energy (scalar per batch)
+            E_domain = E_col.sum(dim=(-2, -1)).unsqueeze(-1)  # [B, 1]
+
+        return E_total, E_domain
 
     def output_keys(self):
-        keys = ['total_energy']
-        # if self.p_levels is not None:
-        #     keys.append('total_energy_column')
-        return keys
+        return ['energy', 'total_energy']
+
 
 """
 Notes:
