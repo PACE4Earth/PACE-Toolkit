@@ -10,6 +10,7 @@ from dataset import UnifiedDataset
 
 def process_var(var, var_name=None):
     """Process variable: handle shapes (1, 8, H, W) and (H, W), convert units if needed."""
+    print(var.shape)
     if hasattr(var, 'cpu'):
         var = var.cpu().numpy()
     if var.ndim == 4:  # (1, 8, H, W)
@@ -31,8 +32,8 @@ def process_var(var, var_name=None):
 
 def main():
     start_time = time.perf_counter()
-    config_path = "/p/project/hclimrep/vas1/PACE-Toolkit/pace/configs/config_corrdiff.json"
-    out_dir = Path("/p/project/hclimrep/vas1/PACE-Toolkit/pace/plots/case_studies")
+    config_path = Path(os.environ["CONFIG_PATH"])
+    out_dir = Path(os.environ["PLOTS_DIR_PATH"]) / "case_studies"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     model_dataset = UnifiedDataset(config_path, dataset_key="model")
@@ -49,6 +50,7 @@ def main():
         base_time = sample['base_time']
         lead_time = sample['lead_time']
         valid_time = model_dataset.valid_times_for_samples[i]
+        print(base_time, lead_time, valid_time)
         base_str = base_time.strftime("%Y%m%d_%H")
         lead_hours = int(lead_time.total_seconds() // 3600)
         lead_str = f"{lead_hours}h"

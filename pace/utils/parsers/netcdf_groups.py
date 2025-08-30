@@ -7,7 +7,6 @@ import xarray as xr
 from datetime import timedelta
 
 # GROUP_NAMES = ["truth", "prediction", "input"]
-# GROUP_NAMES = ["prediction"]
 
 def parse_file(file_path: Path, group: str):
     """
@@ -30,7 +29,6 @@ def parse_file(file_path: Path, group: str):
         return results
 
     # For each group, append tuples
-    # for group in GROUP_NAMES:
     opener_kwargs = {"engine": "netcdf4", "group": group}
     try:
         with xr.open_dataset(file_path, **opener_kwargs) as ds_group:

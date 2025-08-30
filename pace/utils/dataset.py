@@ -383,7 +383,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         global_idx = self.index_map[(base_time, lead_time)]
         
         with xr.open_dataset(file_path, **opener_kwargs) as ds: 
-            if self.name == "corrdiff":
+            if self.name == "corrdiff" or "rea" in self.name:
                 # CorrDiff time is integer steps of 6h from 2013-01-01 00:00
                 corr_start = datetime(2013, 1, 1, 0, 0)
                 step_hours = 6
