@@ -91,7 +91,7 @@ class GenericHistogram(nn.Module):
             'vmax_10m': (VMAX_MIN, VMAX_MAX),
             'total_precipitation': (TP_MIN, TP_MAX)
         }
-        self.default_bins = 64
+        self.default_bins = 128
         self.corr = None
         self.pairs = pairs
         
@@ -186,7 +186,9 @@ class GenericHistogram(nn.Module):
             minlength=bins_y * bins_x
         ).view(bins_y, bins_x)
         
-        hist_info['tensor'] += hist_increment
+        hist_info['tensor'] = hist_info['tensor'] + hist_increment
+        
+        print(hist_info['tensor'].max())
 
     def get_histogram(self, key):
         """Returns the histogram tensor for a specific key."""
@@ -204,6 +206,8 @@ class GenericHistogram(nn.Module):
             this_path = os.path.join(f"{logger.path.split('.')[0]}", f"{rank}.{key}.pt")
             
             torch.save(hist_info, this_path)
+        
+        self.histograms = {}
         
         return ...
 
@@ -259,7 +263,9 @@ class GenericHistogram(nn.Module):
                     tensor = tensor.unsqueeze(0)
                 elif tensor.ndim == 4:
                 ############################################# this
-                    tensor = tensor[0, [0]]
+                    # print(tensor.shape)
+                    tensor = tensor[0, [1]]
+                    # print(tensor.min(), tensor.max())
                 
                 tensor = standardize(tensor)
                     
@@ -288,8 +294,11 @@ class GenericHistogram(nn.Module):
             try:
                 key = f"{var_x}.{var_y}"
                 
+                # print(sample[var_x].max(), sample[var_y].max())
+                
                 if key not in self.histograms:
                     self.add_histogram(var_x, var_y)
+                    print('hola')
                 
                 self.update_histogram(
                     key,

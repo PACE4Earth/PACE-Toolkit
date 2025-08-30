@@ -73,9 +73,12 @@ def visualize(model_hist, ref_hist, key, ax):
 
     model_data = model_hist['tensor']
     model_data = (model_data / model_data.sum()).clamp(min=1e-8).cpu().numpy()
+    # model_data = model_data.clamp(min=1e-8).cpu().numpy()
     
     ref_data = ref_hist['tensor']
     ref_data = (ref_data / ref_data.sum()).clamp(min=1e-8).cpu().numpy()
+    # ref_data = ref_data.clamp(min=1e-8).cpu().numpy()
+    
     
     range_x, range_y = model_hist['range']
     extent = [range_x[0], range_x[1], range_y[0], range_y[1]]
