@@ -119,7 +119,8 @@ def main(distributed=False):
         canonical_names=model_info["canonical_names"],
         config_path=config_path,
         dataset_key="model",
-        index_map=model_info["index_map"]
+        index_map=model_info["index_map"],
+        name=model_info["name"]
     )
 
     # === BUILD REFERENCE DATASET IF AVAILABLE ===

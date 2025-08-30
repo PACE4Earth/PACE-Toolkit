@@ -448,6 +448,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
             config_path=None, 
             dataset_key='model',
             index_map=None,
+            name=None
         ):
         """
         Construct dataset directly from a prepared sample list and metadata.
@@ -475,7 +476,7 @@ class UnifiedDataset(torch.utils.data.Dataset):
         obj.metrics = metrics
         obj.requested_names = requested_names
         obj.canonical_names = canonical_names
-        obj.name = dataset_key
+        obj.name = name if name is not None else dataset_key
         obj.index_map = index_map
 
         # Minimal needed for __getitem__

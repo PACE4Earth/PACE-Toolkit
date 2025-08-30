@@ -172,7 +172,8 @@ def build_dataset_info(config_path, dataset_key="model", shared_valid_times=None
         "requested_names": dataset.requested_names,
         "canonical_names": dataset.canonical_names,
         "chosen_valid_times": dataset.chosen_valid_times,
-        "index_map": dataset.index_map
+        "index_map": dataset.index_map,
+        "name": dataset.name,
     }
 
 # def harmonize_zarr_to_xarray(
