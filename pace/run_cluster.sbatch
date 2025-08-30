@@ -16,8 +16,8 @@ ml Stages/2024 GCCcore/.12.3.0 GCC/12.3.0 zarr/2.18.3
 ml SciPy-Stack/2023a PyTorch/2.1.2 netcdf4-python/1.6.4-serial
 ml ParaStationMPI/5.9.2-1 mpi4py/3.1.4
 
-export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster"
-export PLOTS_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster/plots"
+export OUTPUTS_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster_2"
+export PLOTS_DIR_PATH="/p/scratch/hclimrep/${USER}/outputs_cluster_2/plots"
 mkdir -p "$OUTPUTS_DIR_PATH"
 mkdir -p "$PLOTS_DIR_PATH"
 

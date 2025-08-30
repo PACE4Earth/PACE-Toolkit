@@ -1,0 +1,85 @@
+Preparing files for corrdiff...
+Done. Found 32 usable files (2013-07-25 00:00:00 -- 2013-07-26 23:59:00).
+
+Grid setup... Done.
+Checking required fields for metrics...
+correlation_corrdiff    is complete.
+correlation_map_corrdiff is complete.
+
+Selected 4 samples for corrdiff.
+---------------------------------------------
+
+Preparing files for rea...
+Done. Found 32 usable files (2013-07-25 00:00:00 -- 2013-07-26 23:59:00).
+
+Grid setup... Done.
+Checking required fields for metrics...
+correlation_corrdiff    is complete.
+correlation_map_corrdiff is complete.
+
+Selected 4 samples for rea.
+---------------------------------------------
+
+[Rank 0] Initializing Zarr archive at /p/scratch/hclimrep/vozar2/outputs_cluster_2/corrdiff.zarr
+
+[Rank 0] Initializing Zarr archive at /p/scratch/hclimrep/vozar2/outputs_cluster_2/rea.zarr
+
+2013-07-25 00:00:00 18:00:00 vmax_10m tensor(29.4754)
+2013-07-25 00:00:00 18:00:00 total_precipitation tensor(24.4448)
+2013-07-25 00:00:00 18:00:00 2m_temperature tensor(282.3326)
+[Rank 0] Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs_cluster_2/corrdiff.zarr
+
+2013-07-25 06:00:00 12:00:00 vmax_10m tensor(30.9641)
+2013-07-25 06:00:00 12:00:00 total_precipitation tensor(23.2355)
+2013-07-25 06:00:00 12:00:00 2m_temperature tensor(283.2287)
+1
+Rank 1 processed 1 samples.
+7
+Rank 7 processed 0 samples.
+2013-07-25 00:00:00 18:00:00 vmax_10m tensor(29.4754)
+2013-07-25 00:00:00 18:00:00 total_precipitation tensor(24.4448)
+2013-07-25 00:00:00 18:00:00 2m_temperature tensor(282.3326)
+0
+Rank 0 is aggregating results from all ranks...
+Aggregation complete. Total count: 5
+torch.Size([3, 3, 448, 640]) tensor(-1.0000) tensor(1.0000)
+Correlation map computed and saved.
+Rank 0 processed 1 samples.
+Finished evaluation of corrdiff.
+
+[Rank 0] Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs_cluster_2/rea.zarr
+
+2013-07-24 18:00:00 1 day, 0:00:00 vmax_10m tensor(25.2660)
+2013-07-24 18:00:00 1 day, 0:00:00 total_precipitation tensor(16.8360)
+2013-07-24 18:00:00 1 day, 0:00:00 2m_temperature tensor(281.6278)
+2
+Rank 2 processed 1 samples.
+2013-07-25 12:00:00 6:00:00 vmax_10m tensor(32.1184)
+2013-07-25 12:00:00 6:00:00 total_precipitation tensor(18.3108)
+2013-07-25 12:00:00 6:00:00 2m_temperature tensor(283.5804)
+3
+Rank 3 processed 1 samples.
+4
+Rank 4 processed 0 samples.
+5
+Rank 5 processed 0 samples.
+6
+Rank 6 processed 0 samples.
+Histogram visualization disabled in config.
+
+Vertical profile visualization disabled in config.
+
+
+Running correlation visualization...
+index 3 is out of bounds for axis 0 with size 3
+
+Running correlation map visualization...
+'correlation_map'
+Spatial slice visualization disabled in config.
+
+Spatial average visualization disabled in config.
+
+Time series visualization disabled in config.
+
+
+Elapsed time: 4.02 s

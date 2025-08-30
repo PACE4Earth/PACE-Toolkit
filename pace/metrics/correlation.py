@@ -188,7 +188,7 @@ class GenericHistogram(nn.Module):
         
         hist_info['tensor'] = hist_info['tensor'] + hist_increment
         
-        print(hist_info['tensor'].max())
+        # print(hist_info['tensor'].max())
 
     def get_histogram(self, key):
         """Returns the histogram tensor for a specific key."""
@@ -255,6 +255,7 @@ class GenericHistogram(nn.Module):
         covariance matrix.
         """
 
+
         processed_tensors = []
         variable_names = []
         for name, tensor in sample.items():
@@ -265,6 +266,7 @@ class GenericHistogram(nn.Module):
                 ############################################# this
                     # print(tensor.shape)
                     tensor = tensor[0, [1]]
+                    print(sample['base_time'], sample['lead_time'], name, tensor.max())
                     # print(tensor.min(), tensor.max())
                 
                 tensor = standardize(tensor)
@@ -298,7 +300,7 @@ class GenericHistogram(nn.Module):
                 
                 if key not in self.histograms:
                     self.add_histogram(var_x, var_y)
-                    print('hola')
+                    # print('hola')
                 
                 self.update_histogram(
                     key,
