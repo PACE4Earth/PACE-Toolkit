@@ -16,12 +16,12 @@
     "correlation_map_corrdiff": ["all"]
   },
   "time": {
-    "start": "20130725",
-    "end": "20130726",
+    "start": "20131025",
+    "end": "20131026",
     "num_lead_times": 1, 
     "stride_hours": 6,
     "sample_percent": 100,
-    "custom_times": {"enabled": true, "times": ["20130725_18"]}
+    "custom_times": {"enabled": true, "times": ["20131025_18"]}
   },
   "visualization": {
     "plots_dir": "/p/scratch/hclimrep/${USER}/outputs_cluster/plots",
