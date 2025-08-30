@@ -144,7 +144,8 @@ def main(distributed=False):
             canonical_names=ref_info["canonical_names"],
             config_path=config_path,
             dataset_key="reference",
-            index_map=ref_info["index_map"]
+            index_map=ref_info["index_map"],
+            name=ref_info["name"]
         )
     else:
         reference_dataset = None
