@@ -72,11 +72,11 @@ def visualize(model_hist, ref_hist, key, ax):
     fig = ax[0].get_figure()
 
     model_data = model_hist['tensor']
-    model_data = (model_data / model_data.sum()).clamp(min=1e-8).cpu().numpy()
+    model_data = (model_data / model_data.sum()).clamp(min=1e-6).cpu().numpy()
     # model_data = model_data.clamp(min=1e-8).cpu().numpy()
     
     ref_data = ref_hist['tensor']
-    ref_data = (ref_data / ref_data.sum()).clamp(min=1e-8).cpu().numpy()
+    ref_data = (ref_data / ref_data.sum()).clamp(min=1e-6).cpu().numpy()
     # ref_data = ref_data.clamp(min=1e-8).cpu().numpy()
     
     
@@ -88,23 +88,27 @@ def visualize(model_hist, ref_hist, key, ax):
 
     # Define the contour levels
     # Using LogNorm() suggests that the data spans several orders of magnitude, so we create levels on a logarithmic scale.
-    levels = np.logspace(np.log10(model_data.min()), np.log10(model_data.max()), 12)
+    # levels = np.logspace(np.log10(model_data.min()), np.log10(model_data.max()), 8)
+    # levels = np.logspace(-6.01, -2.5, 8)
+    levels = np.array([10**(-6.01), 10**(-6.), 10**(-5.), 10**(-4.5), 1e-4, 10**(-3.5), 1e-3, 10**(-2.5), 1e-2])
 
     # Create the contourf plot
     im = ax[0].contourf(
         x, y, model_data,
         levels=levels,
         cmap='magma',
+        # colors='white',
         norm=colors.LogNorm(),
     )
     
     ax[0].contour(
-        x, y,
+        x, 
+        y,
         ref_data,
         levels=levels,
-        # colors='black', # or use cmap='jet' and pass norm again
-        cmap='viridis_r',
-        linewidths=0.5,
+        # colors='w', # or use cmap='jet' and pass norm again
+        cmap='binary',
+        linewidths=1.,
         alpha=0.5,
         norm=colors.LogNorm()
     )
@@ -114,7 +118,8 @@ def visualize(model_hist, ref_hist, key, ax):
     max_diff = max(diff.max(), np.abs(diff).max())
     
     im2 = ax[1].pcolormesh(
-        x, y,
+        x, 
+        y,
         diff,
         cmap='seismic',
         vmin=-max_diff,
@@ -151,6 +156,8 @@ def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
         
         visualize(m_h, r_h, key, axs[i, :])
         
+        print(i)
+    
     plt.tight_layout()
     plt.savefig(os.path.join(plots_dir, f'bivar_hist_{model_name}.png'))
     
