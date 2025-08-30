@@ -8,13 +8,23 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset import UnifiedDataset
 
+# -------------------------------
+# Config: choose model member handling
+# -------------------------------
+USE_MEAN_MEMBER = False   # if True → mean over 8 members, else use SINGLE_MEMBER_IDX
+SINGLE_MEMBER_IDX = 5    # which member to use when USE_MEAN_MEMBER = False
+
+
 def process_var(var, var_name=None):
     """Process variable: handle shapes (1, 8, H, W) and (H, W), convert units if needed."""
     if hasattr(var, 'cpu'):
         var = var.cpu().numpy()
     
     if var.ndim == 4:  # Model: (1, 8, H, W)
-        var = var[0].mean(axis=0)  # mean over second dim
+        if USE_MEAN_MEMBER:
+            var = var[0].mean(axis=0)  # mean over second dim
+        else:
+            var = var[0, SINGLE_MEMBER_IDX]  # select one member
     elif var.ndim == 2:  # Reference: (H, W)
         pass  # already 2D
 
@@ -28,6 +38,7 @@ def process_var(var, var_name=None):
     elif var_name == "vmax_10m":
         units = "m/s"
     return var, units
+
 
 def plot_sample(sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, time_str, is_model=True, lead_time=None):
     """Plot a sample with 4-panel layout and save to file."""
@@ -97,6 +108,68 @@ def plot_sample(sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, time_str,
     print(f"Saved to: {plots_dir}")
 
 
+def plot_difference(truth, prediction, name, out_dir, lat, lon, lon_ticks, lat_ticks, time_str, lead_time):
+    """Plot truth vs prediction vs difference (3x3 layout)."""
+    t_truth, t_units = process_var(truth["2m_temperature"], "2m_temperature")
+    p_truth, p_units = process_var(truth["total_precipitation"], "total_precipitation")
+    v_truth, v_units = process_var(truth["vmax_10m"], "vmax_10m")
+
+    t_pred, _ = process_var(prediction["2m_temperature"], "2m_temperature")
+    p_pred, _ = process_var(prediction["total_precipitation"], "total_precipitation")
+    v_pred, _ = process_var(prediction["vmax_10m"], "vmax_10m")
+
+    # Differences
+    t_diff = t_pred - t_truth
+    v_diff = v_pred - v_truth
+    p_diff = p_pred - p_truth
+
+    fig, axes = plt.subplots(3, 3, figsize=(14, 12))
+    plt.suptitle(f"Base: {time_str} | Lead: {lead_time}h", fontsize=18)
+
+    cmap_temp = "coolwarm"
+    cmap_precip = "Blues"
+    cmap_vmax = "viridis"
+    cmap_diff = "RdBu_r"
+    extent = [lon.min(), lon.max(), lat.min(), lat.max()]
+
+    def plot_var(ax, data, cmap, title, units, diff=False):
+        if diff:
+            vmax = np.nanmax(np.abs(data))
+            vmin, vmax = -vmax, vmax  # symmetric around 0
+            im = ax.imshow(data, cmap=cmap, extent=extent, origin="lower", vmin=vmin, vmax=vmax)
+        else:
+            im = ax.imshow(data, cmap=cmap, extent=extent, origin="lower")
+        ax.set_title(f"{title} [{units}]", fontsize=14)
+        ax.set_xticks(lon_ticks)
+        ax.set_yticks(lat_ticks)
+        ax.set_xticklabels([f"{v:.0f}°" for v in lon_ticks])
+        ax.set_yticklabels([f"{v:.0f}°" for v in lat_ticks])
+        plt.colorbar(im, ax=ax, shrink=0.6, pad=0.02)
+        return im
+
+    # Row 1: Temp
+    plot_var(axes[0, 0], t_truth, cmap_temp, "COSMO-REA2 T2m", t_units)
+    plot_var(axes[0, 1], t_pred, cmap_temp, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} T2m", t_units)
+    plot_var(axes[0, 2], t_diff, cmap_diff, "Truth - Pred.", t_units, diff=True)
+
+    # Row 2: Precip
+    plot_var(axes[1, 0], p_truth, cmap_precip, "COSMO-REA2 Precip", p_units)
+    plot_var(axes[1, 1], p_pred, cmap_precip, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} Precip", p_units)
+    plot_var(axes[1, 2], p_diff, cmap_diff, "Truth - Pred.", p_units, diff=True)
+
+    # Row 3: Vmax
+    plot_var(axes[2, 0], v_truth, cmap_vmax, "COSMO-REA2 Vmax", v_units)
+    plot_var(axes[2, 1], v_pred, cmap_vmax, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} Vmax 10", v_units)
+    plot_var(axes[2, 2], v_diff, cmap_diff, "Truth - Pred.", v_units, diff=True)
+
+    plt.tight_layout(rect=[0, 0, 1, 1])
+    filename = f"{name}_diff_{time_str}_{lead_time}h.png"
+    plots_dir = out_dir / filename
+    plt.savefig(plots_dir, dpi=300)
+    plt.close(fig)
+    print(f"Saved diff plot to: {plots_dir}")
+
+
 def main():
     start_time = time.perf_counter()
     config_path = Path(os.environ["CONFIG_PATH"])
@@ -117,24 +190,28 @@ def main():
     # -------------------------------
     for i, (file_path, base_time, lead_idx, leadtimes, o) in enumerate(model_dataset.samples):
         sample = model_dataset[i]
+        ref_sample = reference_dataset[i]  # align by index (assuming same order)
         base_time = sample['base_time']
         lead_time = sample['lead_time']
-        valid_time = model_dataset.valid_times_for_samples[i]
         base_str = base_time.strftime("%Y%m%d_%H")
         lead_hours = int(lead_time.total_seconds() // 3600)
         name = "CORRDIFF"
 
-        plot_sample(sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, base_str, is_model=True, lead_time=lead_hours)
+        # Normal plot
+        # plot_sample(sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, base_str, is_model=True, lead_time=lead_hours)
+
+        # Difference plot
+        plot_difference(ref_sample, sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, base_str, lead_hours)
 
     # -------------------------------
-    # Single reference sample
+    # Single reference sample (first one)
     # -------------------------------
-    ref_sample = reference_dataset[0]  # only 1 sample
+    ref_sample = reference_dataset[0]
     valid_time = reference_dataset.valid_times_for_samples[0]
     valid_str = valid_time.strftime("%Y%m%d_%H")
     name = "COSMO-REA2"
 
-    plot_sample(ref_sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, valid_str, is_model=False)
+    # plot_sample(ref_sample, name, out_dir, lat, lon, lon_ticks, lat_ticks, valid_str, is_model=False)
 
     end_time = time.perf_counter()
     print(f"Elapsed time: {end_time - start_time}")
