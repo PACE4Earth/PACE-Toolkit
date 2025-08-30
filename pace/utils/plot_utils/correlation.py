@@ -1,11 +1,15 @@
+from typing import List, Dict, Tuple, Optional
 import os
+from pathlib import Path
 
 import numpy as np
-from pathlib import Path
-import matplotlib.pyplot as plt
-from typing import List, Dict, Tuple, Optional
-import seaborn as sns
+import torch
 import xarray as xr
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import seaborn as sns
+
 
 def plot_corr_time_series(
         model_ds=None,
@@ -62,6 +66,57 @@ def plot_corr_time_series(
     
     return
 
+def visualize(model_hist, ref_hist, key, ax):
+    """Visualizes the histogram for a given key using its specific range."""
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(7, 6))
+    else:
+        fig = ax.get_figure()
+
+    model_data = model_hist['tensor']
+    model_data = (model_data / model_data.sum()).clamp(min=1e-8).cpu().numpy()
+    
+    ref_data = ref_hist['tensor']
+    ref_data = (ref_data / ref_data.sum()).clamp(min=1e-8).cpu().numpy()
+    
+    range_x, range_y = model_hist['range']
+    extent = [range_x[0], range_x[1], range_y[0], range_y[1]]
+
+    x = np.linspace(range_x[0], range_x[1], model_data.shape[1])
+    y = np.linspace(range_y[0], range_y[1], model_data.shape[0])
+
+    # Define the contour levels
+    # Using LogNorm() suggests that the data spans several orders of magnitude, so we create levels on a logarithmic scale.
+    levels = np.logspace(np.log10(model_data.min()), np.log10(model_data.max()), 12)
+
+    # Create the contourf plot
+    im = ax.contourf(
+        x, y, model_data,
+        levels=levels,
+        cmap='magma',
+        norm=colors.LogNorm(),
+    )
+    
+    CS = ax.contour(
+        x, y,
+        ref_data,
+        levels=levels,
+        # colors='black', # or use cmap='jet' and pass norm again
+        cmap='viridis_r',
+        linewidths=0.5,
+        alpha=0.5,
+        norm=colors.LogNorm()
+    )
+    
+    var_x, var_y = tuple(key.split('.'))
+    ax.set_xlabel(var_x)
+    ax.set_ylabel(var_y)
+    ax.set_title(f"Histogram for {key}")
+    fig.colorbar(im, ax=ax, label='Prob. density') 
+    
+    return fig, ax
+
 def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
     
     for f in os.listdir(outputs_dir):
@@ -70,7 +125,18 @@ def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
         elif f == ref_name:
             ref_dir = os.path.join(outputs_dir, f)
             
-    print(model_dir, os.listdir(model_dir))
-    print(ref_dir, os.listdir(ref_dir))            
+    fix, axs = plt.subplots(ncols=1, nrows=3, figsize=(5, 9))
+            
+    for i, (m, r) in enumerate(zip(os.listdir(model_dir), os.listdir(ref_dir))):
+        
+        key = m[ m.find('.') + 1 : m.rfind('.') ]
+        
+        m_h = torch.load(os.path.join(model_dir, m))
+        r_h = torch.load(os.path.join(ref_dir, r))
+        
+        visualize(m_h, r_h, key, axs[i])
+        
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, f'bivar_hist_{model_name}.png'))
     
     return

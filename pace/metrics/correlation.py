@@ -14,14 +14,16 @@ except Exception as e:
 
 WIND_MIN = -30      # m/s
 WIND_MAX = 30       # m/s
-T_MIN = 220         # K
-T_MAX = 325         # K
+# T_MIN = 220         # K
+# T_MAX = 325         # K
+T_MIN = 250         # K
+T_MAX = 310         # K
 MSLP_MIN = 95000    # Pa
 MSLP_MAX = 107000   # Pa
 VMAX_MIN = 0
 VMAX_MAX = 40
 TP_MIN = 0
-TP_MAX = 200
+TP_MAX = 100
     
 # range=(
 #     (-1.0, 1.0), # t2m, u10m 

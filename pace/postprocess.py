@@ -191,9 +191,6 @@ def main():
             
             from utils.plot_utils import correlation_map
             
-            print(model_ds)
-            print(ref_ds)
-            
             correlation_map.plot_map(
                 model_ds=model_ds,
                 ref_ds=ref_ds,

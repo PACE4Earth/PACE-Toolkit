@@ -38,47 +38,9 @@ def plot_map(
     rows, cols = np.triu_indices(c, k=1)
     model_tri_data = model_data[rows, cols, :, :]
     ref_tri_data = ref_data[rows, cols, :, :]
-    
-    # print(model_tri_data.shape)
-    
+        
     v, h, w = model_tri_data.shape
 
-    # fig.suptitle(f'corr({model_name}) - corr({ref_name})')
-    # axs[0, 0].set_title(model_name)
-    # axs[0, 1].set_title(ref_name)
-    # axs[0, 2].set_title(model_name, '-', ref_name)
-    
-    # for i in range(v):
-    #     axs[i, 0].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
-    #     im = axs[i, 0].pcolormesh(
-    #         Lon,
-    #         Lat,
-    #         model_tri_data[i],
-    #         cmap='coolwarm',
-    #         vmin=-1,
-    #         vmax=1,
-    #     )
-    #     axs[i, 1].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
-    #     im = axs[i, 1].pcolormesh(
-    #         Lon,
-    #         Lat,
-    #         ref_tri_data[i],
-    #         cmap='coolwarm',
-    #         vmin=-1,
-    #         vmax=1,
-    #     )
-    #     axs[i, 2].set_title(f'{model_ds.var_1.isel(var_1=rows[i]).values}\n{model_ds.var_2.isel(var_2=cols[i]).values}')
-    #     im = axs[i, 2].pcolormesh(
-    #         Lon,
-    #         Lat,
-    #         (model_tri_data[i]-ref_tri_data[i]),
-    #         cmap='coolwarm',
-    #         vmin=-1,
-    #         vmax=1,
-    #     )
-        # plt.colorbar(im, ax=axs[i, 2])
-        
-    # Set the titles for the first row only
     axs[0, 0].set_title(model_name)
     axs[0, 1].set_title(ref_name)
     axs[0, 2].set_title(f"{model_name}-{ref_name}")
@@ -110,7 +72,7 @@ def plot_map(
         # Add the colorbar to the new axes
         fig.colorbar(im, cax=cax)
   
-    print(plots_dir)
+    # print(plots_dir)
   
     plt.tight_layout()
     # plt.savefig(os.path.join(plots_dir, f'correlation_map_{model_name}.png'))
