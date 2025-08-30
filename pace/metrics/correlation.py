@@ -22,7 +22,7 @@ VMAX_MIN = 0
 VMAX_MAX = 40
 TP_MIN = 0
 TP_MAX = 200
-
+    
 # range=(
 #     (-1.0, 1.0), # t2m, u10m 
 #     (-1.0, 1.0), # t2m, v10m 
@@ -91,16 +91,17 @@ class GenericHistogram(nn.Module):
         }
         self.default_bins = 64
         self.corr = None
+        self.pairs = pairs
         
         # Use provided pairs or fallback to config-derived pairs
-        if pairs is not None:
-            self.pairs = pairs
-        else:
-            config = histogram_config if histogram_config is not None else HISTOGRAM_CONFIG
-            self.pairs = []
-            for key in config.keys():
-                var_x, var_y = key.split('.', 1)
-                self.pairs.append((var_x, var_y))
+        # if pairs is not None:
+        #     self.pairs = pairs
+        # else:
+        #     config = histogram_config if histogram_config is not None else HISTOGRAM_CONFIG
+        #     self.pairs = []
+        #     for key in config.keys():
+        #         var_x, var_y = key.split('.', 1)
+        #         self.pairs.append((var_x, var_y))
 
     def add_histogram(self, var_x, var_y, bins=None, range_x=None, range_y=None, key=None):
         
@@ -188,6 +189,21 @@ class GenericHistogram(nn.Module):
     def get_histogram(self, key):
         """Returns the histogram tensor for a specific key."""
         return self.histograms.get(key, {}).get('tensor')
+    
+    def evaluate(self, logger, comm):
+        
+        rank = comm.Get_rank()
+        
+        if not os.path.exists(f"{logger.path.split('.')[0]}"):
+            os.mkdir(f"{logger.path.split('.')[0]}")
+        
+        for key, hist_info in self.histograms.items():
+            
+            this_path = os.path.join(f"{logger.path.split('.')[0]}", f"{rank}.{key}.pt")
+            
+            torch.save(hist_info, this_path)
+        
+        return ...
 
     def visualize(self, key, ax=None, cmap='hot'):
         """Visualizes the histogram for a given key using its specific range."""
@@ -247,6 +263,13 @@ class GenericHistogram(nn.Module):
                     
                 processed_tensors.append(tensor)
                 variable_names.append(name)
+         
+        if self.pairs == None:
+            self.pairs = [
+                (variable_names[0], variable_names[1]),
+                (variable_names[0], variable_names[2]),
+                (variable_names[1], variable_names[2]),
+            ]
                     
         data = torch.stack(processed_tensors, dim=0).contiguous()
         c, n, h, w = data.shape

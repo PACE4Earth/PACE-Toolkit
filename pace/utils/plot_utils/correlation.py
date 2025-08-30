@@ -61,3 +61,16 @@ def plot_corr_time_series(
     plt.savefig(os.path.join(plots_dir, f'correlation_{model_name}.png'))
     
     return
+
+def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
+    
+    for f in os.listdir(outputs_dir):
+        if f == model_name:
+            model_dir = os.path.join(outputs_dir, f)
+        elif f == ref_name:
+            ref_dir = os.path.join(outputs_dir, f)
+            
+    print(model_dir, os.listdir(model_dir))
+    print(ref_dir, os.listdir(ref_dir))            
+    
+    return

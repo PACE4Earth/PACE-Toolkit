@@ -172,6 +172,13 @@ def main():
                 plots_dir=plots_dir,
             )
             
+            correlation.plot_bivar_hist(
+                model_name=model_name,
+                ref_name=ref_name,
+                outputs_dir=outputs_dir,
+                plots_dir=plots_dir,
+            )
+            
         else:
             print("Correlation visualization disabled in config.\n")
     except Exception as e:
