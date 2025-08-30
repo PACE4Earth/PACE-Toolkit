@@ -21,9 +21,12 @@ import xarray as xr
 from pathlib import Path
 from datetime import datetime, timedelta
 import time
-
-from .parsers.netcdf import parse_directory
-from .parsers.netcdf_groups import parse_directory_groups
+try:
+    from .parsers.netcdf import parse_directory
+    from .parsers.netcdf_groups import parse_directory_groups
+except:
+    from parsers.netcdf import parse_directory
+    from parsers.netcdf_groups import parse_directory_groups
 
 # --- Physical constants ---
 R_EARTH = 6371000.0  # Radius of Earth (m)

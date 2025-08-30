@@ -297,7 +297,7 @@ class GenericHistogram(nn.Module):
                     sample[var_y].flatten(),
                 )
             except Exception as e:
-                ...
+                print(e)
         
         return corr_column, variable_names
     
