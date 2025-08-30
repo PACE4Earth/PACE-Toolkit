@@ -69,10 +69,7 @@ def plot_corr_time_series(
 def visualize(model_hist, ref_hist, key, ax):
     """Visualizes the histogram for a given key using its specific range."""
 
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(7, 6))
-    else:
-        fig = ax.get_figure()
+    fig = ax[0].get_figure()
 
     model_data = model_hist['tensor']
     model_data = (model_data / model_data.sum()).clamp(min=1e-8).cpu().numpy()
@@ -91,14 +88,14 @@ def visualize(model_hist, ref_hist, key, ax):
     levels = np.logspace(np.log10(model_data.min()), np.log10(model_data.max()), 12)
 
     # Create the contourf plot
-    im = ax.contourf(
+    im = ax[0].contourf(
         x, y, model_data,
         levels=levels,
         cmap='magma',
         norm=colors.LogNorm(),
     )
     
-    CS = ax.contour(
+    ax[0].contour(
         x, y,
         ref_data,
         levels=levels,
@@ -109,11 +106,26 @@ def visualize(model_hist, ref_hist, key, ax):
         norm=colors.LogNorm()
     )
     
+    diff = model_data-ref_data
+    
+    max_diff = max(diff.max(), np.abs(diff).max())
+    
+    im2 = ax[1].pcolormesh(
+        x, y,
+        diff,
+        cmap='seismic',
+        vmin=-max_diff,
+        vmax=max_diff,
+        # norm=colors.LogNorm()
+    )
+    
     var_x, var_y = tuple(key.split('.'))
-    ax.set_xlabel(var_x)
-    ax.set_ylabel(var_y)
-    ax.set_title(f"Histogram for {key}")
-    fig.colorbar(im, ax=ax, label='Prob. density') 
+    for a in ax.flatten():
+        a.set_xlabel(var_x)
+        a.set_ylabel(var_y)
+        # a.set_title(f"Histogram for {key}")
+    fig.colorbar(im, ax=ax[0], label='Prob. density') 
+    fig.colorbar(im2, ax=ax[1], label='Prob. density') 
     
     return fig, ax
 
@@ -125,7 +137,7 @@ def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
         elif f == ref_name:
             ref_dir = os.path.join(outputs_dir, f)
             
-    fix, axs = plt.subplots(ncols=1, nrows=3, figsize=(5, 9))
+    fix, axs = plt.subplots(ncols=2, nrows=3, figsize=(9, 9))
             
     for i, (m, r) in enumerate(zip(os.listdir(model_dir), os.listdir(ref_dir))):
         
@@ -134,7 +146,7 @@ def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
         m_h = torch.load(os.path.join(model_dir, m))
         r_h = torch.load(os.path.join(ref_dir, r))
         
-        visualize(m_h, r_h, key, axs[i])
+        visualize(m_h, r_h, key, axs[i, :])
         
     plt.tight_layout()
     plt.savefig(os.path.join(plots_dir, f'bivar_hist_{model_name}.png'))
