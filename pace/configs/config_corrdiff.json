@@ -4,12 +4,14 @@
     "model": {
       "name": "corrdiff",
       "path": "/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/"
+    },
+    "reference": {
+      "name": "rea",
+      "path": "/p/scratch/hclimrep/pavel1/CorrDiff/CorrDiff_Output_Code4Earth/"
     }
   },
   "outputs_dir": "${OUTPUTS_DIR_PATH}",
    "metrics": {
-    "correlation": ["all"],
-    "correlation_map": ["all"],
     "case_studies": ["all"]
   },
   "spatial": {
@@ -19,17 +21,17 @@
   },
   "time": {
     "start": "20130101",
-    "end": "20130104",
+    "end": "20131231",
     "num_lead_times": 1, 
     "stride_hours": 6,
     "sample_percent": 100,
-    "custom_times": {"enabled": false, "times": ["20130324_12"]}
+    "custom_times": {"enabled": true, "times": ["20130907_18"]}
   },
   "visualization": {
     "plots_dir": null,
     "histogram": false,
     "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3, "geopotential_level": 500}
+    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3}
   }
 }
