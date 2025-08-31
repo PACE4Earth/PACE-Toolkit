@@ -157,7 +157,8 @@ def main():
             print("Vertical profile visualization disabled in config.\n")
     except Exception as e:
         print(e)
-        
+      
+    # --- CORRELATION & BIVAR. HIST. visualization ---  
     try:
         if is_viz_enabled(config, "correlation"):
             print("\nRunning correlation visualization...")
@@ -172,11 +173,14 @@ def main():
                 plots_dir=plots_dir,
             )
             
+            valid_times = np.unique(ref_ds['base_time'].values + ref_ds['lead_time'].values)
+            
             correlation.plot_bivar_hist(
                 model_name=model_name,
                 ref_name=ref_name,
                 outputs_dir=outputs_dir,
                 plots_dir=plots_dir,
+                valid_times=valid_times,
             )
             
         else:
@@ -184,7 +188,7 @@ def main():
     except Exception as e:
         print(e)
         
-    
+    # --- CORRELATION MAP visualization ---    
     try:
         if is_viz_enabled(config, "correlation_map"):
             print("\nRunning correlation map visualization...")

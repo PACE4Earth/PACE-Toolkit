@@ -17,7 +17,7 @@ WIND_MAX = 30       # m/s
 # T_MIN = 220         # K
 # T_MAX = 325         # K
 T_MIN = 250         # K
-T_MAX = 310         # K
+T_MAX = 320         # K
 MSLP_MIN = 95000    # Pa
 MSLP_MAX = 107000   # Pa
 VMAX_MIN = 0
@@ -91,7 +91,7 @@ class GenericHistogram(nn.Module):
             'vmax_10m': (VMAX_MIN, VMAX_MAX),
             'total_precipitation': (TP_MIN, TP_MAX)
         }
-        self.default_bins = 128
+        self.default_bins = 64
         self.corr = None
         self.pairs = pairs
         
@@ -266,7 +266,7 @@ class GenericHistogram(nn.Module):
                 ############################################# this
                     # print(tensor.shape)
                     tensor = tensor[0, [1]]
-                    print(sample['base_time'], sample['lead_time'], name, tensor.max())
+                    # print(sample['base_time'], sample['lead_time'], name, tensor.max())
                     # print(tensor.min(), tensor.max())
                 
                 tensor = standardize(tensor)

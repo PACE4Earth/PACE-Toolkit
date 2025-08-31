@@ -90,7 +90,7 @@ def visualize(model_hist, ref_hist, key, ax):
     # Using LogNorm() suggests that the data spans several orders of magnitude, so we create levels on a logarithmic scale.
     # levels = np.logspace(np.log10(model_data.min()), np.log10(model_data.max()), 8)
     # levels = np.logspace(-6.01, -2.5, 8)
-    levels = np.array([10**(-6.01), 10**(-6.), 10**(-5.), 10**(-4.5), 1e-4, 10**(-3.5), 1e-3, 10**(-2.5), 1e-2])
+    levels = np.array([10**(-6.01), 10**(-6), 10**(-5.), 10**(-4.5), 1e-4, 10**(-3.5), 1e-3, 10**(-2.5), 1e-2])
 
     # Create the contourf plot
     im = ax[0].contourf(
@@ -117,14 +117,28 @@ def visualize(model_hist, ref_hist, key, ax):
     
     max_diff = max(diff.max(), np.abs(diff).max())
     
+    log_norm = colors.LogNorm(vmin=1e-5, vmax=1e-2)
+    
     im2 = ax[1].pcolormesh(
         x, 
         y,
-        diff,
-        cmap='seismic',
-        vmin=-max_diff,
-        vmax=max_diff,
-        # norm=colors.LogNorm()
+        (diff>0).astype(int)*(diff+1e-5),
+        cmap='Reds',
+        # vmin=-np.log10(max_diff),
+        # vmin=1e-8,
+        # vmax=max_diff,
+        norm=log_norm,
+    )
+    
+    im3 = ax[1].pcolormesh(
+        x, 
+        y,
+        (diff<0).astype(int)*(-diff+1e-5),
+        cmap='Blues',
+        # vmin=-np.log10(max_diff),
+        # vmin=1e-8,
+        # vmax=max_diff,
+        norm=log_norm,
     )
     
     var_x, var_y = tuple(key.split('.'))
@@ -133,11 +147,12 @@ def visualize(model_hist, ref_hist, key, ax):
         a.set_ylabel(var_y)
         # a.set_title(f"Histogram for {key}")
     fig.colorbar(im, ax=ax[0], label='Prob. density') 
-    fig.colorbar(im2, ax=ax[1], label='Prob. density') 
+    fig.colorbar(im2, ax=ax[1], label='Diff. prob. density') 
+    fig.colorbar(im3, ax=ax[1]) 
     
     return fig, ax
 
-def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
+def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir, valid_times):
     
     for f in os.listdir(outputs_dir):
         if f == model_name:
@@ -145,7 +160,9 @@ def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir):
         elif f == ref_name:
             ref_dir = os.path.join(outputs_dir, f)
             
-    fix, axs = plt.subplots(ncols=2, nrows=3, figsize=(9, 9))
+    fig, axs = plt.subplots(ncols=2, nrows=3, figsize=(9, 9))
+    if len(valid_times)==1:
+        fig.suptitle(valid_times[0].astype('datetime64[h]'))   
             
     for i, (m, r) in enumerate(zip(os.listdir(model_dir), os.listdir(ref_dir))):
         
