@@ -12,7 +12,7 @@ from dataset import UnifiedDataset
 # Config: choose model member handling
 # -------------------------------
 USE_MEAN_MEMBER = False   # if True → mean over 8 members, else use SINGLE_MEMBER_IDX
-SINGLE_MEMBER_IDX = 5    # which member to use when USE_MEAN_MEMBER = False
+SINGLE_MEMBER_IDX = 0    # which member to use when USE_MEAN_MEMBER = False
 
 
 def process_var(var, var_name=None):
@@ -150,17 +150,17 @@ def plot_difference(truth, prediction, name, out_dir, lat, lon, lon_ticks, lat_t
     # Row 1: Temp
     plot_var(axes[0, 0], t_truth, cmap_temp, "COSMO-REA2 T2m", t_units)
     plot_var(axes[0, 1], t_pred, cmap_temp, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} T2m", t_units)
-    plot_var(axes[0, 2], t_diff, cmap_diff, "Truth - Pred.", t_units, diff=True)
+    plot_var(axes[0, 2], t_diff, cmap_diff, "Pred. - Truth", t_units, diff=True)
 
     # Row 2: Precip
     plot_var(axes[1, 0], p_truth, cmap_precip, "COSMO-REA2 Precip", p_units)
     plot_var(axes[1, 1], p_pred, cmap_precip, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} Precip", p_units)
-    plot_var(axes[1, 2], p_diff, cmap_diff, "Truth - Pred.", p_units, diff=True)
+    plot_var(axes[1, 2], p_diff, cmap_diff, "Pred. - Truth", p_units, diff=True)
 
     # Row 3: Vmax
     plot_var(axes[2, 0], v_truth, cmap_vmax, "COSMO-REA2 Vmax", v_units)
-    plot_var(axes[2, 1], v_pred, cmap_vmax, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} Vmax 10", v_units)
-    plot_var(axes[2, 2], v_diff, cmap_diff, "Truth - Pred.", v_units, diff=True)
+    plot_var(axes[2, 1], v_pred, cmap_vmax, f"CORRDIFF member {SINGLE_MEMBER_IDX+1} Vmax", v_units)
+    plot_var(axes[2, 2], v_diff, cmap_diff, "Pred. - Truth", v_units, diff=True)
 
     plt.tight_layout(rect=[0, 0, 1, 1])
     filename = f"{name}_diff_{time_str}_{lead_time}h.png"
