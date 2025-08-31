@@ -27,6 +27,7 @@ Machine learning forecasts can appear statistically accurate while violating bas
 * ✅ **hydrostatic balance**
 * ✅ **humidity–temperature consistency**
 * ✅ **potential vorticity**
+* ✅ **energy & mass conservation**
 
 **Spatial/temporal metrics**:
 * ✅ **correlation**
@@ -109,8 +110,11 @@ python pace/postprocess.py
 
 ### Currently supported plots:
 * ✅ **histograms**
+* ✅ **bivariate histograms**
 * ✅ **vertical profiles**
 * ✅ **spatial slices**
+* ✅ **spatial averages**
+* ✅ **time series**
 
 Output: figures per metric - model leadtime comparison, as well as comparison model vs physical reference
 
@@ -126,13 +130,14 @@ PACE-Toolkit/
 ├── pace/                
 │   ├── configs/
 |   |   ├── config.json  # Main configuration file
-│   ├── evaluator.py     # Core evaluation code
 │   ├── metrics/         # Physical consistency metrics
 │   ├── utils/
 │   |   ├── dataset.py   # Dataloader
 │   |   ├── plot_utils/     
+│   |   ├── parsers/     # File and directory parsing scripts  
+│   ├── evaluator.py     # Core evaluation code 
 │   ├── postprocess.py   # Postprocessing & visualization    
-│   ├── plots            # Some output figures     
+│   ├── plots/            # Some output figures     
 ├── .gitignore
 ├── LICENSE
 ├── README.md

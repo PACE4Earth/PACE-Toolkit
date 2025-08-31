@@ -3,28 +3,29 @@
   "datasets": {
     "model": {
       "name": "graphcast",
-      "path": "/p/scratch/weatherai/shared/ERA5_data_graphcast_inference/240h/2021"
+      "path": "${GRAPHCAST_PATH}"
     },
     "reference": {
       "name": "era5",
-      "path": "/p/scratch/weatherai/shared/ERA5_data_download/2021"
+      "path": "${ERA5_PATH}"
     }
   },
-  "outputs_dir": "/p/project/hclimrep/vas1/PACE-Toolkit/pace/outputs",
+  "outputs_dir": "${OUTPUTS_DIR_PATH}",
   "metrics": {
+    "energy_conservation": ["all"],
     "mass_conservation": ["all"]
   },
   "spatial": {
-    "pressure_levels": 2,
-    "lat_range": [0, 10],
-    "lon_range": [0, 10]
+    "pressure_levels": 37,
+    "lat_range": [30, 80],
+    "lon_range": [0, 180]
   },
   "time": {
     "start": "20210601",
     "end": "20210610",
-    "num_lead_times": 5, 
+    "num_lead_times": 40, 
     "stride_hours": 6,
-    "sample_percent": 10,
+    "sample_percent": 100,
     "custom_times": {"enabled": false, "times": ["20210605_12"]}
   },
   "visualization": {

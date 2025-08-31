@@ -34,7 +34,9 @@ Example configuration:
     "correlation": ["all"],
     "correlation_map": ["all"],
     "potential_vorticity": ["all"],
-    "humidity_temperature": ["all"]
+    "humidity_temperature": ["all"],
+    "energy_conservation": ["all"],
+    "mass_conservation": ["all"],
   },
   "spatial": {
     "pressure_levels": 3,
@@ -57,12 +59,7 @@ Example configuration:
     "histogram": false,
     "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {
-      "enabled": true,
-      "variable": "geostrophic_wind_ratio",
-      "level": 500,
-      "samples": 3
-    }
+    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3}
   }
 }
 ```
@@ -117,7 +114,9 @@ Default: *(required — must specify at least one metric)*
     "correlation": ["all"],
     "correlation_map": ["all"],
     "potential_vorticity": ["potential_vorticity"],
-    "humidity_temperature": ["relative_humidity"]
+    "humidity_temperature": ["relative_humidity"],
+    "energy_conservation": ["energy", "total_energy"],
+    "mass_conservation": ["total_mass"]
   },
 ```
 
@@ -141,18 +140,18 @@ Defines the temporal subset of data to be used.
 
 | Key                    | Type   | Description                                                       | Default             |
 | ---------------------- | ------ | ----------------------------------------------------------------- | ------------------- |
-| `start`                | string | Start date in `YYYYMMDD` format.                                  | *(required)*        |
-| `end`                  | string | End date in `YYYYMMDD` format.                                    | *(required)*        |
+| `start`                | string | Start date in `YYYYMMDD` format. (included)                                 | *(required)*        |
+| `end`                  | string | End date in `YYYYMMDD`  format. (included)                                    | *(required)*        |
 | `num_lead_times`       | int    | Number of lead times to include from each base time.              | `1`                 |
 | `stride_hours`         | int    | Time step between lead times in hours.                            | `6`                 |
 | `sample_percent`       | float  | Percentage of valid times to sample randomly (select 100 to process all samples in specified time range).                     | `1`                 |
 | `custom_times`         | object | Allows selecting specific valid times instead of random sampling. | disabled by default |
 | `custom_times.enabled` | bool   | If `true`, `custom_times.times` list is used.                     | `false`             |
-| `custom_times.times`   | list   | Specific times to include, in `YYYYMMDD_HH` format.               | `[]`                |
+| `custom_times.times`   | list   | Specific valid times to include, in `YYYYMMDD_HH` format.               | `[]`                |
 
 ---
 
-Note: `valid_times` are selected from time range `start : end - num_lead_times * stride_hours`, so that each `lead_time` has equal number of samples (in total).
+Note: Currently all available samples with `valid_time` in time range are selected. `dataset.py` also supports option to select `valid_times` from time range `start : end - num_lead_times * stride_hours`, so that each `lead_time` has equal number of samples (in total).
 
 Note: When in `custom_times` mode, adjust number of leadtimes per valid time with `num_lead_times` and `sample_percent`.
 
@@ -171,6 +170,10 @@ Configures postprocessing and plotting.
 | `spatial_slice.variable`           | string       | Variable to plot.                                                      | *(required if enabled)* |
 | `spatial_slice.level`              | int          | Pressure level (hPa) for slice.                                        | *(required if enabled)* |
 | `spatial_slice.samples`            | int          | Number of random samples to plot.                                      | *(required if enabled)* |
+| `spatial_average`                 | bool         | Whether to generate spatial averages maps.                                 | `false`                 |
+| `time_series`                 | bool         | Whether to generate time series.                                 | `false`                 |
+| `correlation`                 | bool         | Whether to generate correlation statistics, and bivariate histograms.                                 | `false`                 |
+| `correlation_map`                 | bool         | Whether to generate correlation maps.                                 | `false`                 |
 
 ---
 
