@@ -17,7 +17,9 @@
     "correlation": ["all"],
     "correlation_map": ["all"],
     "potential_vorticity": ["all"],
-    "humidity_temperature": ["all"]
+    "humidity_temperature": ["all"],
+    "energy_conservation": ["all"],
+    "mass_conservation": ["all"]
   },
   "spatial": {
     "pressure_levels": 37,
@@ -37,6 +39,10 @@
     "histogram": false,
     "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3}
+    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3},
+    "spatial_average": false,
+    "time_series": false,
+    "correlation": false,
+    "correlation_map": false
   }
 }
