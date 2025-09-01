@@ -6,7 +6,7 @@ import seaborn as sns
 import xarray as xr
 
 PROFILE_CONFIG = {
-    "geostrophic_wind_ratio": {
+    "ageo_to_geo_wind_ratio": {
         "mean": {"xmin": 0, "xmax": 1, "scale": "linear"},
         "stdev": {"xmin": 0, "xmax": 1, "scale": "linear"},
         "min": {"xmin": 0, "xmax": 0.3, "scale": "linear"},

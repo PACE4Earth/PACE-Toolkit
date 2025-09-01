@@ -12,8 +12,8 @@
   },
   "outputs_dir": "${OUTPUTS_DIR_PATH}",
   "metrics": {
-    "energy_conservation": ["all"],
-    "mass_conservation": ["all"]
+    "geostrophic_balance": ["all"],
+    "potential_vorticity": ["all"]
   },
   "spatial": {
     "pressure_levels": 37,
@@ -30,11 +30,11 @@
   },
   "visualization": {
     "plots_dir": null,
-    "histogram": false,
-    "vertical_profile": false,
+    "histogram": true,
+    "vertical_profile": true,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": false, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 2},
+    "spatial_slice": {"enabled": false, "variable": "ageo_to_geo_wind_ratio", "level": 500, "samples": 2},
     "spatial_average": false,
-    "time_series": true
+    "time_series": false
   }
 }

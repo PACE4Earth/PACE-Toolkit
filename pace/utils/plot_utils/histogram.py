@@ -8,7 +8,7 @@ import xarray as xr
 # Configuration for histogram binning of each variable.
 # Each entry specifies the min/max values and whether to use linear or log scaling.
 BIN_CONFIG = {
-    "geostrophic_wind_ratio": {"vmin": 0, "vmax": 2, "scale": "linear"},
+    "ageo_to_geo_wind_ratio": {"vmin": 0, "vmax": 2, "scale": "linear"},
     "hydrostatic_abs_error": {"vmin": 1e-3, "vmax": 1e4, "scale": "log"},
     "hydrostatic_rel_error": {"vmin": 1e-3, "vmax": 1e0, "scale": "log"},
     "hydrostatic_rmse": {"vmin": 1e1, "vmax": 1e4, "scale": "log"},

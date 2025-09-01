@@ -29,7 +29,7 @@ Example configuration:
   },
   "outputs_dir": "${OUTPUTS_DIR_PATH}",
   "metrics": {
-    "geostrophic_balance": ["geostrophic_wind_ratio"],
+    "geostrophic_balance": ["ageo_to_geo_wind_ratio"],
     "hydrostatic_balance": ["hydrostatic_rel_error", "hydrostatic_rmse"],
     "correlation": ["all"],
     "correlation_map": ["all"],
@@ -59,7 +59,7 @@ Example configuration:
     "histogram": false,
     "vertical_profile": false,
     "summary_stats": ["mean", "stdev", "min", "max"],
-    "spatial_slice": {"enabled": true, "variable": "geostrophic_wind_ratio", "level": 500, "samples": 3}
+    "spatial_slice": {"enabled": true, "variable": "geo_to_geo_wind_ratio", "level": 500, "samples": 3}
   }
 }
 ```
@@ -109,7 +109,7 @@ Default: *(required — must specify at least one metric)*
 
 ```json
 "metrics": {
-    "geostrophic_balance": ["geostrophic_wind_ratio"],
+    "geostrophic_balance": ["geo_to_geo_wind_ratio"],
     "hydrostatic_balance": ["hydrostatic_abs_error", "hydrostatic_rel_error", "hydrostatic_rmse"],
     "correlation": ["all"],
     "correlation_map": ["all"],

@@ -153,4 +153,4 @@ class GeostrophicWind(nn.Module):
         Returns:
             list[str]: ["geostrophic_wind_ratio"]
         """
-        return ["geostrophic_wind_ratio"]
+        return ["ageo_to_geo_wind_ratio"]
