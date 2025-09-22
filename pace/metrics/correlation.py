@@ -265,7 +265,7 @@ class GenericHistogram(nn.Module):
                 elif tensor.ndim == 4:
                 ############################################# this
                     # print(tensor.shape)
-                    tensor = tensor[0, [1]]
+                    tensor = tensor[0, [0]]
                     # print(sample['base_time'], sample['lead_time'], name, tensor.max())
                     # print(tensor.min(), tensor.max())
                 

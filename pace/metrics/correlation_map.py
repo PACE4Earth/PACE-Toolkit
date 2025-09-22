@@ -45,17 +45,17 @@ class CorrelationMap(nn.Module):
             
         self.variables = VARIABLES
         # c = len(self.variables)  # Number of channels is now dynamic
-        c = 3
-        h = grid['lat'].shape[0]
-        w = grid['lon'].shape[0]
+        self.c = 3
+        self.h = grid['lat'].shape[0]
+        self.w = grid['lon'].shape[0]
         
         # Buffers to store running sums for correlation calculation
         # We use register_buffer so they are moved to the correct device
         # with .to(device) and included in the state_dict, but are not
         # considered model parameters by the optimizer.
-        self.register_buffer('sum_c', torch.zeros(1, c, h, w, dtype=torch.float32))
-        self.register_buffer('sum_c_sq', torch.zeros(1, c, h, w, dtype=torch.float32))
-        self.register_buffer('sum_cc', torch.zeros(c, c, h, w, dtype=torch.float32))
+        self.register_buffer('sum_c', torch.zeros(1, self.c, self.h, self.w, dtype=torch.float32))
+        self.register_buffer('sum_c_sq', torch.zeros(1, self.c, self.h, self.w, dtype=torch.float32))
+        self.register_buffer('sum_cc', torch.zeros(self.c, self.c, self.h, self.w, dtype=torch.float32))
         self.register_buffer('count', torch.tensor(0, dtype=torch.long))
 
     def forward(self, sample: dict):
@@ -264,9 +264,20 @@ class CorrelationMap(nn.Module):
             corr_arr.attrs['_ARRAY_DIMENSIONS'] = ['var_1', 'var_2', 'lat', 'lon']
 
             print('Correlation map computed and saved.')
+         
+            self.sum_c = torch.zeros(1, self.c, self.h, self.w, dtype=torch.float32)
+            self.sum_c_sq = torch.zeros(1, self.c, self.h, self.w, dtype=torch.float32)
+            self.sum_cc = torch.zeros(self.c, self.c, self.h, self.w, dtype=torch.float32)
+            self.count = torch.tensor(0, dtype=torch.long)
 
             return correlation_map
         else:
+            
+            self.sum_c = torch.zeros(1, self.c, self.h, self.w, dtype=torch.float32)
+            self.sum_c_sq = torch.zeros(1, self.c, self.h, self.w, dtype=torch.float32)
+            self.sum_cc = torch.zeros(self.c, self.c, self.h, self.w, dtype=torch.float32)
+            self.count = torch.tensor(0, dtype=torch.long)
+            
             return None
     
     def visualize(self):

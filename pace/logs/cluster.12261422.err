@@ -5,8 +5,8 @@ or newer)[0m
 srun: Setting --cpu-bind=threads as a default of --threads-per-core use
 srun: defined options
 srun: -------------------- --------------------
-srun: (null)              : jwc00n024
-srun: jobid               : 12224142
+srun: (null)              : jwc00n002
+srun: jobid               : 12261422
 srun: job-name            : run_cluster.sbatch
 srun: licenses            : home@just,project1@just,scratch@just
 srun: mpi                 : pspmix
@@ -17,18 +17,18 @@ srun: threads-per-core    : 1
 srun: verbose             : 1
 srun: -------------------- --------------------
 srun: end of defined options
-srun: jobid 12224142: nodes(1):`jwc00n024', cpu counts: 48(x1)
+srun: jobid 12261422: nodes(1):`jwc00n002', cpu counts: 48(x1)
 srun: CpuBindType=threads
-srun: launching StepId=12224142.0 on host jwc00n024, 1 tasks: 0
+srun: launching StepId=12261422.0 on host jwc00n002, 1 tasks: 0
 srun: topology/tree: init: topology tree plugin loaded
-srun: Node jwc00n024, 1 tasks started
-srun: Received task exit notification for 1 task of StepId=12224142.0 (status=0x0000).
-srun: jwc00n024: task 0: Completed
+srun: Node jwc00n002, 1 tasks started
+srun: Received task exit notification for 1 task of StepId=12261422.0 (status=0x0000).
+srun: jwc00n002: task 0: Completed
 srun: Setting --cpu-bind=threads as a default of --threads-per-core use
 srun: defined options
 srun: -------------------- --------------------
-srun: (null)              : jwc00n024
-srun: jobid               : 12224142
+srun: (null)              : jwc00n002
+srun: jobid               : 12261422
 srun: job-name            : run_cluster.sbatch
 srun: licenses            : home@just,project1@just,scratch@just
 srun: mpi                 : pspmix
@@ -39,10 +39,10 @@ srun: threads-per-core    : 1
 srun: verbose             : 1
 srun: -------------------- --------------------
 srun: end of defined options
-srun: jobid 12224142: nodes(1):`jwc00n024', cpu counts: 48(x1)
+srun: jobid 12261422: nodes(1):`jwc00n002', cpu counts: 48(x1)
 srun: CpuBindType=threads
-srun: launching StepId=12224142.1 on host jwc00n024, 1 tasks: 0
+srun: launching StepId=12261422.1 on host jwc00n002, 1 tasks: 0
 srun: topology/tree: init: topology tree plugin loaded
-srun: Node jwc00n024, 1 tasks started
-srun: Received task exit notification for 1 task of StepId=12224142.1 (status=0x0000).
-srun: jwc00n024: task 0: Completed
+srun: Node jwc00n002, 1 tasks started
+srun: Received task exit notification for 1 task of StepId=12261422.1 (status=0x0000).
+srun: jwc00n002: task 0: Completed

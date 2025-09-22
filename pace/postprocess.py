@@ -165,6 +165,14 @@ def main():
             
             from utils.plot_utils import correlation
             
+            correlation.plot_corr_lt(
+                model_ds=model_ds,
+                ref_ds=ref_ds,
+                model_name=model_name,
+                ref_name=ref_name,
+                plots_dir=plots_dir,
+            )
+            
             correlation.plot_corr_time_series(
                 model_ds=model_ds,
                 ref_ds=ref_ds,

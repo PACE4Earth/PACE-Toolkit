@@ -11,6 +11,38 @@ import matplotlib.colors as colors
 import seaborn as sns
 
 
+def plot_corr_lt(
+        model_ds=None,
+        ref_ds=None,
+        model_name=None,
+        ref_name=None,
+        plots_dir=None,
+    ):
+        
+    plt.figure(figsize=(4, 4))
+        
+    for lead in model_ds['lead_time'].values:
+        
+        model_sel = model_ds.where(model_ds.lead_time == lead, drop=True)
+        ref_sel = ref_ds.where(model_ds.lead_time == lead, drop=True)
+
+        model_values = model_sel['corr_column'].values
+        reference_values = ref_sel['corr_column'].values
+
+        diff = (model_values - reference_values).flatten()
+        print(diff.shape)
+
+        plt.scatter([lead.astype(int)]*9, diff)
+    
+    plt.xticks(model_ds['lead_time'].values.astype(int))
+    plt.xlabel("Lead time [h]")
+    plt.ylabel("Correlation error")
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, f'correlation_{model_name}_lt.png'))
+    plt.close()
+
 def plot_corr_time_series(
         model_ds=None,
         ref_ds=None,
@@ -55,6 +87,9 @@ def plot_corr_time_series(
                 label=f'{name}: ({ds.var_1.isel(var_1=rows[i]).values}, {ds.var_2.isel(var_2=cols[i]).values})', 
                 alpha=0.4
             )
+            
+    for ax in axs.flatten():
+        ax.set_xticks([valid_times[0], valid_times[len(valid_times)//2], valid_times[-1]])
         
     plt.xlabel('valid time')
     
@@ -115,31 +150,27 @@ def visualize(model_hist, ref_hist, key, ax):
     
     diff = model_data-ref_data
     
-    max_diff = max(diff.max(), np.abs(diff).max())
-    
-    log_norm = colors.LogNorm(vmin=1e-5, vmax=1e-2)
-    
+    v_max = 1e-2
+    lin_thresh = 1e-5
+
+    sym_log_norm = colors.SymLogNorm(
+        linthresh=lin_thresh,
+        vmin=-v_max,
+        vmax=v_max,
+        base=10
+    )
+
     im2 = ax[1].pcolormesh(
-        x, 
+        x,
         y,
-        (diff>0).astype(int)*(diff+1e-5),
-        cmap='Reds',
-        # vmin=-np.log10(max_diff),
-        # vmin=1e-8,
-        # vmax=max_diff,
-        norm=log_norm,
+        diff,
+        cmap='bwr',
+        norm=sym_log_norm,
     )
-    
-    im3 = ax[1].pcolormesh(
-        x, 
-        y,
-        (diff<0).astype(int)*(-diff+1e-5),
-        cmap='Blues',
-        # vmin=-np.log10(max_diff),
-        # vmin=1e-8,
-        # vmax=max_diff,
-        norm=log_norm,
-    )
+
+    cbar = fig.colorbar(im2, ax=ax[1], label='Diff. prob. density')
+    ticks = [-v_max, -1e-3, -1e-4, -lin_thresh, lin_thresh, 1e-4, 1e-3, v_max]
+    cbar.set_ticks(ticks)
     
     var_x, var_y = tuple(key.split('.'))
     for a in ax.flatten():
@@ -147,8 +178,6 @@ def visualize(model_hist, ref_hist, key, ax):
         a.set_ylabel(var_y)
         # a.set_title(f"Histogram for {key}")
     fig.colorbar(im, ax=ax[0], label='Prob. density') 
-    fig.colorbar(im2, ax=ax[1], label='Diff. prob. density') 
-    fig.colorbar(im3, ax=ax[1]) 
     
     return fig, ax
 
@@ -161,6 +190,10 @@ def plot_bivar_hist(model_name, ref_name, outputs_dir, plots_dir, valid_times):
             ref_dir = os.path.join(outputs_dir, f)
             
     fig, axs = plt.subplots(ncols=2, nrows=3, figsize=(9, 9))
+    
+    axs[0,0].set_title('Model: filled\nReference: contours')
+    axs[0,1].set_title('Model - Reference')
+    
     if len(valid_times)==1:
         fig.suptitle(valid_times[0].astype('datetime64[h]'))   
             

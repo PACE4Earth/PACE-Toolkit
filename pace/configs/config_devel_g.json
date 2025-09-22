@@ -16,17 +16,17 @@
     "correlation_map": ["all"]
   },
   "spatial": {
-    "pressure_levels": 3,
-    "lat_range": [45, 57],
-    "lon_range": [0, 18]
+    "pressure_levels": 37,
+    "lat_range": [30, 80],
+    "lon_range": [0, 180]
   },
   "time": {
-    "start": "20210906",
-    "end": "20210907",
-    "num_lead_times": 5, 
+    "start": "20210601",
+    "end": "20210610",
+    "num_lead_times": 40, 
     "stride_hours": 6,
     "sample_percent": 100,
-    "custom_times": {"enabled": false, "times": ["20210615_12"]}
+    "custom_times": {"enabled": false, "times": ["20210605_12"]}
   },
   "visualization": {
     "plots_dir": "/p/scratch/hclimrep/vozar2/outputs_cluster/plots",

@@ -1,0 +1,87 @@
+Preparing files for graphcast...
+Done. Found 40 usable files (2021-06-01 00:00:00 -- 2021-06-10 23:59:00).
+
+Grid setup... Done.
+Checking required fields for metrics...
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 800 samples for graphcast.
+---------------------------------------------
+
+Preparing files for era5...
+Done. Found 10 usable files (2021-06-01 00:00:00 -- 2021-06-10 23:59:00).
+
+Grid setup... Done.
+Checking required fields for metrics...
+correlation             is complete.
+correlation_map         is complete.
+
+Selected 40 samples for era5.
+---------------------------------------------
+
+[Rank 0] Initializing Zarr archive at /p/scratch/hclimrep/vozar2/outputs_cluster/graphcast.zarr
+
+[Rank 0] Initializing Zarr archive at /p/scratch/hclimrep/vozar2/outputs_cluster/era5.zarr
+
+[Rank 0] Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs_cluster/graphcast.zarr
+
+0
+Rank 0 is aggregating results from all ranks...
+Aggregation complete. Total count: 801
+torch.Size([3, 3, 201, 721]) tensor(-0.9246) tensor(1.)
+Correlation map computed and saved.
+Rank 0 processed 800 samples.
+Finished evaluation of graphcast.
+
+[Rank 0] Zarr store initialized for xarray at: /p/scratch/hclimrep/vozar2/outputs_cluster/era5.zarr
+
+0
+Rank 0 is aggregating results from all ranks...
+Aggregation complete. Total count: 41
+torch.Size([3, 3, 201, 721]) tensor(-0.9509) tensor(1.)
+Correlation map computed and saved.
+Rank 0 processed 40 samples.
+Finished evaluation of era5.
+
+Metadata consolidation complete.
+
+Opening model dataset using xarray.
+
+<xarray.Dataset>
+Dimensions:          (idx: 800, var_1: 3, var_2: 3, lat: 201, lon: 721,
+                      level: 37)
+Coordinates:
+    base_time        (idx) datetime64[ns] ...
+  * idx              (idx) float64 0.0 1.0 2.0 3.0 ... 796.0 797.0 798.0 799.0
+  * lat              (lat) float32 30.0 30.25 30.5 30.75 ... 79.5 79.75 80.0
+    lead_time        (idx) timedelta64[h] ...
+  * level            (level) float64 1.0 2.0 3.0 5.0 ... 925.0 950.0 975.0 1e+03
+  * lon              (lon) float32 0.0 0.25 0.5 0.75 ... 179.2 179.5 179.8 180.0
+  * var_1            (var_1) object '2m_temperature' ... '10m_v_component_of_...
+  * var_2            (var_2) object '2m_temperature' ... '10m_v_component_of_...
+Data variables:
+    corr_column      (idx, var_1, var_2) float32 ...
+    correlation_map  (var_1, var_2, lat, lon) float32 ...
+
+Elapsed time: 276.17 s
+Histogram visualization disabled in config.
+
+Vertical profile visualization disabled in config.
+
+
+Running correlation visualization...
+0
+1
+2
+
+Running correlation map visualization...
+
+Spatial slice visualization disabled in config.
+
+Spatial average visualization disabled in config.
+
+Time series visualization disabled in config.
+
+
+Elapsed time: 6.52 s
